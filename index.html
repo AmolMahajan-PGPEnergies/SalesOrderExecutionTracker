@@ -34,8 +34,7 @@
         }
         body {
             display: flex;
-            flex-direction: column;
-            height: 100vh;
+            min-height: 100vh;
             background:
                 radial-gradient(circle at 12% 8%, rgba(255, 255, 255, 0.05) 0%, transparent 30%),
                 radial-gradient(circle at 90% 16%, rgba(255, 255, 255, 0.03) 0%, transparent 34%),
@@ -49,18 +48,44 @@
             color: var(--brand-text);
         }
         header {
-            position: relative;
-            background-color: rgba(10, 12, 15, 0.9);
-            padding: 20px;
-            text-align: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background-color: rgba(10, 12, 15, 0.95);
+            padding: 12px 24px;
             border-bottom: 1px solid var(--brand-border);
             backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            height: 70px;
+        }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+        .brand-logo {
+            display: block;
+            height: 40px;
+            width: auto;
+            border-radius: 6px;
         }
         header h1 {
-            color: #f3f8ff;
-            font-size: 1.5em;
-            text-shadow: none;
+            color: var(--brand-accent);
+            font-size: 1.2em;
+            font-weight: 700;
             letter-spacing: 0.04em;
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-left: auto;
         }
         .header-logo-link {
             position: absolute;
@@ -71,11 +96,45 @@
             align-items: center;
             text-decoration: none;
         }
-        .brand-logo {
-            display: block;
-            height: 52px;
-            width: auto;
-            border-radius: 6px;
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 70px;
+            width: 260px;
+            height: calc(100vh - 70px);
+            background-color: rgba(11, 13, 16, 0.85);
+            border-right: 1px solid var(--brand-border);
+            backdrop-filter: blur(8px);
+            overflow-y: auto;
+            padding: 20px 0;
+        }
+        .sidebar-menu {
+            list-style: none;
+        }
+        .sidebar-menu-item {
+            padding: 0;
+        }
+        .sidebar-menu-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: var(--brand-muted);
+            text-decoration: none;
+            font-size: 0.95em;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+        .sidebar-menu-link:hover {
+            color: var(--brand-accent);
+            background-color: rgba(22, 194, 197, 0.08);
+            border-left-color: var(--brand-accent);
+        }
+        .sidebar-menu-link.active {
+            color: var(--brand-accent);
+            background-color: rgba(22, 194, 197, 0.12);
+            border-left-color: var(--brand-accent);
         }
         .header-buttons {
             position: absolute;
@@ -132,24 +191,36 @@
             transform: scale(1.08);
         }
         @media (max-width: 700px) {
-            header {
-                padding-bottom: 70px;
+            .sidebar {
+                width: 100%;
+                height: auto;
+                top: 70px;
+                border-right: none;
+                border-bottom: 1px solid var(--brand-border);
+                padding: 10px 0;
             }
-            .header-logo-link {
-                position: static;
-                transform: none;
-                margin: 0 auto 10px;
-                justify-content: center;
-                width: fit-content;
+            .sidebar-menu {
+                display: flex;
+                flex-wrap: wrap;
             }
-            .brand-logo {
-                height: 46px;
+            .sidebar-menu-item {
+                flex: 1 1 auto;
             }
-            .header-buttons {
-                top: auto;
-                right: 50%;
-                bottom: 16px;
-                transform: translateX(50%);
+            .sidebar-menu-link {
+                padding: 8px 12px;
+                font-size: 0.85em;
+                white-space: nowrap;
+            }
+            main {
+                margin-left: 0;
+                margin-top: calc(70px + 50px);
+                padding: 20px 12px;
+            }
+            main h1 {
+                font-size: 1.8em;
+            }
+            .header-actions {
+                display: none;
             }
             .color-picker {
                 right: 50%;
@@ -162,6 +233,10 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            margin-left: 260px;
+            margin-top: 70px;
+            padding: 32px 24px;
+            overflow-y: auto;
         }
         main h1 {
             color: var(--brand-accent);
@@ -220,24 +295,17 @@
             color: #d9ffff;
             text-decoration: underline;
         }
-        footer {
-            background-color: rgba(10, 12, 15, 0.9);
-            padding: 20px;
-            text-align: center;
-            border-top: 1px solid var(--brand-border);
-            color: var(--brand-muted);
-            font-size: 0.9em;
-            backdrop-filter: blur(8px);
-        }
     </style>
 </head>
 <body>
     <header>
-        <a class="header-logo-link" href="index.html" aria-label="PGP Energies home">
-            <img class="brand-logo" src="pgp-logo.svg" alt="PGP Energies logo">
-        </a>
-        <h1>PGP Energies</h1>
-        <div class="header-buttons">
+        <div class="header-brand">
+            <a href="index.html" aria-label="PGP Energies home">
+                <img class="brand-logo" src="pgp-logo.svg" alt="PGP Energies logo">
+            </a>
+            <h1>COREPULSE</h1>
+        </div>
+        <div class="header-actions">
             <button id="rainbowButton" type="button">Gradient</button>
             <button id="colorsButton" type="button">Shades</button>
             <div id="colorPicker" class="color-picker" aria-label="Background color options">
@@ -256,27 +324,35 @@
             </div>
         </div>
     </header>
+
+    <aside class="sidebar">
+        <nav class="sidebar-menu">
+            <li class="sidebar-menu-item">
+                <a href="index.html" class="sidebar-menu-link active">📊 Dashboard</a>
+            </li>
+            <li class="sidebar-menu-item">
+                <a href="SalesOrderTracker.html" class="sidebar-menu-link">🚀 Projects</a>
+            </li>
+            <li class="sidebar-menu-item">
+                <a href="SalesOrderTrackerAndExecutionControls.html" class="sidebar-menu-link">👥 My Team</a>
+            </li>
+        </nav>
+    </aside>
+
     <main>
-        <h1>Welcome</h1>
-        <p>My name is Anish and I love coding! Today, I want to share some of my repositories with you.
-            These repositories can get you up to speed about coding languages and how to use them.
+        <h1>Welcome to COREPULSE</h1>
+        <p>PGP Energies Sales Order & Execution Tracking System
+            <br>
+            Manage your shipments and execution workflows efficiently.
         </p>
         <div class="repositories">
-            <h2>My Repositories</h2>
+            <h2>My Projects</h2>
             <ul>
-                <li><a href="HTMLLearning.html">HTML Learning</a></li>
-                <li><a href="CSSTricks.html">CSS Tricks</a></li>
-                <li><a href="JavaScriptFundamentals.html">JavaScript Fundamentals</a></li>
-                <li><a href="PythonPowerhouse.html">Python Powerhouse</a></li>
                 <li><a href="SalesOrderTracker.html">Sales Order Tracker</a></li>
-                <li><a href="SalesOrderTrackerAndExecutionControls.html">Sales Order Tracker &amp; Execution Controls</a></li>
+                <li><a href="SalesOrderTrackerAndExecutionControls.html">Execution Controls</a></li>
             </ul>
         </div>
     </main>
-    <footer>
-        <p>&copy; 2026 PGP Energies. All rights reserved.</p>
-        <p>Author: Anish Mahajan</p>
-    </footer>
     <script>
         const body = document.body;
         const colorsButton = document.getElementById('colorsButton');

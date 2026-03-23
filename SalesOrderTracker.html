@@ -10,11 +10,15 @@
             --brand-bg: #0b0d10;
             --brand-bg-deep: #050607;
             --brand-panel: #14181d;
+            --brand-panel-elev: #1b2128;
             --brand-border: #2b3138;
             --brand-text: #e6edf4;
             --brand-muted: #9ea9b5;
             --brand-accent: #16c2c5;
             --brand-accent-strong: #0aa4a8;
+            --brand-danger: #f87171;
+            --brand-warning: #fbbf24;
+            --brand-success: #34d399;
         }
         * {
             margin: 0;
@@ -23,79 +27,108 @@
         }
         body {
             display: flex;
-            flex-direction: column;
             min-height: 100vh;
-            background-color: #f4f7fb;
+            background:
+                radial-gradient(circle at 12% 8%, rgba(255, 255, 255, 0.05) 0%, transparent 30%),
+                radial-gradient(circle at 90% 16%, rgba(255, 255, 255, 0.03) 0%, transparent 34%),
+                linear-gradient(165deg,
+                var(--brand-bg-deep) 0%,
+                var(--brand-bg) 40%,
+                #171c22 100%);
             font-family: 'Poppins', sans-serif;
+            color: var(--brand-text);
         }
         header {
-            position: relative;
-            background-color: #ffffff;
-            padding: 20px;
-            text-align: center;
-            border-bottom: 1px solid #dbe3f0;
-        }
-        header h1 {
-            color: #1f2937;
-            font-size: 1.5em;
-            text-shadow: none;
-        }
-        .header-logo-link {
-            position: absolute;
-            left: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            display: inline-flex;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background-color: rgba(10, 12, 15, 0.95);
+            padding: 12px 24px;
+            border-bottom: 1px solid var(--brand-border);
+            backdrop-filter: blur(8px);
+            display: flex;
             align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            height: 70px;
+        }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
             text-decoration: none;
         }
         .brand-logo {
             display: block;
-            height: 52px;
+            height: 40px;
             width: auto;
             border-radius: 6px;
         }
-        .page-meta {
-            position: absolute;
-            top: 50%;
-            right: 20px;
-            transform: translateY(-50%);
+        header h1 {
+            color: var(--brand-accent);
+            font-size: 1.2em;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+        .header-actions {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 10px 14px;
-            border-radius: 12px;
-            background-color: #eef4ff;
-            border: 1px solid #c4d7ff;
-            color: #1e3a8a;
-            box-shadow: 0 10px 24px rgba(30, 58, 138, 0.08);
-            text-align: left;
+            gap: 12px;
+            margin-left: auto;
         }
-        .page-meta-label {
-            color: #64748b;
-            font-size: 0.72em;
-            font-weight: 600;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 70px;
+            width: 260px;
+            height: calc(100vh - 70px);
+            background-color: rgba(11, 13, 16, 0.85);
+            border-right: 1px solid var(--brand-border);
+            backdrop-filter: blur(8px);
+            overflow-y: auto;
+            padding: 20px 0;
         }
-        .page-meta-value {
-            color: #1e3a8a;
-            font-size: 0.88em;
-            font-weight: 600;
-            white-space: nowrap;
+        .sidebar-menu {
+            list-style: none;
+        }
+        .sidebar-menu-item {
+            padding: 0;
+        }
+        .sidebar-menu-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: var(--brand-muted);
+            text-decoration: none;
+            font-size: 0.95em;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+        .sidebar-menu-link:hover {
+            color: var(--brand-accent);
+            background-color: rgba(22, 194, 197, 0.08);
+            border-left-color: var(--brand-accent);
+        }
+        .sidebar-menu-link.active {
+            color: var(--brand-accent);
+            background-color: rgba(22, 194, 197, 0.12);
+            border-left-color: var(--brand-accent);
         }
         main {
+            margin-left: 260px;
+            margin-top: 70px;
             flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 20px;
+            padding: 32px 24px;
+            overflow-y: auto;
         }
         main h1 {
-            color: #1e3a8a;
-            font-size: 3em;
-            text-shadow: none;
+            color: var(--brand-accent);
+            font-size: 2.2em;
+            margin-bottom: 8px;
         }
         .content-card {
             width: min(95vw, 1400px);
@@ -246,13 +279,24 @@
             font-family: 'Poppins', sans-serif;
         }
         .add-shipment-btn:hover {
-            background-color: #1e40af;
+            background-color: var(--brand-accent-strong);
             transform: translateY(-2px);
         }
         .page-actions {
             display: flex;
             justify-content: flex-end;
             margin-top: 8px;
+        }
+        .add-shipment-btn {
+            background-color: var(--brand-accent);
+            color: #0b0d10;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
         }
         .shipments-list {
             margin-top: 32px;
@@ -1179,19 +1223,33 @@
 </head>
 <body>
     <header>
-        <a class="header-logo-link" href="index.html" aria-label="PGP Energies home">
-            <img class="brand-logo" src="pgp-logo.svg" alt="PGP Energies logo">
-        </a>
-        <h1>PGP Energies</h1>
-        <div class="page-meta" aria-label="Build information">
-            <span class="page-meta-label">Commit</span>
-            <span class="page-meta-value">8729e55</span>
-            <span class="page-meta-label">Updated</span>
-            <span class="page-meta-value">2026-03-21 07:04:16</span>
+        <div class="header-brand">
+            <a href="index.html" aria-label="PGP Energies home">
+                <img class="brand-logo" src="pgp-logo.svg" alt="PGP Energies logo">
+            </a>
+            <h1>COREPULSE</h1>
+        </div>
+        <div class="header-actions">
+            <!-- Additional actions can be added here -->
         </div>
     </header>
+
+    <aside class="sidebar">
+        <nav class="sidebar-menu">
+            <li class="sidebar-menu-item">
+                <a href="index.html" class="sidebar-menu-link">📊 Dashboard</a>
+            </li>
+            <li class="sidebar-menu-item">
+                <a href="SalesOrderTracker.html" class="sidebar-menu-link active">🚀 Projects</a>
+            </li>
+            <li class="sidebar-menu-item">
+                <a href="SalesOrderTrackerAndExecutionControls.html" class="sidebar-menu-link">👥 My Team</a>
+            </li>
+        </nav>
+    </aside>
+
     <main>
-        <h1>Sales Order Tracker</h1>
+        <h1>📋 Sales Order Tracker</h1>
         <section class="content-card">
             <div class="page-actions">
                 <button type="button" class="add-shipment-btn" id="openAddShipmentBtn">Add Shipment</button>
