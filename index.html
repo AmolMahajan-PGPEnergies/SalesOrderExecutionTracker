@@ -122,48 +122,59 @@
             width: 60px;
             overflow-x: visible;
         }
-
-        .sidebar.collapsed:hover {
-            width: 260px;
+        .sidebar-menu {
+            list-style: none;
         }
-
+        .sidebar-menu-item {
+            padding: 0;
+        }
+        .sidebar-menu-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: var(--brand-muted);
+            text-decoration: none;
+            font-size: 0.95em;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+        .sidebar-menu-link:hover {
+            color: var(--brand-accent);
+            background-color: rgba(22, 194, 197, 0.08);
+            border-left-color: var(--brand-accent);
+        }
+        .sidebar-menu-link.active {
+            color: var(--brand-accent);
+            background-color: rgba(22, 194, 197, 0.12);
+            border-left-color: var(--brand-accent);
+        }
         .sidebar.collapsed .sidebar-menu-link {
             padding: 12px 8px;
             justify-content: center;
             position: relative;
             z-index: 1;
-            white-space: nowrap;
+            transition: background-color 0.15s ease, transform 0.15s ease;
         }
-
         .sidebar.collapsed .sidebar-menu-link span {
-            opacity: 0;
-            visibility: hidden;
-            width: 0;
-            overflow: hidden;
-            display: inline-block;
-            transition: opacity 0.2s ease;
+            display: none;
         }
-
-        .sidebar.collapsed:hover .sidebar-menu-link {
-            padding: 12px 20px;
-            justify-content: flex-start;
-        }
-
-        .sidebar.collapsed:hover .sidebar-menu-link span {
-            opacity: 1;
-            visibility: visible;
-            width: auto;
-            margin-left: 12px;
-            color: var(--brand-accent);
-            font-weight: 600;
-        }
-
         .sidebar.collapsed .sidebar-menu-link:hover {
             background-color: rgba(22, 194, 197, 0.08);
             border-radius: 6px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-            transform: none;
-            width: auto;
+            transform: translateX(4px);
+            width: 260px;
+            padding: 12px 20px;
+            justify-content: flex-start;
+            z-index: 30;
+        }
+        .sidebar.collapsed .sidebar-menu-link:hover span {
+            display: inline;
+            margin-left: 12px;
+            color: var(--brand-accent);
+            font-weight: 600;
         }
         .sidebar-menu-link {
             position: relative;
