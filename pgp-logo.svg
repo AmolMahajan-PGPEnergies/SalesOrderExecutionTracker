@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 264" role="img" aria-labelledby="title desc">
+  <title id="title">PGP Energies Logo</title>
+  <desc id="desc">PGP Energies wordmark with four cyan icon circles on a black background.</desc>
+  <rect width="760" height="264" fill="#000000"/>
+
+  <g transform="translate(30, 24)">
+    <g fill="#10c2c6" stroke="#ecf4ff" stroke-width="8">
+      <circle cx="44" cy="44" r="40"/>
+      <circle cx="122" cy="44" r="40"/>
+      <circle cx="44" cy="122" r="40"/>
+      <circle cx="122" cy="122" r="40"/>
+    </g>
+    <g fill="#000000">
+      <circle cx="57" cy="57" r="28"/>
+      <circle cx="135" cy="57" r="28"/>
+      <circle cx="57" cy="135" r="28"/>
+      <circle cx="135" cy="135" r="28"/>
+    </g>
+  </g>
+
+  <g fill="#f3f8ff" font-family="Poppins, Arial, sans-serif" font-weight="700">
+    <text x="250" y="145" font-size="128" letter-spacing="3">PGP</text>
+    <text x="708" y="74" font-size="44" font-weight="600">&#174;</text>
+    <text x="250" y="228" font-size="74" letter-spacing="14">ENERGIES</text>
+  </g>
+</svg>

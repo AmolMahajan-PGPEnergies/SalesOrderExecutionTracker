@@ -7,12 +7,12 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
         :root {
-            --brand-bg: #052f31;
-            --brand-bg-deep: #031f20;
-            --brand-panel: #0b3a3c;
-            --brand-border: #1d6668;
-            --brand-text: #e6f3f2;
-            --brand-muted: #9ec8c8;
+            --brand-bg: #0b0d10;
+            --brand-bg-deep: #050607;
+            --brand-panel: #14181d;
+            --brand-border: #2b3138;
+            --brand-text: #e6edf4;
+            --brand-muted: #9ea9b5;
             --brand-accent: #16c2c5;
             --brand-accent-strong: #0aa4a8;
         }
@@ -37,12 +37,12 @@
             flex-direction: column;
             height: 100vh;
             background:
-                radial-gradient(circle at 12% 8%, rgba(22, 194, 197, 0.2) 0%, transparent 30%),
-                radial-gradient(circle at 90% 16%, rgba(10, 164, 168, 0.14) 0%, transparent 34%),
+                radial-gradient(circle at 12% 8%, rgba(255, 255, 255, 0.05) 0%, transparent 30%),
+                radial-gradient(circle at 90% 16%, rgba(255, 255, 255, 0.03) 0%, transparent 34%),
                 linear-gradient(165deg,
                 var(--brand-bg-deep) 0%,
                 var(--brand-bg) 40%,
-                #074245 100%);
+                #171c22 100%);
             background-size: 200% 200%;
             font-family: 'Poppins', sans-serif;
             animation: waveFlow 8s ease-in-out infinite;
@@ -50,16 +50,32 @@
         }
         header {
             position: relative;
-            background-color: rgba(4, 39, 40, 0.86);
+            background-color: rgba(10, 12, 15, 0.9);
             padding: 20px;
             text-align: center;
             border-bottom: 1px solid var(--brand-border);
             backdrop-filter: blur(8px);
         }
         header h1 {
-            color: var(--brand-accent);
+            color: #f3f8ff;
             font-size: 1.5em;
             text-shadow: none;
+            letter-spacing: 0.04em;
+        }
+        .header-logo-link {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+        }
+        .brand-logo {
+            display: block;
+            height: 52px;
+            width: auto;
+            border-radius: 6px;
         }
         .header-buttons {
             position: absolute;
@@ -72,7 +88,7 @@
         }
         .header-buttons button {
             border: 1px solid var(--brand-border);
-            background-color: rgba(9, 52, 53, 0.9);
+            background-color: rgba(19, 24, 31, 0.9);
             color: var(--brand-text);
             padding: 8px 16px;
             border-radius: 6px;
@@ -93,7 +109,7 @@
             display: none;
             grid-template-columns: repeat(4, 34px);
             gap: 8px;
-            background: rgba(7, 42, 44, 0.95);
+            background: rgba(15, 20, 26, 0.95);
             border: 1px solid var(--brand-border);
             border-radius: 10px;
             padding: 10px;
@@ -118,6 +134,16 @@
         @media (max-width: 700px) {
             header {
                 padding-bottom: 70px;
+            }
+            .header-logo-link {
+                position: static;
+                transform: none;
+                margin: 0 auto 10px;
+                justify-content: center;
+                width: fit-content;
+            }
+            .brand-logo {
+                height: 46px;
             }
             .header-buttons {
                 top: auto;
@@ -151,7 +177,7 @@
             max-width: 600px;
             text-shadow: none;
             line-height: 1.6;
-            background-color: rgba(11, 58, 60, 0.78);
+            background-color: rgba(20, 25, 32, 0.84);
             border: 1px solid var(--brand-border);
             border-radius: 14px;
             box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
@@ -174,7 +200,7 @@
         .repositories li {
             padding: 10px 20px;
             margin: 8px;
-            background-color: rgba(11, 58, 60, 0.82);
+            background-color: rgba(20, 25, 32, 0.84);
             border: 1px solid var(--brand-border);
             border-radius: 999px;
             display: inline-block;
@@ -195,7 +221,7 @@
             text-decoration: underline;
         }
         footer {
-            background-color: rgba(4, 39, 40, 0.86);
+            background-color: rgba(10, 12, 15, 0.9);
             padding: 20px;
             text-align: center;
             border-top: 1px solid var(--brand-border);
@@ -207,6 +233,9 @@
 </head>
 <body>
     <header>
+        <a class="header-logo-link" href="index.html" aria-label="PGP Energies home">
+            <img class="brand-logo" src="pgp-logo.svg" alt="PGP Energies logo">
+        </a>
         <h1>PGP Energies</h1>
         <div class="header-buttons">
             <button id="rainbowButton" type="button">Gradient</button>
@@ -254,7 +283,7 @@
         const rainbowButton = document.getElementById('rainbowButton');
         const colorPicker = document.getElementById('colorPicker');
         const colorOptions = document.querySelectorAll('.color-option');
-        const originalRainbow = 'radial-gradient(circle at 12% 8%, rgba(22, 194, 197, 0.2) 0%, transparent 30%), radial-gradient(circle at 90% 16%, rgba(10, 164, 168, 0.14) 0%, transparent 34%), linear-gradient(165deg, #031f20 0%, #052f31 40%, #074245 100%)';
+        const originalRainbow = 'radial-gradient(circle at 12% 8%, rgba(255, 255, 255, 0.05) 0%, transparent 30%), radial-gradient(circle at 90% 16%, rgba(255, 255, 255, 0.03) 0%, transparent 34%), linear-gradient(165deg, #050607 0%, #0b0d10 40%, #171c22 100%)';
 
         function setSolidBackground(color) {
             body.style.animation = 'none';

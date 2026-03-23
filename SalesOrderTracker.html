@@ -7,12 +7,12 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
         :root {
-            --brand-bg: #052f31;
-            --brand-bg-deep: #031f20;
-            --brand-panel: #0b3a3c;
-            --brand-border: #1d6668;
-            --brand-text: #e6f3f2;
-            --brand-muted: #9ec8c8;
+            --brand-bg: #0b0d10;
+            --brand-bg-deep: #050607;
+            --brand-panel: #14181d;
+            --brand-border: #2b3138;
+            --brand-text: #e6edf4;
+            --brand-muted: #9ea9b5;
             --brand-accent: #16c2c5;
             --brand-accent-strong: #0aa4a8;
         }
@@ -39,6 +39,21 @@
             color: #1f2937;
             font-size: 1.5em;
             text-shadow: none;
+        }
+        .header-logo-link {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+        }
+        .brand-logo {
+            display: block;
+            height: 52px;
+            width: auto;
+            border-radius: 6px;
         }
         .page-meta {
             position: absolute;
@@ -944,16 +959,20 @@
         /* Dark theme using the logo palette */
         body {
             background:
-                radial-gradient(circle at 12% 8%, rgba(22, 194, 197, 0.18) 0%, transparent 28%),
-                radial-gradient(circle at 90% 16%, rgba(10, 164, 168, 0.12) 0%, transparent 32%),
-                linear-gradient(165deg, var(--brand-bg-deep) 0%, var(--brand-bg) 42%, #074245 100%);
+                radial-gradient(circle at 12% 8%, rgba(255, 255, 255, 0.05) 0%, transparent 28%),
+                radial-gradient(circle at 90% 16%, rgba(255, 255, 255, 0.03) 0%, transparent 32%),
+                linear-gradient(165deg, var(--brand-bg-deep) 0%, var(--brand-bg) 42%, #171c22 100%);
             color: var(--brand-text);
         }
         header,
         footer {
-            background-color: rgba(4, 39, 40, 0.86);
+            background-color: rgba(10, 12, 15, 0.9);
             border-color: var(--brand-border);
             backdrop-filter: blur(8px);
+        }
+        header h1 {
+            color: #f3f8ff;
+            letter-spacing: 0.04em;
         }
         header h1,
         main h1,
@@ -970,7 +989,7 @@
             color: var(--brand-accent);
         }
         .page-meta {
-            background-color: rgba(10, 65, 67, 0.9);
+            background-color: rgba(24, 30, 37, 0.92);
             border-color: var(--brand-border);
             color: var(--brand-text);
             box-shadow: 0 12px 26px rgba(0, 0, 0, 0.36);
@@ -1015,7 +1034,7 @@
         .planner-header,
         .stage-config-date-picker,
         .stage-toggle-trigger {
-            background-color: rgba(9, 52, 53, 0.85);
+            background-color: rgba(19, 24, 31, 0.9);
             border-color: var(--brand-border);
             color: var(--brand-text);
         }
@@ -1036,7 +1055,7 @@
         .form-group select,
         .stage-config-date,
         .edit-stage-date {
-            background-color: rgba(3, 29, 31, 0.82);
+            background-color: rgba(11, 14, 18, 0.9);
             border-color: var(--brand-border);
             color: var(--brand-text);
         }
@@ -1044,7 +1063,7 @@
             color: #7ea8a9;
         }
         .form-group select option {
-            background-color: #083133;
+            background-color: #12171d;
             color: var(--brand-text);
         }
         .add-shipment-btn,
@@ -1090,6 +1109,16 @@
         @media (max-width: 640px) {
             header {
                 padding-top: 18px;
+            }
+            .header-logo-link {
+                position: static;
+                transform: none;
+                margin: 0 auto 10px;
+                justify-content: center;
+                width: fit-content;
+            }
+            .brand-logo {
+                height: 46px;
             }
             .page-meta {
                 position: static;
@@ -1150,6 +1179,9 @@
 </head>
 <body>
     <header>
+        <a class="header-logo-link" href="index.html" aria-label="PGP Energies home">
+            <img class="brand-logo" src="pgp-logo.svg" alt="PGP Energies logo">
+        </a>
         <h1>PGP Energies</h1>
         <div class="page-meta" aria-label="Build information">
             <span class="page-meta-label">Commit</span>
