@@ -62,8 +62,8 @@
         }
         .brand-logo {
             display: block;
-            height: 40px;
-            width: auto;
+            height: auto;
+            width: 175px;
             border-radius: 6px;
         }
         header h1 {
@@ -78,6 +78,21 @@
             gap: 12px;
             margin-left: auto;
         }
+        .sidebar-toggle {
+            background: none;
+            border: 1px solid var(--brand-border);
+            color: var(--brand-text);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9em;
+            transition: all 0.2s ease;
+        }
+        .sidebar-toggle:hover {
+            background-color: rgba(22, 194, 197, 0.1);
+            border-color: var(--brand-accent);
+        }
         .sidebar {
             position: fixed;
             left: 0;
@@ -89,6 +104,10 @@
             backdrop-filter: blur(8px);
             overflow-y: auto;
             padding: 20px 0;
+            transition: width 0.3s ease;
+        }
+        .sidebar.collapsed {
+            width: 60px;
         }
         .sidebar-menu {
             list-style: none;
@@ -124,6 +143,10 @@
             flex: 1;
             padding: 32px 24px;
             overflow-y: auto;
+            transition: margin-left 0.3s ease;
+        }
+        body.sidebar-collapsed main {
+            margin-left: 60px;
         }
         main h1 {
             color: var(--brand-accent);
@@ -1162,6 +1185,25 @@
                 flex-wrap: wrap;
                 justify-content: center;
             }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                top: 70px;
+                border-right: none;
+                border-bottom: 1px solid var(--brand-border);
+                padding: 10px 0;
+            }
+            .sidebar.collapsed {
+                width: 100%;
+            }
+            main {
+                margin-left: 0;
+                margin-top: calc(70px + 50px);
+                padding: 20px 12px;
+            }
+            body.sidebar-collapsed main {
+                margin-left: 0;
+            }
             main h1 {
                 font-size: 2.3em;
                 text-align: center;
@@ -1220,6 +1262,7 @@
             <h1>COREPULSE</h1>
         </div>
         <div class="header-actions">
+            <button class="sidebar-toggle" id="sidebarToggle">☰</button>
             <!-- Additional actions can be added here -->
         </div>
     </header>
@@ -1372,6 +1415,9 @@
         const addPlannerHeader = document.getElementById('addPlannerHeader');
         const optionalStageModal = document.getElementById('optionalStageModal');
         const optionalStageModalClose = document.getElementById('optionalStageModalClose');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.querySelector('.sidebar');
+        const body = document.body;
         let editingShipmentIndex = null;
         let activeShipmentDraft = null;
         let addPlannerState = null;
@@ -1386,6 +1432,10 @@
         addShipmentCancelBtn.addEventListener('click', closeAddShipmentModal);
 
         optionalStageModalClose.addEventListener('click', closeOptionalStageModal);
+        sidebarToggle.addEventListener('click', function () {
+            sidebar.classList.toggle('collapsed');
+            body.classList.toggle('sidebar-collapsed');
+        });
         addShipmentModal.addEventListener('click', function (event) {
             if (event.target === addShipmentModal) {
                 closeAddShipmentModal();
