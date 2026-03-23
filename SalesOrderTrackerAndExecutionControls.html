@@ -162,15 +162,23 @@
             border-radius: 6px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
             transform: translateX(4px);
-            min-width: 180px;
-            max-width: 220px;
-            width: auto;
-            overflow: visible;
+            width: 260px;
+            padding: 12px 20px;
+            justify-content: flex-start;
             z-index: 30;
         }
         .sidebar.collapsed .sidebar-menu-link:hover span {
             opacity: 1;
             visibility: visible;
+            position: static;
+            transform: none;
+            background: none;
+            border: none;
+            border-radius: 0;
+            padding: 0;
+            margin-left: 12px;
+            color: var(--brand-accent);
+            font-weight: 600;
         }
         .sidebar-menu-link {
             position: relative;
