@@ -81,12 +81,6 @@
             font-weight: 700;
             letter-spacing: 0.04em;
         }
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-left: auto;
-        }
         .sidebar-toggle {
             background: none;
             border: 1px solid var(--brand-border);
@@ -206,35 +200,6 @@
             background-color: rgba(22, 194, 197, 0.16);
             transform: translateY(-1px);
         }
-        .color-picker {
-            position: absolute;
-            top: calc(100% + 10px);
-            right: 0;
-            display: none;
-            grid-template-columns: repeat(4, 34px);
-            gap: 8px;
-            background: rgba(15, 20, 26, 0.95);
-            border: 1px solid var(--brand-border);
-            border-radius: 10px;
-            padding: 10px;
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.36);
-            z-index: 1000;
-        }
-        .color-picker.show {
-            display: grid;
-        }
-        .color-option {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            border: 2px solid rgba(230, 243, 242, 0.85);
-            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
-            cursor: pointer;
-            transition: transform 0.15s ease;
-        }
-        .color-option:hover {
-            transform: scale(1.08);
-        }
         @media (max-width: 700px) {
             .sidebar {
                 width: 100%;
@@ -270,13 +235,7 @@
             main h1 {
                 font-size: 1.8em;
             }
-            .header-actions {
-                display: none;
-            }
-            .color-picker {
-                right: 50%;
-                transform: translateX(50%);
-            }
+
         }
         main {
             flex: 1;
@@ -355,29 +314,11 @@
 <body>
     <header>
         <div class="header-brand">
-            <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">☰</button>
             <a href="index.html" aria-label="PGP Energies home">
                 <img class="brand-logo" src="PGP Energies - Full logo - Main.png" alt="PGP Energies logo">
             </a>
+            <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">☰</button>
             <h1>COREPULSE</h1>
-        </div>
-        <div class="header-actions">
-            <button id="rainbowButton" type="button">Gradient</button>
-            <button id="colorsButton" type="button">Shades</button>
-            <div id="colorPicker" class="color-picker" aria-label="Background color options">
-                <button type="button" class="color-option" data-color="#031f20" title="Midnight Teal" style="background:#031f20"></button>
-                <button type="button" class="color-option" data-color="#052f31" title="Deep Teal" style="background:#052f31"></button>
-                <button type="button" class="color-option" data-color="#074245" title="Ocean Teal" style="background:#074245"></button>
-                <button type="button" class="color-option" data-color="#0b3a3c" title="Panel Teal" style="background:#0b3a3c"></button>
-                <button type="button" class="color-option" data-color="#11494b" title="Muted Teal" style="background:#11494b"></button>
-                <button type="button" class="color-option" data-color="#0a5659" title="Sea Teal" style="background:#0a5659"></button>
-                <button type="button" class="color-option" data-color="#0f6f72" title="Turquoise Deep" style="background:#0f6f72"></button>
-                <button type="button" class="color-option" data-color="#0aa4a8" title="Cyan Accent" style="background:#0aa4a8"></button>
-                <button type="button" class="color-option" data-color="#16c2c5" title="Bright Cyan" style="background:#16c2c5"></button>
-                <button type="button" class="color-option" data-color="#0e7490" title="Slate Cyan" style="background:#0e7490"></button>
-                <button type="button" class="color-option" data-color="#1f2937" title="Graphite" style="background:#1f2937"></button>
-                <button type="button" class="color-option" data-color="#111827" title="Charcoal" style="background:#111827"></button>
-            </div>
         </div>
     </header>
 
@@ -411,49 +352,8 @@
     </main>
     <script>
         const body = document.body;
-        const colorsButton = document.getElementById('colorsButton');
-        const rainbowButton = document.getElementById('rainbowButton');
-        const colorPicker = document.getElementById('colorPicker');
-        const colorOptions = document.querySelectorAll('.color-option');
         const sidebarToggle = document.getElementById('sidebarToggle');
         const sidebar = document.querySelector('.sidebar');
-        const originalRainbow = 'radial-gradient(circle at 12% 8%, rgba(255, 255, 255, 0.05) 0%, transparent 30%), radial-gradient(circle at 90% 16%, rgba(255, 255, 255, 0.03) 0%, transparent 34%), linear-gradient(165deg, #050607 0%, #0b0d10 40%, #171c22 100%)';
-
-        function setSolidBackground(color) {
-            body.style.animation = 'none';
-            body.style.backgroundImage = 'none';
-            body.style.backgroundColor = color;
-        }
-
-        function setRainbowBackground() {
-            body.style.background = originalRainbow;
-            body.style.backgroundSize = '200% 200%';
-            body.style.backgroundPosition = '0% 0%';
-            body.style.animation = 'waveFlow 8s ease-in-out infinite';
-        }
-
-        colorsButton.addEventListener('click', function () {
-            colorPicker.classList.toggle('show');
-        });
-
-        rainbowButton.addEventListener('click', function () {
-            colorPicker.classList.remove('show');
-            setRainbowBackground();
-        });
-
-        colorOptions.forEach(function (option) {
-            option.addEventListener('click', function () {
-                const selectedColor = option.getAttribute('data-color');
-                setSolidBackground(selectedColor);
-                colorPicker.classList.remove('show');
-            });
-        });
-
-        document.addEventListener('click', function (event) {
-            if (!colorPicker.contains(event.target) && event.target !== colorsButton) {
-                colorPicker.classList.remove('show');
-            }
-        });
 
         sidebarToggle.addEventListener('click', function () {
             sidebar.classList.toggle('collapsed');
