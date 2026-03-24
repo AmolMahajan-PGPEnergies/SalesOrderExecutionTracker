@@ -2422,6 +2422,7 @@
                         const parsedFromDisplay = parseLocalDate(dateInput.value);
                         nativeDateInput.value = parsedFromDisplay ? formatInputDate(parsedFromDisplay) : '';
                     }
+                    updateSubsequentStagesStartFromDate(row);
                 });
 
                 dateInput.addEventListener('input', function () {
@@ -2431,6 +2432,7 @@
                         const parsedFromDisplay = parseLocalDate(dateInput.value);
                         nativeDateInput.value = parsedFromDisplay ? formatInputDate(parsedFromDisplay) : '';
                     }
+                    updateSubsequentStagesStartFromDate(row);
                 });
 
                 dateInput.addEventListener('blur', function () {
@@ -2441,6 +2443,7 @@
                     if (nativeDateInput) {
                         nativeDateInput.value = parsedDate ? formatInputDate(parsedDate) : '';
                     }
+                    updateSubsequentStagesStartFromDate(row);
                 });
 
                 if (datePickerButton && nativeDateInput) {
@@ -2460,6 +2463,7 @@
                             dateInput.value = '';
                             const stageStartFromDate = parseLocalDate(row.dataset.startFromDate);
                             syncSliderFromDate(dateInput, sliderInput, stageStartFromDate);
+                            updateSubsequentStagesStartFromDate(row);
                             return;
                         }
 
@@ -2467,6 +2471,7 @@
                         dateInput.value = parsedNativeDate ? formatDisplayDate(parsedNativeDate) : '';
                         const stageStartFromDate = parseLocalDate(row.dataset.startFromDate);
                         syncSliderFromDate(dateInput, sliderInput, stageStartFromDate);
+                        updateSubsequentStagesStartFromDate(row);
                     });
                 }
 
@@ -2495,6 +2500,36 @@
             updateStageToggleTriggerLabel();
             setupAddPlannerInteractions(initialScrollLeft);
             stageConfigSection.style.display = 'block';
+        }
+
+        function updateSubsequentStagesStartFromDate(currentStageRow) {
+            const allRows = Array.from(stageConfigContainer.querySelectorAll('.stage-config-row'));
+            const currentRowIndex = allRows.indexOf(currentStageRow);
+            
+            if (currentRowIndex === -1) {
+                return;
+            }
+            
+            const currentDateInput = currentStageRow.querySelector('.stage-config-date');
+            const currentDateValue = currentDateInput ? parseLocalDate(currentDateInput.value) : null;
+            
+            if (!currentDateValue) {
+                return;
+            }
+            
+            // Update all subsequent stages
+            for (let i = currentRowIndex + 1; i < allRows.length; i++) {
+                const nextRow = allRows[i];
+                nextRow.dataset.startFromDate = formatInputDate(currentDateValue);
+                
+                const nextDateInput = nextRow.querySelector('.stage-config-date');
+                const nextSlider = nextRow.querySelector('.stage-config-slider');
+                
+                if (nextDateInput && nextSlider) {
+                    // Resync the slider with the new startFromDate
+                    syncSliderFromDate(nextDateInput, nextSlider, currentDateValue);
+                }
+            }
         }
 
         function getSelectedTimelineWithDates() {
