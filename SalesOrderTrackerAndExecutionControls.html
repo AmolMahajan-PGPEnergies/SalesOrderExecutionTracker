@@ -2420,12 +2420,17 @@
                     startFromDate = parseLocalDate(existingStageMap.get(previousStage.name) || today);
                 }
 
+                // Calculate duration of this stage (in days)
+                const endDate = parseLocalDate(existingDate);
+                const stageDurationDays = daysBetween(startFromDate, endDate);
+
                 const row = document.createElement('div');
                 row.className = 'stage-config-row';
                 row.dataset.stageName = stage.name;
                 row.dataset.mandatory = isMandatory ? 'true' : 'false';
                 row.dataset.applicable = 'true';
                 row.dataset.startFromDate = formatInputDate(startFromDate);
+                row.dataset.stageDurationDays = stageDurationDays;
                 row.innerHTML = `
                     <div class="stage-config-name">${stage.name}</div>
                     <div class="stage-config-date-range-block">
@@ -2457,6 +2462,7 @@
                         const parsedFromDisplay = parseLocalDate(dateInput.value);
                         nativeDateInput.value = parsedFromDisplay ? formatInputDate(parsedFromDisplay) : '';
                     }
+                    updateStageDurationInDataset(row);
                     updateSubsequentStagesStartFromDate(row);
                 });
 
@@ -2468,6 +2474,7 @@
                     if (nativeDateInput) {
                         nativeDateInput.value = parsedDate ? formatInputDate(parsedDate) : '';
                     }
+                    updateStageDurationInDataset(row);
                     updateSubsequentStagesStartFromDate(row);
                 });
 
@@ -2486,12 +2493,14 @@
                     nativeDateInput.addEventListener('change', function () {
                         if (!nativeDateInput.value) {
                             dateInput.value = '';
+                            updateStageDurationInDataset(row);
                             updateSubsequentStagesStartFromDate(row);
                             return;
                         }
 
                         const parsedNativeDate = parseLocalDate(nativeDateInput.value);
                         dateInput.value = parsedNativeDate ? formatDisplayDate(parsedNativeDate) : '';
+                        updateStageDurationInDataset(row);
                         updateSubsequentStagesStartFromDate(row);
                     });
                 }
@@ -2515,6 +2524,23 @@
             stageConfigSection.style.display = 'block';
         }
 
+        function updateStageDurationInDataset(stageRow) {
+            const startDateInput = stageRow.querySelector('.stage-config-start-date');
+            const endDateInput = stageRow.querySelector('.stage-config-date');
+            
+            if (!startDateInput || !endDateInput) {
+                return;
+            }
+            
+            const startDate = parseLocalDate(startDateInput.value);
+            const endDate = parseLocalDate(endDateInput.value);
+            
+            if (startDate && endDate) {
+                const durationDays = daysBetween(startDate, endDate);
+                stageRow.dataset.stageDurationDays = durationDays;
+            }
+        }
+
         function updateSubsequentStagesStartFromDate(currentStageRow) {
             const allRows = Array.from(stageConfigContainer.querySelectorAll('.stage-config-row'));
             const currentRowIndex = allRows.indexOf(currentStageRow);
@@ -2524,21 +2550,35 @@
             }
             
             const currentDateInput = currentStageRow.querySelector('.stage-config-date');
-            const currentDateValue = currentDateInput ? parseLocalDate(currentDateInput.value) : null;
+            let currentEndDate = currentDateInput ? parseLocalDate(currentDateInput.value) : null;
             
-            if (!currentDateValue) {
+            if (!currentEndDate) {
                 return;
             }
             
             // Update all subsequent stages
             for (let i = currentRowIndex + 1; i < allRows.length; i++) {
                 const nextRow = allRows[i];
-                nextRow.dataset.startFromDate = formatInputDate(currentDateValue);
                 
+                // Get the stored duration of this stage (in days)
+                const stageDurationDays = parseInt(nextRow.dataset.stageDurationDays) || 0;
+                
+                // Set the next stage's start date to current stage's end date
+                nextRow.dataset.startFromDate = formatInputDate(currentEndDate);
                 const nextStartDateInput = nextRow.querySelector('.stage-config-start-date');
                 if (nextStartDateInput) {
-                    nextStartDateInput.value = formatDisplayDate(currentDateValue);
+                    nextStartDateInput.value = formatDisplayDate(currentEndDate);
                 }
+                
+                // Calculate new end date by adding the stored duration to the new start date
+                const newEndDate = addDays(currentEndDate, stageDurationDays);
+                const nextDateInput = nextRow.querySelector('.stage-config-date');
+                if (nextDateInput) {
+                    nextDateInput.value = formatDisplayDate(newEndDate);
+                }
+                
+                // Update current end date for next iteration
+                currentEndDate = newEndDate;
             }
         }
 
