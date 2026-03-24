@@ -785,10 +785,10 @@
         }
         .stage-config-row {
             display: grid;
-            grid-template-columns: 190px minmax(280px, 1fr) 150px;
+            grid-template-columns: 190px 1fr;
             align-items: center;
             gap: 10px;
-            padding: 8px 0;
+            padding: 12px 0;
             border-top: 1px solid #dbe8ff;
         }
         .stage-config-row:first-of-type {
@@ -844,6 +844,60 @@
             flex-direction: column;
             gap: 6px;
             align-items: flex-start;
+        }
+        .stage-config-date-range-block {
+            display: grid;
+            grid-template-columns: 1fr 30px 1fr auto;
+            gap: 12px;
+            align-items: center;
+            padding: 16px;
+            background-color: #ffffff;
+            border: 1px solid #dbe3f0;
+            border-radius: 10px;
+            flex: 1;
+        }
+        .date-range-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .date-range-label {
+            font-size: 0.75em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #64748b;
+            display: block;
+        }
+        .date-range-item input {
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background-color: #ffffff;
+            color: #1f2937;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95em;
+        }
+        .date-range-item input:readonly {
+            background-color: #f8fafc;
+            color: #64748b;
+            cursor: default;
+        }
+        .date-range-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1d4ed8;
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-top: 20px;
+        }
+        .date-range-end-wrap {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 38px;
+            gap: 6px;
+            align-items: center;
         }
         .stage-config-header {
             display: grid;
@@ -2288,14 +2342,12 @@
         }
 
         function applyStageConfigApplicability(row, toggleButton, applicable) {
-            const sliderInput = row.querySelector('.stage-config-slider');
             const dateInput = row.querySelector('.stage-config-date');
             const nativeDateInput = row.querySelector('.stage-config-native-date');
             const datePickerButton = row.querySelector('.stage-config-date-picker');
 
             row.dataset.applicable = applicable ? 'true' : 'false';
             row.style.display = applicable ? '' : 'none';
-            sliderInput.disabled = !applicable;
             dateInput.disabled = !applicable;
             if (nativeDateInput) {
                 nativeDateInput.disabled = !applicable;
@@ -2310,11 +2362,6 @@
                 if (nativeDateInput) {
                     nativeDateInput.value = '';
                 }
-                sliderInput.value = sliderInput.min;
-                updateSliderProgress(sliderInput);
-            } else if (!dateInput.value) {
-                sliderInput.value = sliderInput.min;
-                updateSliderProgress(sliderInput);
             }
 
             if (toggleButton) {
@@ -2360,10 +2407,6 @@
             });
             addPlannerState = buildPlannerState(plannerSourceStages);
             renderPlannerHeader(addPlannerState, addPlannerHeader);
-            const addTimelineWidth = addPlannerState.timelineWidth;
-            const addScrollWidth = addTimelineWidth + 32;
-            const addGridMarkup = createPlannerGridMarkup(addPlannerState.months, 'stage-config-grid-cell');
-            let initialScrollLeft = 0;
 
             stages.forEach(function (stage, stageIndex) {
                 const isMandatory = stage.mandatory;
@@ -2376,14 +2419,6 @@
                     const previousStage = stages[stageIndex - 1];
                     startFromDate = parseLocalDate(existingStageMap.get(previousStage.name) || today);
                 }
-                
-                // Calculate slider offset from the stage's own startFromDate
-                const initialOffset = addPlannerState
-                    ? Math.min(
-                        addPlannerState.totalDays,
-                        Math.max(0, daysBetween(startFromDate, parseLocalDate(existingDate)))
-                    )
-                    : 0;
 
                 const row = document.createElement('div');
                 row.className = 'stage-config-row';
@@ -2393,41 +2428,31 @@
                 row.dataset.startFromDate = formatInputDate(startFromDate);
                 row.innerHTML = `
                     <div class="stage-config-name">${stage.name}</div>
-                    <div class="stage-config-planner">
-                        <div class="stage-config-scroll" style="width: ${addScrollWidth}px;">
-                            <div class="stage-config-grid">${addGridMarkup}</div>
-                            <input type="range" class="stage-config-slider" data-stage-name="${stage.name}" min="0" max="${addPlannerState.totalDays}" value="${initialOffset}" style="width: ${addTimelineWidth}px; margin-left: 0;">
+                    <div class="stage-config-date-range-block">
+                        <div class="date-range-item">
+                            <label class="date-range-label">Start Date</label>
+                            <input type="text" class="stage-config-start-date" data-stage-name="${stage.name}" value="${formatDisplayDate(startFromDate)}" placeholder="dd-MMM-yyyy" readonly>
                         </div>
-                    </div>
-                    <div class="stage-config-date-cell">
-                        <div class="stage-config-date-input-wrap">
-                            <input type="text" class="stage-config-date" data-stage-name="${stage.name}" value="${formatDisplayDate(parseLocalDate(existingDate))}" placeholder="dd-MMM-yyyy" autocomplete="off" required>
-                            <button type="button" class="stage-config-date-picker" aria-label="Open date picker" title="Open date picker">📅</button>
-                            <input type="date" class="stage-config-native-date" value="${existingDate}" tabindex="-1" aria-hidden="true">
+                        <div class="date-range-arrow">→</div>
+                        <div class="date-range-item">
+                            <label class="date-range-label">End Date</label>
+                            <div class="date-range-end-wrap">
+                                <input type="text" class="stage-config-date" data-stage-name="${stage.name}" value="${formatDisplayDate(parseLocalDate(existingDate))}" placeholder="dd-MMM-yyyy" autocomplete="off" required>
+                                <button type="button" class="stage-config-date-picker" aria-label="Open date picker" title="Open date picker">📅</button>
+                                <input type="date" class="stage-config-native-date" value="${existingDate}" tabindex="-1" aria-hidden="true">
+                            </div>
                         </div>
                         ${isMandatory ? '<span class="mandatory-pill">Mandatory</span>' : ''}
                     </div>
                 `;
                 stageConfigContainer.appendChild(row);
 
-                const sliderInput = row.querySelector('.stage-config-slider');
+                const startDateInput = row.querySelector('.stage-config-start-date');
                 const dateInput = row.querySelector('.stage-config-date');
                 const nativeDateInput = row.querySelector('.stage-config-native-date');
                 const datePickerButton = row.querySelector('.stage-config-date-picker');
 
-                sliderInput.addEventListener('input', function () {
-                    const stageStartFromDate = parseLocalDate(row.dataset.startFromDate);
-                    syncDateFromSlider(sliderInput, dateInput, stageStartFromDate);
-                    if (nativeDateInput) {
-                        const parsedFromDisplay = parseLocalDate(dateInput.value);
-                        nativeDateInput.value = parsedFromDisplay ? formatInputDate(parsedFromDisplay) : '';
-                    }
-                    updateSubsequentStagesStartFromDate(row);
-                });
-
                 dateInput.addEventListener('input', function () {
-                    const stageStartFromDate = parseLocalDate(row.dataset.startFromDate);
-                    syncSliderFromDate(dateInput, sliderInput, stageStartFromDate);
                     if (nativeDateInput) {
                         const parsedFromDisplay = parseLocalDate(dateInput.value);
                         nativeDateInput.value = parsedFromDisplay ? formatInputDate(parsedFromDisplay) : '';
@@ -2461,22 +2486,15 @@
                     nativeDateInput.addEventListener('change', function () {
                         if (!nativeDateInput.value) {
                             dateInput.value = '';
-                            const stageStartFromDate = parseLocalDate(row.dataset.startFromDate);
-                            syncSliderFromDate(dateInput, sliderInput, stageStartFromDate);
                             updateSubsequentStagesStartFromDate(row);
                             return;
                         }
 
                         const parsedNativeDate = parseLocalDate(nativeDateInput.value);
                         dateInput.value = parsedNativeDate ? formatDisplayDate(parsedNativeDate) : '';
-                        const stageStartFromDate = parseLocalDate(row.dataset.startFromDate);
-                        syncSliderFromDate(dateInput, sliderInput, stageStartFromDate);
                         updateSubsequentStagesStartFromDate(row);
                     });
                 }
-
-                const stageStartFromDate = parseLocalDate(row.dataset.startFromDate);
-                syncSliderFromDate(dateInput, sliderInput, stageStartFromDate);
 
                 if (!isMandatory) {
                     const toggleButton = document.createElement('button');
@@ -2491,14 +2509,9 @@
                     stageToggleToolbar.appendChild(toggleButton);
                     applyStageConfigApplicability(row, toggleButton, isInitiallyApplicable);
                 }
-
-                if (stageIndex === 0) {
-                    initialScrollLeft = Math.max(0, initialOffset * addPlannerState.dayWidth - 120);
-                }
             });
 
             updateStageToggleTriggerLabel();
-            setupAddPlannerInteractions(initialScrollLeft);
             stageConfigSection.style.display = 'block';
         }
 
@@ -2522,12 +2535,9 @@
                 const nextRow = allRows[i];
                 nextRow.dataset.startFromDate = formatInputDate(currentDateValue);
                 
-                const nextDateInput = nextRow.querySelector('.stage-config-date');
-                const nextSlider = nextRow.querySelector('.stage-config-slider');
-                
-                if (nextDateInput && nextSlider) {
-                    // Resync the slider with the new startFromDate
-                    syncSliderFromDate(nextDateInput, nextSlider, currentDateValue);
+                const nextStartDateInput = nextRow.querySelector('.stage-config-start-date');
+                if (nextStartDateInput) {
+                    nextStartDateInput.value = formatDisplayDate(currentDateValue);
                 }
             }
         }
