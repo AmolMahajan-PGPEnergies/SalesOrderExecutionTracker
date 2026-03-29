@@ -785,10 +785,10 @@
         }
         .stage-config-row {
             display: grid;
-            grid-template-columns: 190px 1fr;
+            grid-template-columns: 200px 1fr 1fr;
             align-items: center;
-            gap: 10px;
-            padding: 12px 0;
+            gap: 16px;
+            padding: 12px;
             border-top: 1px solid #dbe8ff;
         }
         .stage-config-row:first-of-type {
@@ -797,6 +797,12 @@
         .stage-config-name {
             color: #334155;
             font-size: 0.95em;
+            font-weight: 600;
+        }
+        .stage-name-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
         .stage-config-date {
             width: 100%;
@@ -901,17 +907,29 @@
         }
         .stage-config-header {
             display: grid;
-            grid-template-columns: 190px minmax(280px, 1fr) 150px;
+            grid-template-columns: 200px 1fr 1fr;
             align-items: stretch;
             border: 1px solid #c4d7ff;
             border-radius: 10px;
             overflow: hidden;
             margin-bottom: 10px;
             background-color: #edf4ff;
+            gap: 16px;
+            padding: 12px;
         }
         .stage-config-header-title,
-        .stage-config-header-date {
+        .stage-config-header-start,
+        .stage-config-header-end {
             display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 8px 0;
+            color: #1e3a8a;
+            font-size: 0.85em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
             align-items: center;
             padding: 12px 10px;
             color: #1e3a8a;
@@ -1851,8 +1869,8 @@
                         <button type="button" class="stage-toggle-trigger" id="stageToggleTrigger" style="display: none;">Choose Optional Stages</button>
                         <div class="stage-config-header">
                             <div class="stage-config-header-title">Stage</div>
-                            <div class="stage-config-header-scale" id="addPlannerHeader"></div>
-                            <div class="stage-config-header-date">Date</div>
+                            <div class="stage-config-header-start">Start Date</div>
+                            <div class="stage-config-header-end">End Date</div>
                         </div>
                         <div id="stageConfigContainer"></div>
                     </div>
@@ -2432,22 +2450,17 @@
                 row.dataset.startFromDate = formatInputDate(startFromDate);
                 row.dataset.stageDurationDays = stageDurationDays;
                 row.innerHTML = `
-                    <div class="stage-config-name">${stage.name}</div>
-                    <div class="stage-config-date-range-block">
-                        <div class="date-range-item">
-                            <label class="date-range-label">Start Date</label>
-                            <input type="text" class="stage-config-start-date" data-stage-name="${stage.name}" value="${formatDisplayDate(startFromDate)}" placeholder="dd-MMM-yyyy" readonly>
-                        </div>
-                        <div class="date-range-arrow">→</div>
-                        <div class="date-range-item">
-                            <label class="date-range-label">End Date</label>
-                            <div class="date-range-end-wrap">
-                                <input type="text" class="stage-config-date" data-stage-name="${stage.name}" value="${formatDisplayDate(parseLocalDate(existingDate))}" placeholder="dd-MMM-yyyy" autocomplete="off" required>
-                                <button type="button" class="stage-config-date-picker" aria-label="Open date picker" title="Open date picker">📅</button>
-                                <input type="date" class="stage-config-native-date" value="${existingDate}" tabindex="-1" aria-hidden="true">
-                            </div>
-                        </div>
+                    <div class="stage-name-wrapper">
+                        <div class="stage-config-name">${stage.name}</div>
                         ${isMandatory ? '<span class="mandatory-pill">Mandatory</span>' : ''}
+                    </div>
+                    <div>
+                        <input type="text" class="stage-config-start-date" data-stage-name="${stage.name}" value="${formatDisplayDate(startFromDate)}" placeholder="dd-MMM-yyyy" readonly style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; background-color: #f8fafc; color: #64748b; font-family: 'Poppins', sans-serif; font-size: 0.95em;">
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="text" class="stage-config-date" data-stage-name="${stage.name}" value="${formatDisplayDate(parseLocalDate(existingDate))}" placeholder="dd-MMM-yyyy" autocomplete="off" required style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; background-color: #ffffff; color: #1f2937; font-family: 'Poppins', sans-serif; font-size: 0.95em;">
+                        <button type="button" class="stage-config-date-picker" aria-label="Open date picker" title="Open date picker" style="width: 38px; height: 38px; border: 1px solid #cbd5e1; border-radius: 6px; background-color: #ffffff; color: #1e3a8a; cursor: pointer; font-size: 1.05em; line-height: 1; padding: 0;">📅</button>
+                        <input type="date" class="stage-config-native-date" value="${existingDate}" tabindex="-1" aria-hidden="true" style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;">
                     </div>
                 `;
                 stageConfigContainer.appendChild(row);
