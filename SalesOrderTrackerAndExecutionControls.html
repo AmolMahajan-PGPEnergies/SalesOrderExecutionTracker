@@ -149,40 +149,57 @@ select.sel option{background:var(--panel2)}
 .req{color:var(--danger);margin-left:2px}
 /* input[type="date"] color-scheme defined in common.css */
 
-/* ── STAGE CONFIG (Add Shipment modal) ── */
-.sc-section{margin-top:18px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden}
-.sc-header-row{display:grid;grid-template-columns:200px 1fr 180px;background:var(--bg3);border-bottom:1px solid var(--border)}
-.sc-header-cell{padding:10px 14px;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
-.sc-header-scale{border-left:1px solid var(--border);border-right:1px solid var(--border);overflow-x:auto;cursor:grab;scrollbar-width:thin}
-.sc-header-scale.is-dragging{cursor:grabbing}
-.planner-scale-inner{width:max-content;min-width:100%;padding:0 16px;display:flex;align-items:center;justify-content:space-between;min-height:38px}
-.planner-header-date{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);font-weight:600}
-.stage-config-row{display:grid;grid-template-columns:200px 1fr 180px;align-items:center;border-top:1px solid var(--border);background:var(--panel)}
-.stage-config-row:first-of-type{border-top:none}
-.stage-config-row[data-applicable="false"]{display:none}
-.stage-name-block{padding:12px 14px}
-.stage-name-txt{font-size:12.5px;font-weight:600;color:var(--text2)}
-.mandatory-pill{display:inline-flex;padding:2px 7px;border-radius:99px;background:rgba(0,212,216,.12);border:1px solid rgba(0,212,216,.3);color:var(--accent);font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-top:4px}
-.stage-config-planner{position:relative;min-height:64px;border-left:1px solid var(--border);border-right:1px solid var(--border);overflow:hidden}
-.stage-config-scroll{position:relative;width:max-content;min-width:100%;min-height:64px;padding:10px 16px}
-.stage-config-grid{position:absolute;top:10px;left:16px;display:flex;pointer-events:none;height:44px}
-.stage-config-grid-cell{border-right:1px solid var(--border);background:linear-gradient(to bottom,rgba(0,212,216,.04),rgba(0,212,216,.01));flex:none;height:44px}
-.stage-config-grid-cell:last-child{border-right:none}
-.stage-config-slider{position:relative;z-index:1;width:100%;margin-top:16px;-webkit-appearance:none;appearance:none;height:14px;border-radius:99px;background:linear-gradient(to right,var(--accent) 0%,var(--accent) var(--slider-progress,0%),var(--border2) var(--slider-progress,0%),var(--border2) 100%);outline:none}
-.stage-config-slider::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:var(--accent);border:3px solid var(--bg);box-shadow:0 2px 10px rgba(0,212,216,.3);cursor:pointer}
-.stage-config-slider::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:var(--accent);border:3px solid var(--bg);cursor:pointer}
-.stage-config-slider:disabled{opacity:.35;cursor:not-allowed}
-.date-range-block{display:grid;grid-template-columns:1fr 20px 1fr auto;gap:8px;align-items:center;padding:12px 14px}
-.dr-item{display:flex;flex-direction:column;gap:4px}
-.dr-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
-.dr-input{padding:7px 9px;background:var(--bg2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;outline:none;transition:border-color .2s;width:100%}
-.dr-input:focus{border-color:var(--accent)}
-.dr-input[readonly]{background:var(--bg3);color:var(--muted2);cursor:default}
-.dr-arrow{color:var(--muted);font-size:12px;text-align:center;margin-top:18px}
-.dr-end-wrap{display:flex;gap:5px;align-items:center}
-.date-pick-btn{width:32px;height:32px;border-radius:7px;background:var(--bg3);border:1px solid var(--border2);color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;transition:all .15s}
-.date-pick-btn:hover{background:var(--accent-g);border-color:rgba(0,212,216,.4)}
-.date-pick-btn:disabled{opacity:.35;cursor:not-allowed}
+/* ── GANTT CHART (Add Shipment modal) ── */
+.gantt-outer{margin-top:16px;border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;background:var(--bg2)}
+.gantt-scroll{overflow-x:auto;overflow-y:visible;scrollbar-width:thin}
+.gantt-inner{min-width:100%}
+
+/* Ruler */
+.gantt-hdr{display:flex;background:var(--bg3);border-bottom:2px solid var(--border2)}
+.gantt-hdr-label{width:196px;flex-shrink:0;padding:8px 14px;font-family:'DM Mono',monospace;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;border-right:1px solid var(--border2);position:sticky;left:0;z-index:10;background:var(--bg3);display:flex;align-items:center}
+.gantt-ruler{flex:1;position:relative;height:36px;overflow:hidden}
+.gantt-month{position:absolute;top:0;bottom:0;border-left:1px solid var(--border2);display:flex;align-items:center;padding:0 6px}
+.gantt-month-lbl{font-family:'DM Mono',monospace;font-size:10px;font-weight:600;color:var(--accent);letter-spacing:.04em;white-space:nowrap}
+.gantt-ruler-today{position:absolute;top:0;bottom:0;width:2px;background:var(--danger);opacity:.6;pointer-events:none}
+
+/* Stage rows */
+.gantt-row{display:flex;align-items:stretch;border-bottom:1px solid var(--border);background:var(--panel);transition:opacity .2s}
+.gantt-row:last-child{border-bottom:none}
+.gantt-row.g-off{opacity:.38;pointer-events:none}
+.gantt-row-label{width:196px;flex-shrink:0;padding:10px 14px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;gap:4px;position:sticky;left:0;z-index:4;background:var(--panel)}
+.gantt-row.g-off .gantt-row-label{background:var(--bg2)}
+.gantt-row-name{font-size:12px;font-weight:600;color:var(--text2);line-height:1.35}
+.gantt-mand-pill{display:inline-flex;padding:1px 7px;border-radius:99px;width:fit-content;background:var(--accent-g);border:1px solid rgba(0,212,216,.3);color:var(--accent);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.gantt-opt-pill{display:inline-flex;padding:1px 7px;border-radius:99px;width:fit-content;background:var(--info-bg);border:1px solid rgba(99,102,241,.25);color:var(--info);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+
+/* Track */
+.gantt-track{flex:1;position:relative;min-height:54px;overflow:visible}
+.gantt-grid-vline{position:absolute;top:0;bottom:0;width:1px;background:var(--border);pointer-events:none}
+.gantt-track-today{position:absolute;top:0;bottom:0;width:2px;background:var(--danger);opacity:.4;pointer-events:none;z-index:1}
+
+/* Draggable bar */
+.gantt-bar{position:absolute;top:50%;transform:translateY(-50%);height:34px;border-radius:8px;min-width:18px;display:flex;align-items:center;cursor:grab;user-select:none;z-index:3;box-shadow:0 2px 10px rgba(0,212,216,.18);transition:box-shadow .15s}
+.gantt-bar.gbar-mand{background:linear-gradient(135deg,var(--accent),var(--accent2))}
+.gantt-bar.gbar-opt{background:linear-gradient(135deg,var(--info),#818cf8)}
+.gantt-bar:hover,.gantt-bar.gbar-drag{box-shadow:0 6px 22px rgba(0,212,216,.38);cursor:grabbing}
+.gantt-bar.gbar-opt:hover,.gantt-bar.gbar-opt.gbar-drag{box-shadow:0 6px 22px rgba(99,102,241,.38)}
+.gantt-bar-lbl{flex:1;text-align:center;font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:#000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 3px;pointer-events:none;letter-spacing:.02em}
+.gantt-handle{width:11px;height:100%;flex-shrink:0;cursor:ew-resize;display:flex;align-items:center;justify-content:center;opacity:.65}
+.gantt-handle::after{content:'';display:block;width:2px;height:13px;border-radius:2px;background:rgba(0,0,0,.5);box-shadow:3px 0 rgba(0,0,0,.3)}
+.gantt-handle.gh-right::after{box-shadow:-3px 0 rgba(0,0,0,.3)}
+
+/* Date input strip */
+.gantt-dates-strip{background:var(--bg3);border-top:1px solid var(--border);padding:10px 12px;display:flex;flex-wrap:wrap;gap:8px}
+.gantt-date-card{display:flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--border2);border-radius:var(--r);padding:6px 10px;flex:1;min-width:240px;max-width:360px}
+.gantt-dc-name{font-size:10px;font-weight:700;color:var(--muted2);min-width:70px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gantt-dc-field{display:flex;flex-direction:column;gap:2px}
+.gantt-dc-lbl{font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.gantt-dc-inp{width:102px;padding:4px 7px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;outline:none;transition:border-color .2s}
+.gantt-dc-inp:focus{border-color:var(--accent)}
+.gantt-dc-inp::placeholder{color:var(--muted)}
+.gantt-dc-arrow{color:var(--muted);font-size:10px}
+.gantt-dc-pick{width:26px;height:26px;border-radius:6px;background:var(--bg3);border:1px solid var(--border2);color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;transition:all .15s}
+.gantt-dc-pick:hover{background:var(--accent-g);border-color:rgba(0,212,216,.4)}
 .native-date{position:absolute;opacity:0;pointer-events:none;width:0;height:0}
 
 /* Optional stage toggle modal */
@@ -221,9 +238,7 @@ select.sel option{background:var(--panel2)}
 @media(max-width:700px){
   /* header/sidebar responsive handled in common.css */
   .form-grid{grid-template-columns:1fr} .fg.span2{grid-column:span 1}
-  .sc-header-row,.stage-config-row{grid-template-columns:1fr}
-  .sc-header-scale,.stage-config-planner{border:none}
-  .date-range-block{grid-template-columns:1fr 16px 1fr}
+  .gantt-date-card{min-width:200px}
 }
 </style>
 </head>
@@ -360,17 +375,10 @@ select.sel option{background:var(--panel2)}
         </div>
       </div>
 
-      <!-- Stage config section -->
+      <!-- Stage config section — Gantt chart rendered here by JS -->
       <div id="stageConfigSection" style="display:none">
         <button type="button" class="stg-trigger" id="stgToggleTrigger" style="display:none" onclick="openOptionalModal()">Choose Optional Stages</button>
-        <div class="sc-section">
-          <div class="sc-header-row">
-            <div class="sc-header-cell">Stage</div>
-            <div class="sc-header-scale sc-header-cell" id="addPlannerHeader"></div>
-            <div class="sc-header-cell">Date Range</div>
-          </div>
-          <div id="stageConfigContainer"></div>
-        </div>
+        <div id="stageConfigContainer"></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -579,51 +587,14 @@ function getTimestamp() {
 }
 
 // ═══════════════════════════════════════
-// PLANNER STATE
+// GANTT STATE
 // ═══════════════════════════════════════
-function buildPlannerState(stages) {
-  const dates = stages.map(s=>parseLocalDate(s.date)).filter(Boolean);
-  const anchor = dates.length ? dates[0] : new Date();
-  const minD = dates.length ? dates.reduce((a,b)=>b<a?b:a) : anchor;
-  const maxD = dates.length ? dates.reduce((a,b)=>b>a?b:a) : addDays(anchor,90);
-  const rStart = startOfMonth(minD);
-  const rEnd = endOfMonth(new Date(maxD.getFullYear(), maxD.getMonth()+12, 1));
-  const total = Math.max(daysBetween(rStart, rEnd), 1);
-  const months=[], cur=new Date(rStart.getFullYear(),rStart.getMonth(),1);
-  const dw=6;
-  while (cur<=rEnd) {
-    const md=new Date(cur);
-    months.push({label:md.toLocaleDateString(undefined,{month:'short',year:'2-digit'}),days:daysInMonth(md),width:daysInMonth(md)*dw});
-    cur.setMonth(cur.getMonth()+1);
-  }
-  return {startDate:rStart,endDate:rEnd,totalDays:total,months,dayWidth:dw,timelineWidth:total*dw};
-}
+let ganttData = {};   // { stageName: { startDate, endDate, applicable } }
+let ganttRange = { start: null, end: null };
+let DAY_PX = 22;      // pixels per day (recalculated on render)
 
-function renderPlannerHeader(state, el) {
-  if (!state) { el.innerHTML=''; return; }
-  el.innerHTML = `<div class="planner-scale-inner" style="width:${state.timelineWidth+32}px">
-    <span class="planner-header-date">Start: ${fmtDisp(state.startDate)}</span>
-    <span class="planner-header-date">End: ${fmtDisp(state.endDate)}</span>
-  </div>`;
-}
-
-function updateSliderProgress(slider) {
-  const mn=+slider.min||0, mx=+slider.max||1, v=+slider.value||0;
-  const p = mx===mn ? 0 : ((v-mn)/(mx-mn))*100;
-  slider.style.setProperty('--slider-progress',`${p}%`);
-}
-function syncSliderFromDate(dateInput, slider, startFrom) {
-  if (!startFrom) return;
-  const p = parseLocalDate(dateInput.value);
-  if (!p) { slider.value=slider.min; updateSliderProgress(slider); return; }
-  slider.value = String(Math.max(0, daysBetween(startFrom, p)));
-  updateSliderProgress(slider);
-}
-function syncDateFromSlider(slider, dateInput, startFrom) {
-  if (!startFrom) return;
-  dateInput.value = fmtDisp(addDays(startFrom, +slider.value));
-  updateSliderProgress(slider);
-}
+function dateToX(d) { return daysBetween(ganttRange.start, d) * DAY_PX; }
+function xToDate(x) { return addDays(ganttRange.start, Math.round(x / DAY_PX)); }
 
 // ═══════════════════════════════════════
 // SIDEBAR & NAVIGATION
@@ -657,13 +628,12 @@ function openAddShipmentModal(idx) {
   document.getElementById('stageConfigContainer').innerHTML='';
   document.getElementById('stgToggleToolbar').innerHTML='';
   document.getElementById('stgToggleTrigger').style.display='none';
-  document.getElementById('addPlannerHeader').innerHTML='';
-  addPlannerState=null; activeShipDraft=null;
+  addPlannerState=null; activeShipDraft=null; ganttData={};
 
   if (editingShipIdx!==null) {
     const sh = shipments[editingShipIdx];
     if (!sh) return;
-    activeShipDraft = { id:sh.id, type:sh.type, timeline:sh.timeline.map(s=>({name:s.name,date:s.date})) };
+    activeShipDraft = { id:sh.id, type:sh.type, timeline:sh.timeline.map(s=>({name:s.name, startDate:s.startDate||'', date:s.date||''})) };
     document.getElementById('shipmentId').value = sh.id;
     document.getElementById('shipmentType').value = sh.type;
     renderStageConfigRows();
@@ -691,189 +661,328 @@ function saveShipment() {
 
 function getSelectedTimeline(type) {
   const stages = shipmentTimelines[type]||[];
-  const rows = document.querySelectorAll('#stageConfigContainer .stage-config-row');
   const result=[];
-  rows.forEach(row=>{
-    if (row.dataset.applicable==='false') return;
-    const name = row.dataset.stageName;
-    const dateInput = row.querySelector('.stage-config-date');
-    const date = dateInput ? (parseLocalDate(dateInput.value) ? fmtInput(parseLocalDate(dateInput.value)) : '') : '';
-    result.push({name, date});
+  stages.forEach(stage=>{
+    const data = ganttData[stage.name];
+    if (!data || !data.applicable) return;
+    result.push({
+      name: stage.name,
+      startDate: data.startDate ? fmtInput(data.startDate) : '',
+      date: data.endDate ? fmtInput(data.endDate) : '',
+    });
   });
   return result;
 }
 
 document.getElementById('shipmentType').addEventListener('change', renderStageConfigRows);
 
+// ═══════════════════════════════════════
+// GANTT — BUILD & RENDER
+// ═══════════════════════════════════════
 function renderStageConfigRows() {
   const type = document.getElementById('shipmentType').value;
   const container = document.getElementById('stageConfigContainer');
-  const toolbar = document.getElementById('stgToggleToolbar');
-  const trigger = document.getElementById('stgToggleTrigger');
-  const header = document.getElementById('addPlannerHeader');
-  container.innerHTML=''; toolbar.innerHTML=''; trigger.style.display='none'; header.innerHTML=''; addPlannerState=null;
+  const toolbar   = document.getElementById('stgToggleToolbar');
+  const trigger   = document.getElementById('stgToggleTrigger');
+  container.innerHTML=''; toolbar.innerHTML=''; trigger.style.display='none';
+  ganttData={}; addPlannerState=null;
 
   if (!type) { document.getElementById('stageConfigSection').style.display='none'; return; }
   const stages = shipmentTimelines[type]||[];
   if (!stages.length) { document.getElementById('stageConfigSection').style.display='none'; return; }
-
   document.getElementById('stageConfigSection').style.display='block';
-  const today = fmtInput(new Date());
-  const existMap = new Map(activeShipDraft&&activeShipDraft.type===type ? activeShipDraft.timeline.map(s=>[s.name,s.date]) : []);
-  const plannerSrc = stages.map(s=>({name:s.name,date:existMap.get(s.name)||today}));
-  addPlannerState = buildPlannerState(plannerSrc);
-  renderPlannerHeader(addPlannerState, header);
 
-  const hasOptional = stages.some(s=>!s.mandatory);
-  if (hasOptional) trigger.style.display='inline-flex';
+  // Resolve initial dates from existing draft or defaults
+  const today = new Date(); today.setHours(0,0,0,0);
+  const existMap = new Map(
+    activeShipDraft && activeShipDraft.type===type
+      ? activeShipDraft.timeline.map(s=>[s.name,{sd:s.startDate,ed:s.date}])
+      : []
+  );
+  let cursor = new Date(today);
+  stages.forEach(stage => {
+    const ex = existMap.get(stage.name);
+    let sd = ex && ex.sd ? (parseLocalDate(ex.sd)||new Date(cursor)) : new Date(cursor);
+    let ed = ex && ex.ed ? (parseLocalDate(ex.ed)||addDays(sd,14))   : addDays(sd,14);
+    if (ed <= sd) ed = addDays(sd,1);
+    const applicable = stage.mandatory || !activeShipDraft || existMap.has(stage.name);
+    ganttData[stage.name] = { startDate:sd, endDate:ed, applicable:!!applicable };
+    cursor = new Date(ed);
+  });
 
-  stages.forEach((stage, si) => {
-    const isMandatory = stage.mandatory;
-    const existDate = existMap.get(stage.name)||today;
-    const isApplicable = isMandatory || !activeShipDraft || existMap.has(stage.name);
-    let startFromDate = addPlannerState.startDate;
-    if (si>0) {
-      const prev = stages[si-1];
-      startFromDate = parseLocalDate(existMap.get(prev.name)||today)||addPlannerState.startDate;
-    }
-    const endDate = parseLocalDate(existDate);
-    const durDays = endDate ? daysBetween(startFromDate, endDate) : 0;
-    const totalDays = addPlannerState.totalDays||1;
-    const maxOffset = daysBetween(addPlannerState.startDate, addPlannerState.endDate);
-    const sliderVal = Math.max(0, daysBetween(addPlannerState.startDate, endDate||startFromDate));
+  // Calc gantt time range (month-aligned + 1 month padding each side)
+  const allD = Object.values(ganttData).flatMap(d=>[d.startDate,d.endDate]);
+  let gS = new Date(Math.min(...allD)); gS = new Date(gS.getFullYear(),gS.getMonth()-1,1);
+  let gE = new Date(Math.max(...allD)); gE = new Date(gE.getFullYear(),gE.getMonth()+2,0);
+  ganttRange = { start:gS, end:gE };
 
-    const row = document.createElement('div');
-    row.className = 'stage-config-row';
-    row.dataset.stageName = stage.name;
-    row.dataset.mandatory = isMandatory;
-    row.dataset.applicable = isApplicable;
-    row.dataset.startFromDate = fmtInput(startFromDate);
-    row.dataset.stageDurationDays = durDays;
-    if (!isApplicable) row.style.display='none';
+  // Adaptive day width: aim for 700px visible
+  const totalD = daysBetween(gS,gE)+1;
+  DAY_PX = Math.max(16, Math.min(32, Math.floor(700/totalD)));
+  const tlW = totalD * DAY_PX;
 
-    const gridMarkup = addPlannerState.months.map(m=>`<span class="stage-config-grid-cell" style="width:${m.width}px"></span>`).join('');
-    const sliderProgress = maxOffset>0 ? (sliderVal/maxOffset)*100 : 0;
+  // Build DOM
+  const outer  = document.createElement('div'); outer.className='gantt-outer';
+  const scroll = document.createElement('div'); scroll.className='gantt-scroll';
+  const inner  = document.createElement('div'); inner.className='gantt-inner';
+  inner.style.width = (196+tlW)+'px';
+  outer.appendChild(scroll); scroll.appendChild(inner);
 
-    row.innerHTML = `
-      <div class="stage-name-block">
-        <div class="stage-name-txt">${stage.name}</div>
-        ${isMandatory ? '<div class="mandatory-pill">Mandatory</div>' : ''}
-      </div>
-      <div class="stage-config-planner${isApplicable?'':' stage-config-planner--hidden'}">
-        <div class="stage-config-scroll" style="width:${addPlannerState.timelineWidth+32}px">
-          <div class="stage-config-grid">${gridMarkup}</div>
-          <input type="range" class="stage-config-slider" min="0" max="${maxOffset}" value="${sliderVal}" ${isApplicable?'':'disabled'} style="--slider-progress:${sliderProgress}%">
-        </div>
-      </div>
-      <div class="date-range-block">
-        <div class="dr-item">
-          <span class="dr-lbl">Start</span>
-          <input type="text" class="dr-input stage-config-start-date" value="${fmtDisp(startFromDate)}" readonly>
-        </div>
-        <div class="dr-arrow">→</div>
-        <div class="dr-item">
-          <span class="dr-lbl">End</span>
-          <div class="dr-end-wrap">
-            <input type="text" class="dr-input stage-config-date" data-stage-name="${stage.name}" value="${fmtDisp(endDate||startFromDate)}" placeholder="dd-MMM-yyyy" ${isApplicable?'':'disabled'} ${isApplicable?'required':''}>
-            <button type="button" class="date-pick-btn" ${isApplicable?'':'disabled'} title="Pick date">📅</button>
-            <input type="date" class="native-date" value="${existDate}" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0">
-          </div>
-        </div>
-      </div>
-    `;
-    container.appendChild(row);
+  inner.appendChild(_buildRuler(gS,gE,tlW));
 
-    // Wire up interactions
-    const slider = row.querySelector('.stage-config-slider');
-    const dateInput = row.querySelector('.stage-config-date');
-    const nativeDate = row.querySelector('.native-date');
-    const pickBtn = row.querySelector('.date-pick-btn');
-    const startInput = row.querySelector('.stage-config-start-date');
-    const startFrom = parseLocalDate(row.dataset.startFromDate)||addPlannerState.startDate;
+  stages.forEach(stage => {
+    inner.appendChild(_buildGanttRow(stage, gS, tlW));
+  });
 
-    slider.addEventListener('input', ()=>{
-      syncDateFromSlider(slider, dateInput, startFrom);
-      if (nativeDate) { const p=parseLocalDate(dateInput.value); nativeDate.value=p?fmtInput(p):''; }
-      updateSubsequentStarts(row);
-    });
-    dateInput.addEventListener('input', ()=>{
-      const p=parseLocalDate(dateInput.value);
-      if (nativeDate) nativeDate.value=p?fmtInput(p):'';
-      syncSliderFromDate(dateInput, slider, startFrom);
-      updateSubsequentStarts(row);
-    });
-    if (nativeDate) {
-      nativeDate.addEventListener('change', ()=>{
-        if (nativeDate.value) {
-          const d=parseLocalDate(nativeDate.value);
-          if (d) { dateInput.value=fmtDisp(d); syncSliderFromDate(dateInput,slider,startFrom); updateSubsequentStarts(row); }
-        }
-      });
-    }
-    if (pickBtn&&nativeDate) {
-      pickBtn.addEventListener('click', ()=>nativeDate.showPicker&&nativeDate.showPicker());
-    }
+  // Date-input strip
+  const strip = document.createElement('div'); strip.className='gantt-dates-strip'; strip.id='ganttStrip';
+  outer.appendChild(strip);
+  _buildStrip(stages, strip);
 
-    // Add to optional toolbar if not mandatory
-    if (!isMandatory) {
+  container.appendChild(outer);
+
+  // Optional stage chips
+  const hasOpt = stages.some(s=>!s.mandatory);
+  if (hasOpt) {
+    trigger.style.display='inline-flex';
+    stages.filter(s=>!s.mandatory).forEach(stage=>{
       const chip = document.createElement('button');
       chip.type='button';
-      chip.className=`stg-chip${isApplicable?' is-active':''}`;
+      const act = ganttData[stage.name].applicable;
+      chip.className='stg-chip'+(act?' is-active':'');
       chip.dataset.stageName=stage.name;
-      chip.setAttribute('aria-pressed', isApplicable?'true':'false');
-      chip.innerHTML=`<span class="stg-chip-name">${stage.name}</span><span class="stg-chip-status">${isApplicable?'✓':'✕'}</span>`;
-      chip.addEventListener('click', ()=>{
-        const active = chip.classList.toggle('is-active');
-        chip.setAttribute('aria-pressed', active?'true':'false');
-        chip.querySelector('.stg-chip-status').textContent=active?'✓':'✕';
-        setRowApplicable(row, active, dateInput, nativeDate, pickBtn, slider, startFrom);
+      chip.setAttribute('aria-pressed', act?'true':'false');
+      chip.innerHTML=`<span class="stg-chip-name">${stage.name}</span><span class="stg-chip-status">${act?'✓':'✕'}</span>`;
+      chip.addEventListener('click',()=>{
+        const on = chip.classList.toggle('is-active');
+        chip.setAttribute('aria-pressed',on?'true':'false');
+        chip.querySelector('.stg-chip-status').textContent=on?'✓':'✕';
+        ganttData[stage.name].applicable=on;
+        inner.querySelector(`.gantt-row[data-sn="${_esc(stage.name)}"]`)?.classList.toggle('g-off',!on);
+        _buildStrip(stages, strip);
         updateTriggerLabel();
       });
       toolbar.appendChild(chip);
-    }
-  });
-
-  // Sync scroll
-  const plannerAreas = [header, ...container.querySelectorAll('.stage-config-planner')];
-  plannerAreas.forEach(area=>{
-    area.addEventListener('scroll', ()=>{
-      if (suppressScrollSync) return;
-      suppressScrollSync=true;
-      plannerAreas.forEach(a=>{ if(a!==area) a.scrollLeft=area.scrollLeft; });
-      suppressScrollSync=false;
     });
+    updateTriggerLabel();
+  }
+}
+
+function _esc(s){ return s.replace(/["\\]/g,'\\$&'); }
+
+function _buildRuler(gS,gE,tlW){
+  const hdr=document.createElement('div'); hdr.className='gantt-hdr';
+  hdr.innerHTML='<div class="gantt-hdr-label">Stage</div>';
+  const ruler=document.createElement('div'); ruler.className='gantt-ruler'; ruler.style.width=tlW+'px';
+  // Month labels
+  let cur=new Date(gS.getFullYear(),gS.getMonth(),1);
+  while(cur<=gE){
+    const x=dateToX(cur);
+    const dm=daysInMonth(cur); const w=dm*DAY_PX;
+    const m=document.createElement('div'); m.className='gantt-month';
+    m.style.left=x+'px'; m.style.width=w+'px';
+    m.innerHTML=`<span class="gantt-month-lbl">${cur.toLocaleDateString(undefined,{month:'short',year:'2-digit'})}</span>`;
+    ruler.appendChild(m);
+    cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);
+  }
+  // Today marker in ruler
+  const td=new Date(); td.setHours(0,0,0,0);
+  if(td>=gS&&td<=gE){
+    const tm=document.createElement('div'); tm.className='gantt-ruler-today';
+    tm.style.left=dateToX(td)+'px'; ruler.appendChild(tm);
+  }
+  hdr.appendChild(ruler); return hdr;
+}
+
+function _buildGanttRow(stage,gS,tlW){
+  const data=ganttData[stage.name];
+  const row=document.createElement('div');
+  row.className='gantt-row'+(data.applicable?'':' g-off');
+  row.dataset.sn=stage.name;
+
+  // Label
+  const lbl=document.createElement('div'); lbl.className='gantt-row-label';
+  lbl.innerHTML=`<div class="gantt-row-name">${stage.name}</div>
+    <div class="${stage.mandatory?'gantt-mand-pill':'gantt-opt-pill'}">${stage.mandatory?'Mandatory':'Optional'}</div>`;
+
+  // Track
+  const track=document.createElement('div'); track.className='gantt-track';
+  track.style.width=tlW+'px';
+
+  // Month grid lines
+  let cur=new Date(gS.getFullYear(),gS.getMonth(),1);
+  while(cur<=ganttRange.end){
+    const gl=document.createElement('div'); gl.className='gantt-grid-vline';
+    gl.style.left=dateToX(cur)+'px'; track.appendChild(gl);
+    cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);
+  }
+  // Today line
+  const td=new Date(); td.setHours(0,0,0,0);
+  if(td>=gS&&td<=ganttRange.end){
+    const tl=document.createElement('div'); tl.className='gantt-track-today';
+    tl.style.left=dateToX(td)+'px'; track.appendChild(tl);
+  }
+
+  // Bar
+  const bar=_makeBar(stage,data);
+  track.appendChild(bar);
+
+  row.appendChild(lbl); row.appendChild(track);
+  return row;
+}
+
+function _makeBar(stage,data){
+  const x1=dateToX(data.startDate), x2=dateToX(data.endDate);
+  const w=Math.max(18,x2-x1);
+  const dur=daysBetween(data.startDate,data.endDate);
+
+  const bar=document.createElement('div');
+  bar.className='gantt-bar '+(stage.mandatory?'gbar-mand':'gbar-opt');
+  bar.dataset.sn=stage.name;
+  bar.style.left=x1+'px'; bar.style.width=w+'px';
+  bar.title=`${stage.name}\n${fmtDisp(data.startDate)} → ${fmtDisp(data.endDate)} (${dur}d)`;
+
+  bar.innerHTML=`
+    <div class="gantt-handle gh-left"  data-role="left"></div>
+    <span class="gantt-bar-lbl">${dur>0?dur+'d':''}</span>
+    <div class="gantt-handle gh-right" data-role="right"></div>`;
+
+  _wireDrag(bar,stage);
+  return bar;
+}
+
+function _refreshBar(stageName){
+  const data=ganttData[stageName];
+  const bar=document.querySelector(`.gantt-bar[data-sn="${_esc(stageName)}"]`);
+  if(!bar||!data) return;
+  const x1=dateToX(data.startDate), x2=dateToX(data.endDate);
+  const w=Math.max(18,x2-x1);
+  const dur=daysBetween(data.startDate,data.endDate);
+  bar.style.left=x1+'px'; bar.style.width=w+'px';
+  bar.title=`${stageName}\n${fmtDisp(data.startDate)} → ${fmtDisp(data.endDate)} (${dur}d)`;
+  const lbl=bar.querySelector('.gantt-bar-lbl');
+  if(lbl) lbl.textContent=dur>0?dur+'d':'';
+}
+
+function _syncStrip(stageName){
+  const strip=document.getElementById('ganttStrip'); if(!strip) return;
+  const data=ganttData[stageName];
+  const si=strip.querySelector(`.gantt-dc-inp[data-sn="${_esc(stageName)}"][data-role="start"]`);
+  const ei=strip.querySelector(`.gantt-dc-inp[data-sn="${_esc(stageName)}"][data-role="end"]`);
+  if(si) si.value=fmtDisp(data.startDate);
+  if(ei) ei.value=fmtDisp(data.endDate);
+}
+
+function _wireDrag(bar,stage){
+  let mode=null, x0=0, sd0,ed0;
+
+  function startDrag(e,role){
+    e.preventDefault(); e.stopPropagation();
+    mode=role; x0=e.clientX||e.touches?.[0]?.clientX||0;
+    sd0=new Date(ganttData[stage.name].startDate);
+    ed0=new Date(ganttData[stage.name].endDate);
+    bar.classList.add('gbar-drag');
+    document.addEventListener('mousemove',onMove);
+    document.addEventListener('mouseup',endDrag);
+    document.addEventListener('touchmove',onTouchMove,{passive:false});
+    document.addEventListener('touchend',endDrag);
+  }
+
+  bar.addEventListener('mousedown',e=>{
+    if(e.target.dataset.role) return;
+    startDrag(e,'move');
+  });
+  bar.querySelectorAll('.gantt-handle').forEach(h=>{
+    h.addEventListener('mousedown',e=>startDrag(e,h.dataset.role));
+  });
+  bar.addEventListener('touchstart',e=>{
+    if(e.target.dataset.role) return;
+    startDrag(e,'move');
+  },{passive:false});
+  bar.querySelectorAll('.gantt-handle').forEach(h=>{
+    h.addEventListener('touchstart',e=>startDrag(e,h.dataset.role),{passive:false});
   });
 
-  updateTriggerLabel();
-}
-
-function setRowApplicable(row, applicable, dateInput, nativeDate, pickBtn, slider, startFrom) {
-  row.dataset.applicable = applicable;
-  row.style.display = applicable ? '' : 'none';
-  dateInput.disabled = !applicable;
-  dateInput.required = applicable;
-  if (nativeDate) nativeDate.disabled=!applicable;
-  if (pickBtn) pickBtn.disabled=!applicable;
-  if (slider) slider.disabled=!applicable;
-  if (!applicable) { dateInput.value=''; if(nativeDate) nativeDate.value=''; }
-  updateSubsequentStarts(row);
-}
-
-function updateSubsequentStarts(changedRow) {
-  const container = document.getElementById('stageConfigContainer');
-  const rows = [...container.querySelectorAll('.stage-config-row')];
-  const idx = rows.indexOf(changedRow);
-  if (idx===-1) return;
-  for (let i=idx+1; i<rows.length; i++) {
-    const prevRow = rows[i-1];
-    if (prevRow.dataset.applicable==='false') continue;
-    const prevDateInput = prevRow.querySelector('.stage-config-date');
-    const prevEnd = parseLocalDate(prevDateInput?.value);
-    if (!prevEnd) continue;
-    const curRow = rows[i];
-    const curStartInput = curRow.querySelector('.stage-config-start-date');
-    if (curStartInput) { curStartInput.value=fmtDisp(prevEnd); curRow.dataset.startFromDate=fmtInput(prevEnd); }
+  function applyDelta(clientX){
+    const dx=clientX-x0;
+    const dd=Math.round(dx/DAY_PX);
+    let ns=new Date(sd0), ne=new Date(ed0);
+    if(mode==='move'){ ns=addDays(sd0,dd); ne=addDays(ed0,dd); }
+    else if(mode==='left'){ ns=addDays(sd0,dd); if(ns>=ne) ns=addDays(ne,-1); }
+    else if(mode==='right'){ ne=addDays(ed0,dd); if(ne<=ns) ne=addDays(ns,1); }
+    // Clamp
+    if(ns<ganttRange.start){ const d2=daysBetween(ns,ganttRange.start); if(mode==='move') ne=addDays(ne,d2); ns=new Date(ganttRange.start); }
+    if(ne>ganttRange.end) ne=new Date(ganttRange.end);
+    ganttData[stage.name].startDate=ns; ganttData[stage.name].endDate=ne;
+    _refreshBar(stage.name); _syncStrip(stage.name);
   }
+
+  function onMove(e){ applyDelta(e.clientX); }
+  function onTouchMove(e){ e.preventDefault(); applyDelta(e.touches[0].clientX); }
+  function endDrag(){ bar.classList.remove('gbar-drag'); mode=null;
+    document.removeEventListener('mousemove',onMove);
+    document.removeEventListener('mouseup',endDrag);
+    document.removeEventListener('touchmove',onTouchMove);
+    document.removeEventListener('touchend',endDrag);
+  }
+}
+
+function _buildStrip(stages,strip){
+  strip.innerHTML='';
+  stages.filter(s=>ganttData[s.name]?.applicable).forEach(stage=>{
+    const data=ganttData[stage.name];
+    const card=document.createElement('div'); card.className='gantt-date-card';
+
+    // Hidden native pickers
+    const npS=document.createElement('input'); npS.type='date'; npS.className='native-date'; npS.value=fmtInput(data.startDate);
+    const npE=document.createElement('input'); npE.type='date'; npE.className='native-date'; npE.value=fmtInput(data.endDate);
+    card.appendChild(npS); card.appendChild(npE);
+
+    card.innerHTML+=`
+      <div class="gantt-dc-name" title="${stage.name}">${stage.name}</div>
+      <div class="gantt-dc-field">
+        <span class="gantt-dc-lbl">Start</span>
+        <input class="gantt-dc-inp" type="text" data-sn="${stage.name}" data-role="start"
+               value="${fmtDisp(data.startDate)}" placeholder="dd-Mmm-yyyy">
+      </div>
+      <div class="gantt-dc-arrow">→</div>
+      <div class="gantt-dc-field">
+        <span class="gantt-dc-lbl">End</span>
+        <input class="gantt-dc-inp" type="text" data-sn="${stage.name}" data-role="end"
+               value="${fmtDisp(data.endDate)}" placeholder="dd-Mmm-yyyy">
+      </div>
+      <button type="button" class="gantt-dc-pick" title="Pick end date">📅</button>`;
+
+    strip.appendChild(card);
+
+    const si=card.querySelector('[data-role="start"]');
+    const ei=card.querySelector('[data-role="end"]');
+    const pb=card.querySelector('.gantt-dc-pick');
+
+    si.addEventListener('blur',()=>{
+      const d=parseLocalDate(si.value); if(!d) return;
+      if(d>=ganttData[stage.name].endDate) return;
+      ganttData[stage.name].startDate=d; npS.value=fmtInput(d);
+      _refreshBar(stage.name);
+    });
+    ei.addEventListener('blur',()=>{
+      const d=parseLocalDate(ei.value); if(!d) return;
+      if(d<=ganttData[stage.name].startDate) return;
+      ganttData[stage.name].endDate=d; npE.value=fmtInput(d);
+      _refreshBar(stage.name);
+    });
+    npS.addEventListener('change',()=>{
+      const d=parseLocalDate(npS.value); if(!d) return;
+      if(d>=ganttData[stage.name].endDate) return;
+      ganttData[stage.name].startDate=d; si.value=fmtDisp(d); _refreshBar(stage.name);
+    });
+    npE.addEventListener('change',()=>{
+      const d=parseLocalDate(npE.value); if(!d) return;
+      if(d<=ganttData[stage.name].startDate) return;
+      ganttData[stage.name].endDate=d; ei.value=fmtDisp(d); _refreshBar(stage.name);
+    });
+    pb.addEventListener('click',()=>npE.showPicker&&npE.showPicker());
+  });
 }
 
 function updateTriggerLabel() {
