@@ -236,7 +236,28 @@
       color: var(--text); letter-spacing: -.1px;
     }
     .ai-head-sub { font-size: 11px; color: var(--muted2); margin-top: 1px; }
-    .ai-head-right { display: flex; align-items: center; gap: 8px; }
+    .ai-head-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .ai-key-wrap { position: relative; display: flex; align-items: center; }
+    .ai-key-inp {
+      width: 210px; padding: 6px 32px 6px 10px;
+      background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--r);
+      color: var(--text); font-family: 'DM Mono', monospace; font-size: 11px;
+      outline: none; transition: border-color .2s;
+    }
+    .ai-key-inp:focus { border-color: #7c3aed; }
+    .ai-key-inp::placeholder { color: var(--muted); }
+    .ai-key-toggle {
+      position: absolute; right: 7px; background: none; border: none;
+      color: var(--muted2); cursor: pointer; font-size: 13px; padding: 0;
+      line-height: 1; transition: color .15s;
+    }
+    .ai-key-toggle:hover { color: var(--accent); }
+    .ai-key-badge {
+      display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px;
+      border-radius: 99px; background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.25);
+      color: var(--success); font-size: 10px; font-weight: 700; letter-spacing: .04em;
+      font-family: 'DM Mono', monospace;
+    }
     .ai-clear-btn {
       padding: 6px 12px; border-radius: var(--r); background: transparent;
       border: 1px solid var(--border2); color: var(--muted2); font-size: 11px;
@@ -329,7 +350,7 @@
 
     @media (max-width: 900px) {
       .charts-grid { grid-template-columns: 1fr; }
-      .ai-key-inp { width: 150px; }
+      .ai-key-inp { width: 140px; }
     }
     @media (max-width: 700px) {
       .dash-wrap { padding: 16px 14px 32px; }
@@ -415,6 +436,14 @@
           </div>
         </div>
         <div class="ai-head-right">
+          <!-- Key input shown only on GitHub Pages (not local server) -->
+          <div class="ai-key-wrap" id="aiKeyWrap" style="display:none">
+            <input type="password" class="ai-key-inp" id="aiKeyInp"
+              placeholder="Paste Anthropic API key…"
+              autocomplete="off" spellcheck="false">
+            <button class="ai-key-toggle" id="aiKeyToggle" title="Show / hide key">&#128065;</button>
+          </div>
+          <div id="aiServerBadge" class="ai-key-badge" style="display:none">&#x2713; Secure server mode</div>
           <button class="ai-clear-btn" onclick="aiClear()">Clear chat</button>
         </div>
       </div>
@@ -857,11 +886,44 @@ window.toggleTheme = function() {
 // ═══════════════════════════════════════════════════
 // AI ASSISTANT
 // ═══════════════════════════════════════════════════
-var aiHistory  = [];   // [{role:'user'|'assistant', content:'...'}]
+var aiHistory  = [];
 var aiStreaming = false;
 
-// Auto-grow textarea
+// TRUE  → running on the Node.js proxy server (localhost / private IP)
+// FALSE → static hosting (GitHub Pages etc.) — browser calls Anthropic directly
+var AI_USE_PROXY = (function() {
+  var h = window.location.hostname;
+  return h === 'localhost' || h === '127.0.0.1' || h.startsWith('192.168.') || h.startsWith('10.');
+})();
+
+var AI_KEY_LS = 'cpApiKey';
+
 (function(){
+  // Show the appropriate header badge / key input
+  if (AI_USE_PROXY) {
+    var badge = document.getElementById('aiServerBadge');
+    if (badge) badge.style.display = 'inline-flex';
+  } else {
+    var wrap = document.getElementById('aiKeyWrap');
+    if (wrap) wrap.style.display = 'flex';
+    // Restore saved key
+    var inp = document.getElementById('aiKeyInp');
+    if (inp) {
+      var saved = sessionStorage.getItem(AI_KEY_LS) || '';
+      if (saved) inp.value = saved;
+      inp.addEventListener('input', function(){
+        sessionStorage.setItem(AI_KEY_LS, inp.value.trim());
+      });
+    }
+    // Show/hide toggle
+    var toggle = document.getElementById('aiKeyToggle');
+    if (toggle && inp) toggle.addEventListener('click', function(){
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+      toggle.innerHTML = inp.type === 'password' ? '&#128065;' : '&#128064;';
+    });
+  }
+
+  // Auto-grow textarea
   var ta = document.getElementById('aiInput');
   if (ta) ta.addEventListener('input', function(){
     ta.style.height = 'auto';
@@ -951,12 +1013,21 @@ function aiSetBusy(busy) {
 }
 
 async function aiCall(userMsg) {
-  // Add user message to history & DOM
+  // On GitHub Pages, check the key first
+  if (!AI_USE_PROXY) {
+    var inp = document.getElementById('aiKeyInp');
+    var key = (inp ? inp.value.trim() : '') || sessionStorage.getItem(AI_KEY_LS) || '';
+    if (!key) {
+      showToast('Paste your Anthropic API key in the field above first.', 'danger');
+      if (inp) inp.focus();
+      return;
+    }
+  }
+
   aiHistory.push({ role: 'user', content: userMsg });
   aiAppend('user', aiMarkdown(userMsg));
   aiSetBusy(true);
 
-  // Placeholder bubble for streaming
   var bubble = aiAppend('assistant', '', true);
 
   var systemPrompt = 'You are COREPULSE AI, an intelligent assistant embedded inside a sales order execution tracker for PGP Energies.\n' +
@@ -968,12 +1039,34 @@ async function aiCall(userMsg) {
   var messages = aiHistory.map(function(m){ return { role: m.role, content: m.content }; });
 
   try {
-    // Call local proxy — API key stays on the server, never in the browser
-    var res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ system: systemPrompt, messages: messages })
-    });
+    var res;
+    if (AI_USE_PROXY) {
+      // Secure path: key stays on the server
+      res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ system: systemPrompt, messages: messages })
+      });
+    } else {
+      // GitHub Pages: call Anthropic directly from the browser
+      var apiKey = (document.getElementById('aiKeyInp') || {}).value || sessionStorage.getItem(AI_KEY_LS) || '';
+      res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-opus-4-6',
+          max_tokens: 1024,
+          system: systemPrompt,
+          messages: messages,
+          stream: true
+        })
+      });
+    }
 
     if (!res.ok) {
       var errJson = await res.json().catch(function(){ return {}; });
