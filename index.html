@@ -35,10 +35,31 @@
       align-items: start;
     }
     .top-stats { min-width: 0; }
-    .top-stats .stat-row { grid-template-columns: repeat(2, 1fr); }
+    .top-stats .stat-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 0;
+    }
     @media (max-width: 1100px) {
       .top-row { grid-template-columns: 1fr; }
       .top-stats .stat-row { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    }
+
+    /* Mini chart cards (row 3 of stat grid) */
+    .mini-chart-card {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: var(--rl); padding: 12px 14px;
+      display: flex; flex-direction: column; gap: 6px;
+      transition: border-color .2s;
+    }
+    .mini-chart-card:hover { border-color: var(--border2); }
+    .mini-chart-title {
+      font-family: 'DM Mono', monospace; font-size: 9px; font-weight: 500;
+      color: var(--muted); letter-spacing: .12em; text-transform: uppercase;
+    }
+    .mini-chart-body {
+      flex: 1; position: relative; height: 80px;
     }
 
     /* Navigation cards grid */
@@ -121,6 +142,8 @@
     .sc-b::before { background: linear-gradient(90deg, var(--info), #818cf8); }
     .sc-c::before { background: linear-gradient(90deg, var(--warning), #fbbf24); }
     .sc-d::before { background: linear-gradient(90deg, var(--success), #34d399); }
+    .sc-e::before { background: linear-gradient(90deg, var(--accent), var(--success)); }
+    .sc-f::before { background: linear-gradient(90deg, var(--info), var(--accent)); }
     .stat-lbl {
       font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted);
       letter-spacing: .1em; text-transform: uppercase; margin-bottom: 8px;
@@ -390,6 +413,7 @@
           <span id="lastSavedLabel" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.06em"></span>
         </div>
         <div class="stat-row" id="statRow">
+          <!-- Row 1 -->
           <div class="stat-card sc-a">
             <div class="stat-lbl">Total Shipments</div>
             <div class="stat-val" id="statTotal">—</div>
@@ -408,11 +432,37 @@
             <div class="stat-sub" id="statOverdueSub">past delivery date</div>
             <div class="stat-ico">&#9888;</div>
           </div>
+          <!-- Row 2 -->
           <div class="stat-card sc-d">
             <div class="stat-lbl">Stages Planned</div>
             <div class="stat-val" id="statPlanned">—</div>
             <div class="stat-sub" id="statPlannedSub">with dates set</div>
             <div class="stat-ico">&#9654;</div>
+          </div>
+          <div class="stat-card sc-e">
+            <div class="stat-lbl">On Track</div>
+            <div class="stat-val" id="statOnTrack">—</div>
+            <div class="stat-sub" id="statOnTrackSub">shipments on schedule</div>
+            <div class="stat-ico">&#10003;</div>
+          </div>
+          <div class="stat-card sc-f">
+            <div class="stat-lbl">Stage Coverage</div>
+            <div class="stat-val" id="statCoverage">—</div>
+            <div class="stat-sub" id="statCoverageSub">stages with end dates</div>
+            <div class="stat-ico">&#9646;</div>
+          </div>
+          <!-- Row 3: mini charts spanning all 3 columns -->
+          <div class="mini-chart-card" style="grid-column:1/2">
+            <div class="mini-chart-title">By Type</div>
+            <div class="mini-chart-body"><canvas id="miniChartTypes"></canvas></div>
+          </div>
+          <div class="mini-chart-card" style="grid-column:2/3">
+            <div class="mini-chart-title">On Track vs Overdue</div>
+            <div class="mini-chart-body"><canvas id="miniChartStatus"></canvas></div>
+          </div>
+          <div class="mini-chart-card" style="grid-column:3/4">
+            <div class="mini-chart-title">Stage Coverage</div>
+            <div class="mini-chart-body"><canvas id="miniChartCoverage"></canvas></div>
           </div>
         </div>
       </div>
@@ -622,6 +672,20 @@ function renderStats(shipments, checkpoints) {
   var planned = allStages.filter(function(t){ return !!t.date; }).length;
   setText('statPlanned', planned);
   setText('statPlannedSub', planned + ' of ' + allStages.length + ' stages');
+
+  // On Track: shipments where latest end date is in the future (or no dates = skip)
+  var onTrack = shipments.filter(function(s) {
+    var dates = (s.timeline||[]).map(function(t){ return t.date ? new Date(t.date) : null; }).filter(Boolean);
+    if (!dates.length) return false;
+    return new Date(Math.max.apply(null, dates)) >= now;
+  }).length;
+  setText('statOnTrack', onTrack);
+  setText('statOnTrackSub', onTrack + ' of ' + total + ' on schedule');
+
+  // Stage Coverage: % of all stages that have an end date
+  var coveragePct = allStages.length ? Math.round(planned / allStages.length * 100) : 0;
+  setText('statCoverage', coveragePct + '%');
+  setText('statCoverageSub', planned + ' of ' + allStages.length + ' stages planned');
 }
 
 // ── CHART HELPERS ─────────────────────────────────
@@ -824,10 +888,121 @@ function renderChartCps(checkpoints) {
   });
 }
 
+// ── MINI CHARTS (stat grid row 3) ─────────────────
+function renderMiniCharts(shipments) {
+  var now = new Date();
+
+  // Mini 1: By Type — doughnut
+  destroyChart('miniChartTypes');
+  var mc1 = document.getElementById('miniChartTypes');
+  if (mc1) {
+    if (!shipments.length) {
+      mc1.style.display = 'none';
+    } else {
+      mc1.style.display = '';
+      var counts = {};
+      shipments.forEach(function(s){ counts[s.type] = (counts[s.type]||0)+1; });
+      var labels1 = Object.keys(counts);
+      var data1   = labels1.map(function(l){ return counts[l]; });
+      var COLORS  = [cv('--accent'), cv('--info'), cv('--warning'), cv('--success'), cv('--danger')];
+      _charts['miniChartTypes'] = new Chart(mc1, {
+        type: 'doughnut',
+        data: {
+          labels: labels1,
+          datasets: [{ data: data1, backgroundColor: COLORS.slice(0,labels1.length).map(function(c){return c+'cc';}), borderColor: COLORS, borderWidth: 1.5, hoverOffset: 4 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, cutout: '58%',
+          plugins: {
+            legend: { position:'right', labels:{ color:cv('--text2'), font:{size:9,family:"'DM Sans',sans-serif"}, padding:6, boxWidth:8, usePointStyle:true } },
+            tooltip: Object.assign(tooltipDefaults(), { bodyFont:{size:11} })
+          }
+        }
+      });
+    }
+  }
+
+  // Mini 2: On Track vs Overdue — doughnut
+  destroyChart('miniChartStatus');
+  var mc2 = document.getElementById('miniChartStatus');
+  if (mc2) {
+    var onT  = shipments.filter(function(s){
+      var dates = (s.timeline||[]).map(function(t){ return t.date ? new Date(t.date) : null; }).filter(Boolean);
+      return dates.length && new Date(Math.max.apply(null,dates)) >= now;
+    }).length;
+    var late = shipments.filter(function(s){
+      var dates = (s.timeline||[]).map(function(t){ return t.date ? new Date(t.date) : null; }).filter(Boolean);
+      return dates.length && new Date(Math.max.apply(null,dates)) < now;
+    }).length;
+    if (!onT && !late) {
+      mc2.style.display = 'none';
+    } else {
+      mc2.style.display = '';
+      _charts['miniChartStatus'] = new Chart(mc2, {
+        type: 'doughnut',
+        data: {
+          labels: ['On Track','Overdue'],
+          datasets: [{ data:[onT,late], backgroundColor:[cv('--success')+'cc',cv('--danger')+'cc'], borderColor:[cv('--success'),cv('--danger')], borderWidth:1.5, hoverOffset:4 }]
+        },
+        options: {
+          responsive:true, maintainAspectRatio:false, cutout:'58%',
+          plugins: {
+            legend:{ position:'right', labels:{ color:cv('--text2'), font:{size:9,family:"'DM Sans',sans-serif"}, padding:6, boxWidth:8, usePointStyle:true } },
+            tooltip: Object.assign(tooltipDefaults(), { bodyFont:{size:11} })
+          }
+        }
+      });
+    }
+  }
+
+  // Mini 3: Stage Coverage — horizontal bar
+  destroyChart('miniChartCoverage');
+  var mc3 = document.getElementById('miniChartCoverage');
+  if (mc3) {
+    if (!shipments.length) {
+      mc3.style.display = 'none';
+    } else {
+      mc3.style.display = '';
+      var slice3 = shipments.slice(-5); // last 5 shipments
+      var labels3  = slice3.map(function(s){ return s.id; });
+      var planned3 = slice3.map(function(s){ return (s.timeline||[]).filter(function(t){ return t.date; }).length; });
+      var total3   = slice3.map(function(s){ return (s.timeline||[]).length; });
+      var pct3     = planned3.map(function(p,i){ return total3[i] ? Math.round(p/total3[i]*100) : 0; });
+      _charts['miniChartCoverage'] = new Chart(mc3, {
+        type: 'bar',
+        data: {
+          labels: labels3,
+          datasets: [{
+            label: 'Coverage %',
+            data: pct3,
+            backgroundColor: cv('--accent')+'99',
+            borderColor: cv('--accent'),
+            borderWidth: 1,
+            borderRadius: 3,
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true, maintainAspectRatio: false,
+          scales: {
+            x: { min:0, max:100, ticks:{ color:cv('--muted2'), font:{size:8,family:"'DM Mono',monospace"}, callback:function(v){ return v+'%'; } }, grid:{ color:cv('--border') } },
+            y: { ticks:{ color:cv('--muted2'), font:{size:8,family:"'DM Mono',monospace"} }, grid:{ display:false } }
+          },
+          plugins: {
+            legend:{ display:false },
+            tooltip: Object.assign(tooltipDefaults(), { callbacks:{ label:function(ctx){ return ' '+ctx.parsed.x+'%'; } } })
+          }
+        }
+      });
+    }
+  }
+}
+
 // ── RENDER ALL ────────────────────────────────────
 function renderDashboard() {
   var d = loadData();
   renderStats(d.shipments, d.checkpoints);
+  renderMiniCharts(d.shipments);
   renderChartTypes(d.shipments);
   renderChartDelivery(d.shipments);
   renderChartCoverage(d.shipments);
