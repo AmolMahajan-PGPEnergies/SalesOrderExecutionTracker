@@ -26,47 +26,19 @@
     }
     .dash-header p { color: var(--muted2); font-size: 13px; margin-top: 3px; }
 
-    /* Welcome banner */
-    .welcome-banner {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: var(--rl);
-      padding: 28px 32px;
+    /* Top row: stats left, AI right */
+    .top-row {
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 20px;
       margin-bottom: 28px;
-      display: flex;
-      align-items: center;
-      gap: 28px;
-      overflow: hidden;
-      position: relative;
+      align-items: start;
     }
-    .welcome-banner::before {
-      content: '';
-      position: absolute; top: 0; left: 0; right: 0; height: 3px;
-      background: linear-gradient(90deg, var(--accent), var(--accent2), var(--info));
-    }
-    .wb-logo {
-      flex-shrink: 0;
-    }
-    .wb-logo img {
-      height: 52px; width: auto; display: block;
-      filter: drop-shadow(0 4px 12px rgba(0,212,216,.15));
-    }
-    html.light .wb-logo img { filter: none; }
-    .wb-content { flex: 1; }
-    .wb-title {
-      font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800;
-      color: var(--text); margin-bottom: 6px;
-    }
-    .wb-title span { color: var(--accent); }
-    .wb-sub { font-size: 13.5px; color: var(--muted2); line-height: 1.65; max-width: 560px; }
-    .wb-badge {
-      display: inline-flex; align-items: center; gap: 5px;
-      margin-top: 12px; padding: 4px 12px; border-radius: 99px;
-      background: var(--accent-g); border: 1px solid rgba(0,212,216,.3);
-      color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: .04em;
-    }
-    html.light .wb-badge {
-      background: var(--accent-g); border-color: rgba(0,153,160,.35);
+    .top-stats { min-width: 0; }
+    .top-stats .stat-row { grid-template-columns: repeat(2, 1fr); }
+    @media (max-width: 1100px) {
+      .top-row { grid-template-columns: 1fr; }
+      .top-stats .stat-row { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
     }
 
     /* Navigation cards grid */
@@ -213,8 +185,7 @@
     /* ── AI ASSISTANT ─────────────────────────────── */
     .ai-panel {
       background: var(--panel); border: 1px solid var(--border);
-      border-radius: var(--rl); margin-bottom: 28px; overflow: hidden;
-      position: relative;
+      border-radius: var(--rl); overflow: hidden; position: relative;
     }
     .ai-panel::before {
       content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
@@ -267,7 +238,7 @@
     .ai-clear-btn:hover { border-color: var(--border3); color: var(--text2); }
 
     .ai-messages {
-      height: 320px; overflow-y: auto; padding: 16px 18px;
+      height: 260px; overflow-y: auto; padding: 14px 16px;
       display: flex; flex-direction: column; gap: 12px;
       scroll-behavior: smooth; scrollbar-width: thin;
     }
@@ -409,94 +380,83 @@
       </div>
     </div>
 
-    <!-- Welcome banner -->
-    <div class="welcome-banner">
-      <div class="wb-logo">
-        <img src="PGP Energies - Full logo - Main.png" alt="PGP Energies">
-      </div>
-      <div class="wb-content">
-        <div class="wb-title">Welcome to <span>COREPULSE</span></div>
-        <div class="wb-sub">
-          PGP Energies' integrated platform for tracking sales orders and managing
-          shipment execution workflows. Monitor milestones, control checkpoints, and
-          stay ahead of every delivery.
-        </div>
-        <div class="wb-badge">&#x2713; System Operational</div>
-      </div>
-    </div>
+    <!-- Top row: Live Overview (left) + AI Assistant (right) -->
+    <div class="top-row">
 
-    <!-- AI Assistant -->
-    <div class="ai-panel" id="aiPanel">
-      <div class="ai-head">
-        <div class="ai-head-left">
-          <div class="ai-avatar">AI</div>
-          <div>
-            <div class="ai-head-title">COREPULSE AI Assistant</div>
-            <div class="ai-head-sub">Powered by Claude &mdash; ask anything about your shipments &amp; execution plan</div>
-          </div>
+      <!-- Live Overview -->
+      <div class="top-stats">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+          <span class="section-label" style="margin:0">Live Overview</span>
+          <span id="lastSavedLabel" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.06em"></span>
         </div>
-        <div class="ai-head-right">
-          <!-- Key input shown only on GitHub Pages (not local server) -->
-          <div class="ai-key-wrap" id="aiKeyWrap" style="display:none">
-            <input type="password" class="ai-key-inp" id="aiKeyInp"
-              placeholder="Paste Anthropic API key…"
-              autocomplete="off" spellcheck="false">
-            <button class="ai-key-toggle" id="aiKeyToggle" title="Show / hide key">&#128065;</button>
+        <div class="stat-row" id="statRow">
+          <div class="stat-card sc-a">
+            <div class="stat-lbl">Total Shipments</div>
+            <div class="stat-val" id="statTotal">—</div>
+            <div class="stat-sub" id="statTotalSub">no data yet</div>
+            <div class="stat-ico">&#128666;</div>
           </div>
-          <div id="aiServerBadge" class="ai-key-badge" style="display:none">&#x2713; Secure server mode</div>
-          <button class="ai-clear-btn" onclick="aiClear()">Clear chat</button>
-        </div>
-      </div>
-
-      <div class="ai-messages" id="aiMessages">
-        <div class="ai-msg ai-bot">
-          <div class="ai-msg-avatar">AI</div>
-          <div class="ai-bubble">
-            <p>Hello! I'm your COREPULSE AI assistant. I have access to all your shipment and checkpoint data loaded in this session.</p>
-            <p>You can ask me to <strong>summarise your execution plan</strong>, identify overdue shipments, check stage coverage, or answer any question about your data. Click <strong>Summarise</strong> to get an instant overview.</p>
+          <div class="stat-card sc-b">
+            <div class="stat-lbl">Checkpoint Definitions</div>
+            <div class="stat-val" id="statCp">—</div>
+            <div class="stat-sub" id="statCpSub">in library</div>
+            <div class="stat-ico">&#9711;</div>
+          </div>
+          <div class="stat-card sc-c">
+            <div class="stat-lbl">Overdue Shipments</div>
+            <div class="stat-val" id="statOverdue">—</div>
+            <div class="stat-sub" id="statOverdueSub">past delivery date</div>
+            <div class="stat-ico">&#9888;</div>
+          </div>
+          <div class="stat-card sc-d">
+            <div class="stat-lbl">Stages Planned</div>
+            <div class="stat-val" id="statPlanned">—</div>
+            <div class="stat-sub" id="statPlannedSub">with dates set</div>
+            <div class="stat-ico">&#9654;</div>
           </div>
         </div>
       </div>
 
-      <div class="ai-input-row">
-        <textarea class="ai-textarea" id="aiInput" rows="1"
-          placeholder="Ask about your shipments, stages, overdue items…"
-          onkeydown="aiKeyDown(event)"></textarea>
-        <button class="ai-summarize-btn" onclick="aiSummarise()" title="Auto-summarise all data">&#128196; Summarise</button>
-        <button class="ai-send-btn" id="aiSendBtn" onclick="aiSend()" title="Send">&#10148;</button>
-      </div>
-    </div>
+      <!-- AI Assistant -->
+      <div class="ai-panel" id="aiPanel">
+        <div class="ai-head">
+          <div class="ai-head-left">
+            <div class="ai-avatar">AI</div>
+            <div>
+              <div class="ai-head-title">COREPULSE AI Assistant</div>
+              <div class="ai-head-sub">Powered by Claude &mdash; ask anything about your shipments</div>
+            </div>
+          </div>
+          <div class="ai-head-right">
+            <div class="ai-key-wrap" id="aiKeyWrap" style="display:none">
+              <input type="password" class="ai-key-inp" id="aiKeyInp"
+                placeholder="Paste Anthropic API key…"
+                autocomplete="off" spellcheck="false">
+              <button class="ai-key-toggle" id="aiKeyToggle" title="Show / hide key">&#128065;</button>
+            </div>
+            <div id="aiServerBadge" class="ai-key-badge" style="display:none">&#x2713; Secure</div>
+            <button class="ai-clear-btn" onclick="aiClear()">Clear</button>
+          </div>
+        </div>
 
-    <!-- Quick stats -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-      <span class="section-label" style="margin:0">Live Overview</span>
-      <span id="lastSavedLabel" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.06em"></span>
-    </div>
-    <div class="stat-row" id="statRow">
-      <div class="stat-card sc-a">
-        <div class="stat-lbl">Total Shipments</div>
-        <div class="stat-val" id="statTotal">—</div>
-        <div class="stat-sub" id="statTotalSub">no data yet</div>
-        <div class="stat-ico">&#128666;</div>
+        <div class="ai-messages" id="aiMessages">
+          <div class="ai-msg ai-bot">
+            <div class="ai-msg-avatar">AI</div>
+            <div class="ai-bubble">
+              <p>Hello! I have access to all your shipment and checkpoint data. Ask me anything or click <strong>Summarise</strong> for an instant overview.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="ai-input-row">
+          <textarea class="ai-textarea" id="aiInput" rows="1"
+            placeholder="Ask about shipments, stages, overdue items…"
+            onkeydown="aiKeyDown(event)"></textarea>
+          <button class="ai-summarize-btn" onclick="aiSummarise()" title="Summarise all data">&#128196;</button>
+          <button class="ai-send-btn" id="aiSendBtn" onclick="aiSend()" title="Send">&#10148;</button>
+        </div>
       </div>
-      <div class="stat-card sc-b">
-        <div class="stat-lbl">Checkpoint Definitions</div>
-        <div class="stat-val" id="statCp">—</div>
-        <div class="stat-sub" id="statCpSub">in library</div>
-        <div class="stat-ico">&#9711;</div>
-      </div>
-      <div class="stat-card sc-c">
-        <div class="stat-lbl">Overdue Shipments</div>
-        <div class="stat-val" id="statOverdue">—</div>
-        <div class="stat-sub" id="statOverdueSub">past delivery date</div>
-        <div class="stat-ico">&#9888;</div>
-      </div>
-      <div class="stat-card sc-d">
-        <div class="stat-lbl">Stages Planned</div>
-        <div class="stat-val" id="statPlanned">—</div>
-        <div class="stat-sub" id="statPlannedSub">with dates set</div>
-        <div class="stat-ico">&#9654;</div>
-      </div>
+
     </div>
 
     <!-- Charts -->
