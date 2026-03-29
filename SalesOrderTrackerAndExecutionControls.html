@@ -2372,18 +2372,6 @@
         }
 
         function renderStageConfigRows() {
-            // Null checks for required DOM elements
-            if (!shipmentTypeInput || !stageConfigContainer || !stageToggleToolbar || !stageToggleTrigger || !addPlannerHeader) {
-                console.error('One or more required DOM elements are missing:', {
-                    shipmentTypeInput,
-                    stageConfigContainer,
-                    stageToggleToolbar,
-                    stageToggleTrigger,
-                    addPlannerHeader
-                });
-                return;
-            }
-
             const selectedType = shipmentTypeInput.value;
             stageConfigContainer.innerHTML = '';
             stageToggleToolbar.innerHTML = '';
