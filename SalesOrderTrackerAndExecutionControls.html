@@ -150,14 +150,15 @@ select.sel option{background:var(--panel2)}
 /* input[type="date"] color-scheme defined in common.css */
 
 /* ── GANTT CHART (Add Shipment modal) ── */
-.gantt-outer{margin-top:16px;border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;background:var(--bg2)}
+.gantt-outer{margin-top:16px;border:1px solid var(--border);border-radius:var(--rl);background:var(--bg2);position:relative}
 .gantt-scroll{overflow-x:auto;overflow-y:visible;scrollbar-width:thin}
 .gantt-inner{min-width:100%}
 
-/* Ruler */
-.gantt-hdr{display:flex;background:var(--bg3);border-bottom:2px solid var(--border2)}
-.gantt-hdr-label{width:220px;flex-shrink:0;padding:8px 14px;font-family:'DM Mono',monospace;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;border-right:1px solid var(--border2);position:sticky;left:0;z-index:10;background:var(--bg3);display:flex;align-items:center}
-.gantt-ruler{flex:1;position:relative;height:36px;overflow:hidden}
+/* Sticky ruler header — lives OUTSIDE .gantt-scroll */
+.gantt-hdr{display:flex;background:var(--bg3);border-bottom:2px solid var(--border2);position:sticky;top:0;z-index:20;border-radius:calc(var(--rl) - 1px) calc(var(--rl) - 1px) 0 0}
+.gantt-hdr-label{width:220px;flex-shrink:0;padding:8px 14px;font-family:'DM Mono',monospace;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;border-right:1px solid var(--border2);background:var(--bg3);display:flex;align-items:center}
+.gantt-ruler-clip{flex:1;overflow:hidden;height:36px;position:relative}
+.gantt-ruler{position:absolute;top:0;left:0;height:36px;will-change:transform}
 .gantt-month{position:absolute;top:0;bottom:0;border-left:1px solid var(--border2);display:flex;align-items:center;padding:0 6px}
 .gantt-month-lbl{font-family:'DM Mono',monospace;font-size:10px;font-weight:600;color:var(--accent);letter-spacing:.04em;white-space:nowrap}
 .gantt-ruler-today{position:absolute;top:0;bottom:0;width:2px;background:var(--danger);opacity:.6;pointer-events:none}
@@ -172,19 +173,18 @@ select.sel option{background:var(--panel2)}
 .gantt-mand-pill{display:inline-flex;padding:1px 7px;border-radius:99px;width:fit-content;background:var(--accent-g);border:1px solid rgba(0,212,216,.3);color:var(--accent);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
 .gantt-opt-pill{display:inline-flex;padding:1px 7px;border-radius:99px;width:fit-content;background:var(--info-bg);border:1px solid rgba(99,102,241,.25);color:var(--info);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
 
-/* Inline row date pickers */
-.grd-dates{margin-top:5px;display:flex;flex-direction:column;gap:3px;border-top:1px solid var(--border);padding-top:5px}
-.grd-line{display:flex;align-items:center;gap:4px}
-.grd-key{font-family:'DM Mono',monospace;font-size:8px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;width:9px;flex-shrink:0}
-.grd-pick{width:20px;height:20px;border-radius:5px;background:transparent;border:1px solid var(--border2);color:var(--accent);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;transition:all .15s;padding:0;line-height:1}
-.grd-pick:hover{background:var(--accent-g);border-color:rgba(0,212,216,.4)}
-.grd-inp{flex:1;min-width:0;padding:3px 5px;background:var(--bg2);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-family:'DM Mono',monospace;font-size:10px;outline:none;transition:border-color .2s}
+/* Inline range date picker (single row per stage) */
+.grd-range{display:flex;align-items:center;gap:3px;margin-top:6px;padding-top:6px;border-top:1px solid var(--border)}
+.grd-inp{width:68px;padding:3px 5px;background:var(--bg2);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-family:'DM Mono',monospace;font-size:10px;outline:none;transition:border-color .2s;min-width:0}
 .grd-inp:focus{border-color:var(--accent)}
 .grd-inp::placeholder{color:var(--muted)}
+.grd-sep{color:var(--muted);font-size:11px;flex-shrink:0}
+.grd-pick{width:22px;height:22px;border-radius:5px;background:transparent;border:1px solid var(--border2);color:var(--accent);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;transition:all .15s;padding:0;line-height:1;margin-left:1px}
+.grd-pick:hover{background:var(--accent-g);border-color:rgba(0,212,216,.4)}
 .native-date{position:absolute;opacity:0;pointer-events:none;width:0;height:0}
 
 /* Track */
-.gantt-track{flex:1;position:relative;min-height:86px;overflow:visible}
+.gantt-track{flex:1;position:relative;min-height:80px;overflow:visible}
 .gantt-grid-vline{position:absolute;top:0;bottom:0;width:1px;background:var(--border);pointer-events:none}
 .gantt-track-today{position:absolute;top:0;bottom:0;width:2px;background:var(--danger);opacity:.4;pointer-events:none;z-index:1}
 
@@ -589,6 +589,7 @@ function getTimestamp() {
 let ganttData = {};   // { stageName: { startDate, endDate, applicable } }
 let ganttRange = { start: null, end: null };
 let DAY_PX = 22;      // pixels per day (recalculated on render)
+let ganttHdrEl = null; // reference for sticky-header scroll sync
 
 function dateToX(d) { return daysBetween(ganttRange.start, d) * DAY_PX; }
 function xToDate(x) { return addDays(ganttRange.start, Math.round(x / DAY_PX)); }
@@ -723,9 +724,17 @@ function renderStageConfigRows() {
   const scroll = document.createElement('div'); scroll.className='gantt-scroll';
   const inner  = document.createElement('div'); inner.className='gantt-inner';
   inner.style.width = (220+tlW)+'px';
+
+  // Header lives OUTSIDE scroll so it can be position:sticky in the modal
+  ganttHdrEl = _buildRuler(gS,gE,tlW);
+  outer.appendChild(ganttHdrEl);
   outer.appendChild(scroll); scroll.appendChild(inner);
 
-  inner.appendChild(_buildRuler(gS,gE,tlW));
+  // Sync ruler translate with horizontal scroll
+  scroll.addEventListener('scroll', () => {
+    const ruler = ganttHdrEl.querySelector('.gantt-ruler');
+    if (ruler) ruler.style.transform = `translateX(-${scroll.scrollLeft}px)`;
+  });
 
   stages.forEach(stage => {
     inner.appendChild(_buildGanttRow(stage, gS, tlW));
@@ -764,6 +773,7 @@ function _esc(s){ return s.replace(/["\\]/g,'\\$&'); }
 function _buildRuler(gS,gE,tlW){
   const hdr=document.createElement('div'); hdr.className='gantt-hdr';
   hdr.innerHTML='<div class="gantt-hdr-label">Stage</div>';
+  const clip=document.createElement('div'); clip.className='gantt-ruler-clip';
   const ruler=document.createElement('div'); ruler.className='gantt-ruler'; ruler.style.width=tlW+'px';
   // Month labels
   let cur=new Date(gS.getFullYear(),gS.getMonth(),1);
@@ -782,7 +792,7 @@ function _buildRuler(gS,gE,tlW){
     const tm=document.createElement('div'); tm.className='gantt-ruler-today';
     tm.style.left=dateToX(td)+'px'; ruler.appendChild(tm);
   }
-  hdr.appendChild(ruler); return hdr;
+  clip.appendChild(ruler); hdr.appendChild(clip); return hdr;
 }
 
 function _buildGanttRow(stage,gS,tlW){
@@ -791,33 +801,32 @@ function _buildGanttRow(stage,gS,tlW){
   row.className='gantt-row'+(data.applicable?'':' g-off');
   row.dataset.sn=stage.name;
 
-  // Label with inline date pickers
+  // Label with single-row range date picker
   const lbl=document.createElement('div'); lbl.className='gantt-row-label';
   const npS=document.createElement('input'); npS.type='date'; npS.className='native-date'; npS.value=fmtInput(data.startDate);
   const npE=document.createElement('input'); npE.type='date'; npE.className='native-date'; npE.value=fmtInput(data.endDate);
   lbl.innerHTML=`
     <div class="gantt-row-name">${stage.name}</div>
     <div class="${stage.mandatory?'gantt-mand-pill':'gantt-opt-pill'}">${stage.mandatory?'Mandatory':'Optional'}</div>
-    <div class="grd-dates">
-      <div class="grd-line">
-        <span class="grd-key">S</span>
-        <button type="button" class="grd-pick grd-pick-s" title="Pick start date">&#x1F4C5;</button>
-        <input class="grd-inp" type="text" data-sn="${stage.name}" data-role="start"
-               value="${fmtDisp(data.startDate)}" placeholder="dd-Mmm-yyyy">
-      </div>
-      <div class="grd-line">
-        <span class="grd-key">E</span>
-        <button type="button" class="grd-pick grd-pick-e" title="Pick end date">&#x1F4C5;</button>
-        <input class="grd-inp" type="text" data-sn="${stage.name}" data-role="end"
-               value="${fmtDisp(data.endDate)}" placeholder="dd-Mmm-yyyy">
-      </div>
+    <div class="grd-range">
+      <input class="grd-inp" type="text" data-sn="${stage.name}" data-role="start"
+             value="${fmtDisp(data.startDate)}" placeholder="Start">
+      <span class="grd-sep">—</span>
+      <input class="grd-inp" type="text" data-sn="${stage.name}" data-role="end"
+             value="${fmtDisp(data.endDate)}" placeholder="End">
+      <button type="button" class="grd-pick" title="Pick dates">&#x1F4C5;</button>
     </div>`;
   lbl.appendChild(npS); lbl.appendChild(npE);
-  // Wire inline date inputs
+  // Wire range date inputs
   const grdSi=lbl.querySelector('[data-role="start"]');
   const grdEi=lbl.querySelector('[data-role="end"]');
-  lbl.querySelector('.grd-pick-s').addEventListener('click',()=>npS.showPicker&&npS.showPicker());
-  lbl.querySelector('.grd-pick-e').addEventListener('click',()=>npE.showPicker&&npE.showPicker());
+  // Calendar button: click once → start picker, second click (or if start already set) → end picker
+  const grdBtn=lbl.querySelector('.grd-pick');
+  grdBtn.addEventListener('click',()=>{
+    if(npS.showPicker) npS.showPicker();
+  });
+  grdSi.addEventListener('click',()=>{ if(npS.showPicker) npS.showPicker(); });
+  grdEi.addEventListener('click',()=>{ if(npE.showPicker) npE.showPicker(); });
   grdSi.addEventListener('blur',()=>{
     const d=parseLocalDate(grdSi.value); if(!d) return;
     if(d>=ganttData[stage.name].endDate) return;
@@ -835,6 +844,8 @@ function _buildGanttRow(stage,gS,tlW){
     if(d>=ganttData[stage.name].endDate) return;
     ganttData[stage.name].startDate=d; grdSi.value=fmtDisp(d);
     _refreshBar(stage.name); _maybeExpandGantt();
+    // Auto-open end picker after selecting start
+    setTimeout(()=>{ if(npE.showPicker) npE.showPicker(); }, 80);
   });
   npE.addEventListener('change',()=>{
     const d=parseLocalDate(npE.value); if(!d) return;
@@ -924,8 +935,8 @@ function _maybeExpandGantt(){
   const inner=document.querySelector('.gantt-inner');
   if(!inner) return;
   inner.style.width=(LBL+tlW)+'px';
-  // Rebuild ruler
-  const ruler=inner.querySelector('.gantt-ruler');
+  // Rebuild ruler (in sticky header)
+  const ruler=ganttHdrEl&&ganttHdrEl.querySelector('.gantt-ruler');
   if(ruler){
     ruler.style.width=tlW+'px';
     ruler.innerHTML='';
