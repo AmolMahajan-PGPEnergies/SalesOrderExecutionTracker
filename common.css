@@ -107,20 +107,20 @@ html.light header {
 }
 body.sb-col .hdr-logo { width: 56px; padding: 0 8px; justify-content: center; }
 
-/* Fixed box for both logos — guarantees identical size regardless of image aspect ratio */
+/* Both logos are 500×173 — unified sizing */
 .logo-img {
-  height: 40px; width: 150px; display: block; flex-shrink: 0;
+  height: 40px; width: 160px; display: block; flex-shrink: 0;
   object-fit: contain; object-position: left center;
   transition: height .25s ease, width .25s ease;
-  filter: drop-shadow(0 2px 8px rgba(0,212,216,.15));
 }
-.logo-img-light { display: none; }
+.logo-img-dark  { filter: drop-shadow(0 2px 8px rgba(0,212,216,.15)); }
+.logo-img-light { display: none; filter: none; }
 
 html.light .logo-img-dark  { display: none; }
-html.light .logo-img-light { display: block; filter: none; }
+html.light .logo-img-light { display: block; }
 
-/* Collapsed: shrink to icon-only size, centred */
-body.sb-col .logo-img { height: 30px; width: 36px; object-position: center center; }
+/* Collapsed: shrink to icon-only size */
+body.sb-col .logo-img { height: 32px; width: 32px; object-position: left center; }
 
 .hdr-right {
   flex: 1; display: flex; align-items: center;
