@@ -100,16 +100,18 @@ html.light header {
 }
 
 .hdr-logo {
-  width: var(--sw); display: flex; align-items: center; gap: 10px;
-  padding: 0 18px; border-right: 1px solid var(--border); height: 100%;
-  flex-shrink: 0; transition: width .25s ease, border-color .25s ease;
-  text-decoration: none; overflow: hidden;
+  width: var(--sw); display: flex; align-items: center;
+  padding: 0 16px; border-right: 1px solid var(--border); height: 100%;
+  flex-shrink: 0; transition: width .25s ease, padding .25s ease, border-color .25s ease;
+  text-decoration: none; overflow: visible;
 }
-body.sb-col .hdr-logo { width: 56px; }
+body.sb-col .hdr-logo { width: 56px; padding: 0 8px; justify-content: center; }
 
+/* Fixed box for both logos — guarantees identical size regardless of image aspect ratio */
 .logo-img {
-  height: 44px; width: auto; max-width: 200px; display: block; flex-shrink: 0;
-  object-fit: contain; transition: height .25s ease, max-width .25s ease, opacity .2s;
+  height: 40px; width: 150px; display: block; flex-shrink: 0;
+  object-fit: contain; object-position: left center;
+  transition: height .25s ease, width .25s ease;
   filter: drop-shadow(0 2px 8px rgba(0,212,216,.15));
 }
 .logo-img-light { display: none; }
@@ -117,7 +119,8 @@ body.sb-col .hdr-logo { width: 56px; }
 html.light .logo-img-dark  { display: none; }
 html.light .logo-img-light { display: block; filter: none; }
 
-body.sb-col .logo-img { height: 32px; max-width: 58px; object-position: left; }
+/* Collapsed: shrink to icon-only size, centred */
+body.sb-col .logo-img { height: 30px; width: 36px; object-position: center center; }
 
 .hdr-right {
   flex: 1; display: flex; align-items: center;
