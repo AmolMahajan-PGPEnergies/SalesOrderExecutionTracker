@@ -1822,7 +1822,7 @@
     </div>
 
     <div class="modal-overlay" id="addShipmentModal" aria-hidden="true">
-        <div class="add-shipment-modal-card" role="dialog" aria-modal="true" aria-labelledby="addShipmentModalTitle">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="addShipmentModalTitle">
             <div class="modal-header">
                 <div>
                     <div class="modal-title" id="addShipmentModalTitle">Add New Shipment</div>
@@ -1830,13 +1830,13 @@
                 </div>
                 <button type="button" class="modal-close" id="addShipmentModalClose" aria-label="Close">&times;</button>
             </div>
-            <div class="add-shipment-section">
-                <form id="shipmentForm">
-                    <div class="form-group">
+            <form id="shipmentForm" class="modal-form">
+                <div class="modal-form-grid">
+                    <div class="modal-form-field">
                         <label for="shipmentId">Shipment ID:</label>
                         <input type="text" id="shipmentId" name="shipmentId" placeholder="e.g., SHP-001" required>
                     </div>
-                    <div class="form-group">
+                    <div class="modal-form-field">
                         <label for="shipmentType">Shipment Type:</label>
                         <select id="shipmentType" name="shipmentType" required>
                             <option value="">Select a type...</option>
@@ -1846,22 +1846,22 @@
                             <option value="Supplier Shipment">Supplier Shipment</option>
                         </select>
                     </div>
-                    <div class="stage-config-section" id="stageConfigSection" style="display: none;">
-                        <h4>Stage Dates (One Line Per Stage)</h4>
-                        <button type="button" class="stage-toggle-trigger" id="stageToggleTrigger" style="display: none;">Choose Optional Stages</button>
-                        <div class="stage-config-header">
-                            <div class="stage-config-header-title">Stage</div>
-                            <div class="stage-config-header-scale" id="addPlannerHeader"></div>
-                            <div class="stage-config-header-date">Date</div>
-                        </div>
-                        <div id="stageConfigContainer"></div>
+                </div>
+                <div class="stage-config-section" id="stageConfigSection" style="display: none;">
+                    <h4>Stage Dates (One Line Per Stage)</h4>
+                    <button type="button" class="stage-toggle-trigger" id="stageToggleTrigger" style="display: none;">Choose Optional Stages</button>
+                    <div class="stage-config-header">
+                        <div class="stage-config-header-title">Stage</div>
+                        <div class="stage-config-header-scale" id="addPlannerHeader"></div>
+                        <div class="stage-config-header-date">Date</div>
                     </div>
-                    <div class="modal-actions">
-                        <button type="button" class="modal-btn modal-btn-cancel" id="addShipmentCancelBtn">Cancel</button>
-                        <button type="submit" class="add-shipment-btn" id="submitShipmentBtn">Add Shipment</button>
-                    </div>
-                </form>
-            </div>
+                    <div id="stageConfigContainer"></div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="modal-btn modal-btn-cancel" id="addShipmentCancelBtn">Cancel</button>
+                    <button type="submit" class="modal-btn modal-btn-save" id="submitShipmentBtn">Add Shipment</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -2432,7 +2432,10 @@
                 row.dataset.startFromDate = formatInputDate(startFromDate);
                 row.dataset.stageDurationDays = stageDurationDays;
                 row.innerHTML = `
-                    <div class="stage-config-name">${stage.name}</div>
+                    <div class="stage-config-name-block">
+                        <div class="stage-config-name">${stage.name}</div>
+                        ${isMandatory ? '<div class="mandatory-pill mandatory-under-name">Mandatory</div>' : ''}
+                    </div>
                     <div class="stage-config-date-range-block">
                         <div class="date-range-item">
                             <label class="date-range-label">Start Date</label>
@@ -2447,7 +2450,6 @@
                                 <input type="date" class="stage-config-native-date" value="${existingDate}" tabindex="-1" aria-hidden="true">
                             </div>
                         </div>
-                        ${isMandatory ? '<span class="mandatory-pill">Mandatory</span>' : ''}
                     </div>
                 `;
                 stageConfigContainer.appendChild(row);
@@ -3260,30 +3262,13 @@
                 return;
             }
 
-            const quarterGroups = [];
-
-            plannerState.months.forEach(function (month) {
-                const lastQuarter = quarterGroups[quarterGroups.length - 1];
-                if (lastQuarter && lastQuarter.label === month.quarter) {
-                    lastQuarter.span += 1;
-                    lastQuarter.width += month.width;
-                } else {
-                    quarterGroups.push({ label: month.quarter, span: 1, width: month.width });
-                }
-            });
-
+            // Add start and end date in the header, remove month/quarter division
+            const startDateStr = formatDisplayDate(plannerState.startDate);
+            const endDateStr = formatDisplayDate(plannerState.endDate);
             targetElement.innerHTML = `
-                <div class="planner-scale-inner" style="padding: 0 16px; width: ${plannerState.timelineWidth + 32}px;">
-                <div class="planner-quarter-row">
-                    ${quarterGroups.map(function (group) {
-                        return `<div class="planner-quarter-cell" style="width: ${group.width}px;">${group.label}</div>`;
-                    }).join('')}
-                </div>
-                <div class="planner-month-row">
-                    ${plannerState.months.map(function (month) {
-                        return `<div class="planner-month-cell" style="width: ${month.width}px;">${month.label}</div>`;
-                    }).join('')}
-                </div>
+                <div class="planner-scale-inner" style="padding: 0 16px; width: ${plannerState.timelineWidth + 32}px; display: flex; align-items: center; justify-content: space-between;">
+                    <span class="planner-header-date planner-header-date-start">Start: ${startDateStr}</span>
+                    <span class="planner-header-date planner-header-date-end">End: ${endDateStr}</span>
                 </div>
             `;
         }
