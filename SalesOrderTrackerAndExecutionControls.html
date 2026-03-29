@@ -156,7 +156,7 @@ select.sel option{background:var(--panel2)}
 
 /* Ruler */
 .gantt-hdr{display:flex;background:var(--bg3);border-bottom:2px solid var(--border2)}
-.gantt-hdr-label{width:196px;flex-shrink:0;padding:8px 14px;font-family:'DM Mono',monospace;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;border-right:1px solid var(--border2);position:sticky;left:0;z-index:10;background:var(--bg3);display:flex;align-items:center}
+.gantt-hdr-label{width:220px;flex-shrink:0;padding:8px 14px;font-family:'DM Mono',monospace;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;border-right:1px solid var(--border2);position:sticky;left:0;z-index:10;background:var(--bg3);display:flex;align-items:center}
 .gantt-ruler{flex:1;position:relative;height:36px;overflow:hidden}
 .gantt-month{position:absolute;top:0;bottom:0;border-left:1px solid var(--border2);display:flex;align-items:center;padding:0 6px}
 .gantt-month-lbl{font-family:'DM Mono',monospace;font-size:10px;font-weight:600;color:var(--accent);letter-spacing:.04em;white-space:nowrap}
@@ -166,14 +166,25 @@ select.sel option{background:var(--panel2)}
 .gantt-row{display:flex;align-items:stretch;border-bottom:1px solid var(--border);background:var(--panel);transition:opacity .2s}
 .gantt-row:last-child{border-bottom:none}
 .gantt-row.g-off{opacity:.38;pointer-events:none}
-.gantt-row-label{width:196px;flex-shrink:0;padding:10px 14px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;gap:4px;position:sticky;left:0;z-index:4;background:var(--panel)}
+.gantt-row-label{width:220px;flex-shrink:0;padding:10px 14px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;gap:4px;position:sticky;left:0;z-index:4;background:var(--panel)}
 .gantt-row.g-off .gantt-row-label{background:var(--bg2)}
 .gantt-row-name{font-size:12px;font-weight:600;color:var(--text2);line-height:1.35}
 .gantt-mand-pill{display:inline-flex;padding:1px 7px;border-radius:99px;width:fit-content;background:var(--accent-g);border:1px solid rgba(0,212,216,.3);color:var(--accent);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
 .gantt-opt-pill{display:inline-flex;padding:1px 7px;border-radius:99px;width:fit-content;background:var(--info-bg);border:1px solid rgba(99,102,241,.25);color:var(--info);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
 
+/* Inline row date pickers */
+.grd-dates{margin-top:5px;display:flex;flex-direction:column;gap:3px;border-top:1px solid var(--border);padding-top:5px}
+.grd-line{display:flex;align-items:center;gap:4px}
+.grd-key{font-family:'DM Mono',monospace;font-size:8px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;width:9px;flex-shrink:0}
+.grd-pick{width:20px;height:20px;border-radius:5px;background:transparent;border:1px solid var(--border2);color:var(--accent);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;transition:all .15s;padding:0;line-height:1}
+.grd-pick:hover{background:var(--accent-g);border-color:rgba(0,212,216,.4)}
+.grd-inp{flex:1;min-width:0;padding:3px 5px;background:var(--bg2);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-family:'DM Mono',monospace;font-size:10px;outline:none;transition:border-color .2s}
+.grd-inp:focus{border-color:var(--accent)}
+.grd-inp::placeholder{color:var(--muted)}
+.native-date{position:absolute;opacity:0;pointer-events:none;width:0;height:0}
+
 /* Track */
-.gantt-track{flex:1;position:relative;min-height:54px;overflow:visible}
+.gantt-track{flex:1;position:relative;min-height:86px;overflow:visible}
 .gantt-grid-vline{position:absolute;top:0;bottom:0;width:1px;background:var(--border);pointer-events:none}
 .gantt-track-today{position:absolute;top:0;bottom:0;width:2px;background:var(--danger);opacity:.4;pointer-events:none;z-index:1}
 
@@ -187,20 +198,6 @@ select.sel option{background:var(--panel2)}
 .gantt-handle{width:11px;height:100%;flex-shrink:0;cursor:ew-resize;display:flex;align-items:center;justify-content:center;opacity:.65}
 .gantt-handle::after{content:'';display:block;width:2px;height:13px;border-radius:2px;background:rgba(0,0,0,.5);box-shadow:3px 0 rgba(0,0,0,.3)}
 .gantt-handle.gh-right::after{box-shadow:-3px 0 rgba(0,0,0,.3)}
-
-/* Date input strip */
-.gantt-dates-strip{background:var(--bg3);border-top:1px solid var(--border);padding:10px 12px;display:flex;flex-wrap:wrap;gap:8px}
-.gantt-date-card{display:flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--border2);border-radius:var(--r);padding:6px 10px;flex:1;min-width:240px;max-width:360px}
-.gantt-dc-name{font-size:10px;font-weight:700;color:var(--muted2);min-width:70px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.gantt-dc-field{display:flex;flex-direction:column;gap:2px}
-.gantt-dc-lbl{font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
-.gantt-dc-inp{width:102px;padding:4px 7px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;outline:none;transition:border-color .2s}
-.gantt-dc-inp:focus{border-color:var(--accent)}
-.gantt-dc-inp::placeholder{color:var(--muted)}
-.gantt-dc-arrow{color:var(--muted);font-size:10px}
-.gantt-dc-pick{width:26px;height:26px;border-radius:6px;background:var(--bg3);border:1px solid var(--border2);color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;transition:all .15s}
-.gantt-dc-pick:hover{background:var(--accent-g);border-color:rgba(0,212,216,.4)}
-.native-date{position:absolute;opacity:0;pointer-events:none;width:0;height:0}
 
 /* Optional stage toggle modal */
 .stg-toggle-list{display:flex;flex-direction:column;gap:6px;margin-top:14px}
@@ -238,7 +235,7 @@ select.sel option{background:var(--panel2)}
 @media(max-width:700px){
   /* header/sidebar responsive handled in common.css */
   .form-grid{grid-template-columns:1fr} .fg.span2{grid-column:span 1}
-  .gantt-date-card{min-width:200px}
+  .gantt-row-label{width:180px} .gantt-hdr-label{width:180px}
 }
 </style>
 </head>
@@ -725,7 +722,7 @@ function renderStageConfigRows() {
   const outer  = document.createElement('div'); outer.className='gantt-outer';
   const scroll = document.createElement('div'); scroll.className='gantt-scroll';
   const inner  = document.createElement('div'); inner.className='gantt-inner';
-  inner.style.width = (196+tlW)+'px';
+  inner.style.width = (220+tlW)+'px';
   outer.appendChild(scroll); scroll.appendChild(inner);
 
   inner.appendChild(_buildRuler(gS,gE,tlW));
@@ -733,11 +730,6 @@ function renderStageConfigRows() {
   stages.forEach(stage => {
     inner.appendChild(_buildGanttRow(stage, gS, tlW));
   });
-
-  // Date-input strip
-  const strip = document.createElement('div'); strip.className='gantt-dates-strip'; strip.id='ganttStrip';
-  outer.appendChild(strip);
-  _buildStrip(stages, strip);
 
   container.appendChild(outer);
 
@@ -759,7 +751,6 @@ function renderStageConfigRows() {
         chip.querySelector('.stg-chip-status').textContent=on?'✓':'✕';
         ganttData[stage.name].applicable=on;
         inner.querySelector(`.gantt-row[data-sn="${_esc(stage.name)}"]`)?.classList.toggle('g-off',!on);
-        _buildStrip(stages, strip);
         updateTriggerLabel();
       });
       toolbar.appendChild(chip);
@@ -800,10 +791,57 @@ function _buildGanttRow(stage,gS,tlW){
   row.className='gantt-row'+(data.applicable?'':' g-off');
   row.dataset.sn=stage.name;
 
-  // Label
+  // Label with inline date pickers
   const lbl=document.createElement('div'); lbl.className='gantt-row-label';
-  lbl.innerHTML=`<div class="gantt-row-name">${stage.name}</div>
-    <div class="${stage.mandatory?'gantt-mand-pill':'gantt-opt-pill'}">${stage.mandatory?'Mandatory':'Optional'}</div>`;
+  const npS=document.createElement('input'); npS.type='date'; npS.className='native-date'; npS.value=fmtInput(data.startDate);
+  const npE=document.createElement('input'); npE.type='date'; npE.className='native-date'; npE.value=fmtInput(data.endDate);
+  lbl.innerHTML=`
+    <div class="gantt-row-name">${stage.name}</div>
+    <div class="${stage.mandatory?'gantt-mand-pill':'gantt-opt-pill'}">${stage.mandatory?'Mandatory':'Optional'}</div>
+    <div class="grd-dates">
+      <div class="grd-line">
+        <span class="grd-key">S</span>
+        <button type="button" class="grd-pick grd-pick-s" title="Pick start date">&#x1F4C5;</button>
+        <input class="grd-inp" type="text" data-sn="${stage.name}" data-role="start"
+               value="${fmtDisp(data.startDate)}" placeholder="dd-Mmm-yyyy">
+      </div>
+      <div class="grd-line">
+        <span class="grd-key">E</span>
+        <button type="button" class="grd-pick grd-pick-e" title="Pick end date">&#x1F4C5;</button>
+        <input class="grd-inp" type="text" data-sn="${stage.name}" data-role="end"
+               value="${fmtDisp(data.endDate)}" placeholder="dd-Mmm-yyyy">
+      </div>
+    </div>`;
+  lbl.appendChild(npS); lbl.appendChild(npE);
+  // Wire inline date inputs
+  const grdSi=lbl.querySelector('[data-role="start"]');
+  const grdEi=lbl.querySelector('[data-role="end"]');
+  lbl.querySelector('.grd-pick-s').addEventListener('click',()=>npS.showPicker&&npS.showPicker());
+  lbl.querySelector('.grd-pick-e').addEventListener('click',()=>npE.showPicker&&npE.showPicker());
+  grdSi.addEventListener('blur',()=>{
+    const d=parseLocalDate(grdSi.value); if(!d) return;
+    if(d>=ganttData[stage.name].endDate) return;
+    ganttData[stage.name].startDate=d; npS.value=fmtInput(d);
+    _refreshBar(stage.name); _maybeExpandGantt();
+  });
+  grdEi.addEventListener('blur',()=>{
+    const d=parseLocalDate(grdEi.value); if(!d) return;
+    if(d<=ganttData[stage.name].startDate) return;
+    ganttData[stage.name].endDate=d; npE.value=fmtInput(d);
+    _refreshBar(stage.name); _maybeExpandGantt();
+  });
+  npS.addEventListener('change',()=>{
+    const d=parseLocalDate(npS.value); if(!d) return;
+    if(d>=ganttData[stage.name].endDate) return;
+    ganttData[stage.name].startDate=d; grdSi.value=fmtDisp(d);
+    _refreshBar(stage.name); _maybeExpandGantt();
+  });
+  npE.addEventListener('change',()=>{
+    const d=parseLocalDate(npE.value); if(!d) return;
+    if(d<=ganttData[stage.name].startDate) return;
+    ganttData[stage.name].endDate=d; grdEi.value=fmtDisp(d);
+    _refreshBar(stage.name); _maybeExpandGantt();
+  });
 
   // Track
   const track=document.createElement('div'); track.className='gantt-track';
@@ -864,13 +902,65 @@ function _refreshBar(stageName){
   if(lbl) lbl.textContent=dur>0?dur+'d':'';
 }
 
-function _syncStrip(stageName){
-  const strip=document.getElementById('ganttStrip'); if(!strip) return;
+function _syncRowDates(stageName){
   const data=ganttData[stageName];
-  const si=strip.querySelector(`.gantt-dc-inp[data-sn="${_esc(stageName)}"][data-role="start"]`);
-  const ei=strip.querySelector(`.gantt-dc-inp[data-sn="${_esc(stageName)}"][data-role="end"]`);
+  const si=document.querySelector(`.grd-inp[data-sn="${_esc(stageName)}"][data-role="start"]`);
+  const ei=document.querySelector(`.grd-inp[data-sn="${_esc(stageName)}"][data-role="end"]`);
   if(si) si.value=fmtDisp(data.startDate);
   if(ei) ei.value=fmtDisp(data.endDate);
+}
+
+function _maybeExpandGantt(){
+  const allEnds=Object.values(ganttData).map(d=>d.endDate.getTime());
+  if(!allEnds.length) return;
+  const maxEnd=new Date(Math.max(...allEnds));
+  // Expand when any bar is within 14 days of the right edge
+  if(maxEnd.getTime() < addDays(ganttRange.end,-14).getTime()) return;
+  // Grow by 2 months
+  ganttRange.end=new Date(ganttRange.end.getFullYear(),ganttRange.end.getMonth()+2,0);
+  const totalD=daysBetween(ganttRange.start,ganttRange.end)+1;
+  const tlW=totalD*DAY_PX;
+  const LBL=220;
+  const inner=document.querySelector('.gantt-inner');
+  if(!inner) return;
+  inner.style.width=(LBL+tlW)+'px';
+  // Rebuild ruler
+  const ruler=inner.querySelector('.gantt-ruler');
+  if(ruler){
+    ruler.style.width=tlW+'px';
+    ruler.innerHTML='';
+    let cur=new Date(ganttRange.start.getFullYear(),ganttRange.start.getMonth(),1);
+    while(cur<=ganttRange.end){
+      const x=dateToX(cur); const dm=daysInMonth(cur); const w=dm*DAY_PX;
+      const m=document.createElement('div'); m.className='gantt-month';
+      m.style.left=x+'px'; m.style.width=w+'px';
+      m.innerHTML=`<span class="gantt-month-lbl">${cur.toLocaleDateString(undefined,{month:'short',year:'2-digit'})}</span>`;
+      ruler.appendChild(m);
+      cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);
+    }
+    const td=new Date(); td.setHours(0,0,0,0);
+    if(td>=ganttRange.start&&td<=ganttRange.end){
+      const tm=document.createElement('div'); tm.className='gantt-ruler-today';
+      tm.style.left=dateToX(td)+'px'; ruler.appendChild(tm);
+    }
+  }
+  // Rebuild grid lines in every track
+  inner.querySelectorAll('.gantt-track').forEach(track=>{
+    track.style.width=tlW+'px';
+    track.querySelectorAll('.gantt-grid-vline').forEach(v=>v.remove());
+    let cur=new Date(ganttRange.start.getFullYear(),ganttRange.start.getMonth(),1);
+    while(cur<=ganttRange.end){
+      const gl=document.createElement('div'); gl.className='gantt-grid-vline';
+      gl.style.left=dateToX(cur)+'px'; track.appendChild(gl);
+      cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);
+    }
+    track.querySelectorAll('.gantt-track-today').forEach(v=>v.remove());
+    const td=new Date(); td.setHours(0,0,0,0);
+    if(td>=ganttRange.start&&td<=ganttRange.end){
+      const tl=document.createElement('div'); tl.className='gantt-track-today';
+      tl.style.left=dateToX(td)+'px'; track.appendChild(tl);
+    }
+  });
 }
 
 function _wireDrag(bar,stage){
@@ -910,11 +1000,11 @@ function _wireDrag(bar,stage){
     if(mode==='move'){ ns=addDays(sd0,dd); ne=addDays(ed0,dd); }
     else if(mode==='left'){ ns=addDays(sd0,dd); if(ns>=ne) ns=addDays(ne,-1); }
     else if(mode==='right'){ ne=addDays(ed0,dd); if(ne<=ns) ne=addDays(ns,1); }
-    // Clamp
+    // Clamp left edge only; right edge auto-expands via _maybeExpandGantt
     if(ns<ganttRange.start){ const d2=daysBetween(ns,ganttRange.start); if(mode==='move') ne=addDays(ne,d2); ns=new Date(ganttRange.start); }
-    if(ne>ganttRange.end) ne=new Date(ganttRange.end);
+    if(ns>=ne) ne=addDays(ns,1);
     ganttData[stage.name].startDate=ns; ganttData[stage.name].endDate=ne;
-    _refreshBar(stage.name); _syncStrip(stage.name);
+    _refreshBar(stage.name); _syncRowDates(stage.name); _maybeExpandGantt();
   }
 
   function onMove(e){ applyDelta(e.clientX); }
@@ -925,64 +1015,6 @@ function _wireDrag(bar,stage){
     document.removeEventListener('touchmove',onTouchMove);
     document.removeEventListener('touchend',endDrag);
   }
-}
-
-function _buildStrip(stages,strip){
-  strip.innerHTML='';
-  stages.filter(s=>ganttData[s.name]?.applicable).forEach(stage=>{
-    const data=ganttData[stage.name];
-    const card=document.createElement('div'); card.className='gantt-date-card';
-
-    // Hidden native pickers
-    const npS=document.createElement('input'); npS.type='date'; npS.className='native-date'; npS.value=fmtInput(data.startDate);
-    const npE=document.createElement('input'); npE.type='date'; npE.className='native-date'; npE.value=fmtInput(data.endDate);
-    card.appendChild(npS); card.appendChild(npE);
-
-    card.innerHTML+=`
-      <div class="gantt-dc-name" title="${stage.name}">${stage.name}</div>
-      <div class="gantt-dc-field">
-        <span class="gantt-dc-lbl">Start</span>
-        <input class="gantt-dc-inp" type="text" data-sn="${stage.name}" data-role="start"
-               value="${fmtDisp(data.startDate)}" placeholder="dd-Mmm-yyyy">
-      </div>
-      <div class="gantt-dc-arrow">→</div>
-      <div class="gantt-dc-field">
-        <span class="gantt-dc-lbl">End</span>
-        <input class="gantt-dc-inp" type="text" data-sn="${stage.name}" data-role="end"
-               value="${fmtDisp(data.endDate)}" placeholder="dd-Mmm-yyyy">
-      </div>
-      <button type="button" class="gantt-dc-pick" title="Pick end date">📅</button>`;
-
-    strip.appendChild(card);
-
-    const si=card.querySelector('[data-role="start"]');
-    const ei=card.querySelector('[data-role="end"]');
-    const pb=card.querySelector('.gantt-dc-pick');
-
-    si.addEventListener('blur',()=>{
-      const d=parseLocalDate(si.value); if(!d) return;
-      if(d>=ganttData[stage.name].endDate) return;
-      ganttData[stage.name].startDate=d; npS.value=fmtInput(d);
-      _refreshBar(stage.name);
-    });
-    ei.addEventListener('blur',()=>{
-      const d=parseLocalDate(ei.value); if(!d) return;
-      if(d<=ganttData[stage.name].startDate) return;
-      ganttData[stage.name].endDate=d; npE.value=fmtInput(d);
-      _refreshBar(stage.name);
-    });
-    npS.addEventListener('change',()=>{
-      const d=parseLocalDate(npS.value); if(!d) return;
-      if(d>=ganttData[stage.name].endDate) return;
-      ganttData[stage.name].startDate=d; si.value=fmtDisp(d); _refreshBar(stage.name);
-    });
-    npE.addEventListener('change',()=>{
-      const d=parseLocalDate(npE.value); if(!d) return;
-      if(d<=ganttData[stage.name].startDate) return;
-      ganttData[stage.name].endDate=d; ei.value=fmtDisp(d); _refreshBar(stage.name);
-    });
-    pb.addEventListener('click',()=>npE.showPicker&&npE.showPicker());
-  });
 }
 
 function updateTriggerLabel() {
