@@ -517,6 +517,17 @@ const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov
 
 let shipments = [];
 let checkpointDefinitions = [];
+
+// ── LOAD PERSISTED DATA ──────────────────────────────
+(function() {
+  try {
+    var s = localStorage.getItem('cpShipments');
+    if (s) shipments = JSON.parse(s);
+    var c = localStorage.getItem('cpCheckpoints');
+    if (c) checkpointDefinitions = JSON.parse(c);
+  } catch(e) { shipments = []; checkpointDefinitions = []; }
+})();
+
 let editingShipIdx = null;
 let editingCpIdx = null;
 let activeShipDraft = null;
@@ -1254,9 +1265,23 @@ function exportCSV() {
 });
 
 // ═══════════════════════════════════════
+// PERSIST DATA TO LOCALSTORAGE
+// ═══════════════════════════════════════
+function persistData() {
+  try {
+    localStorage.setItem('cpShipments',    JSON.stringify(shipments));
+    localStorage.setItem('cpCheckpoints',  JSON.stringify(checkpointDefinitions));
+    localStorage.setItem('cpLastSaved',    new Date().toISOString());
+  } catch(e) {
+    console.warn('Could not persist data:', e);
+  }
+}
+
+// ═══════════════════════════════════════
 // RENDER ALL
 // ═══════════════════════════════════════
 function renderAll() {
+  persistData();
   renderStats();
   renderAlerts();
   renderShipments();

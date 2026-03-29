@@ -173,6 +173,46 @@
     }
     .info-card-body { font-size: 12.5px; color: var(--muted2); line-height: 1.7; }
 
+    /* ── CHARTS ──────────────────────────────────────── */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .chart-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--rl);
+      overflow: hidden;
+      transition: border-color .2s;
+    }
+    .chart-card:hover { border-color: var(--border2); }
+    .chart-head {
+      padding: 14px 18px 11px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+    }
+    .chart-title {
+      font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+      color: var(--muted2); letter-spacing: .07em; text-transform: uppercase;
+    }
+    .chart-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+    .chart-body {
+      padding: 14px 16px; height: 260px; position: relative;
+    }
+    .chart-body.h-tall { height: 320px; }
+    .chart-empty {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; height: 100%;
+      color: var(--muted); font-size: 12.5px; gap: 10px; text-align: center;
+      line-height: 1.6;
+    }
+    .chart-empty-ico { font-size: 30px; opacity: .25; }
+
+    @media (max-width: 900px) {
+      .charts-grid { grid-template-columns: 1fr; }
+    }
     @media (max-width: 700px) {
       .dash-wrap { padding: 16px 14px 32px; }
       .welcome-banner { flex-direction: column; padding: 20px; gap: 14px; }
@@ -246,32 +286,95 @@
     </div>
 
     <!-- Quick stats -->
-    <span class="section-label">Quick Overview</span>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <span class="section-label" style="margin:0">Live Overview</span>
+      <span id="lastSavedLabel" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.06em"></span>
+    </div>
     <div class="stat-row" id="statRow">
       <div class="stat-card sc-a">
         <div class="stat-lbl">Total Shipments</div>
         <div class="stat-val" id="statTotal">—</div>
-        <div class="stat-sub">across all types</div>
+        <div class="stat-sub" id="statTotalSub">no data yet</div>
         <div class="stat-ico">&#128666;</div>
       </div>
       <div class="stat-card sc-b">
-        <div class="stat-lbl">Active</div>
-        <div class="stat-val" id="statActive">—</div>
-        <div class="stat-sub">in progress</div>
-        <div class="stat-ico">&#9654;</div>
+        <div class="stat-lbl">Checkpoint Definitions</div>
+        <div class="stat-val" id="statCp">—</div>
+        <div class="stat-sub" id="statCpSub">in library</div>
+        <div class="stat-ico">&#9711;</div>
       </div>
       <div class="stat-card sc-c">
-        <div class="stat-lbl">Overdue Stages</div>
+        <div class="stat-lbl">Overdue Shipments</div>
         <div class="stat-val" id="statOverdue">—</div>
-        <div class="stat-sub">require attention</div>
+        <div class="stat-sub" id="statOverdueSub">past delivery date</div>
         <div class="stat-ico">&#9888;</div>
       </div>
       <div class="stat-card sc-d">
-        <div class="stat-lbl">Checkpoints</div>
-        <div class="stat-val" id="statCp">—</div>
-        <div class="stat-sub">defined</div>
-        <div class="stat-ico">&#9711;</div>
+        <div class="stat-lbl">Stages Planned</div>
+        <div class="stat-val" id="statPlanned">—</div>
+        <div class="stat-sub" id="statPlannedSub">with dates set</div>
+        <div class="stat-ico">&#9654;</div>
       </div>
+    </div>
+
+    <!-- Charts -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <span class="section-label" style="margin:0">Analytics</span>
+    </div>
+    <div class="charts-grid">
+
+      <!-- Chart 1: Shipments by Type -->
+      <div class="chart-card">
+        <div class="chart-head">
+          <div>
+            <div class="chart-title">Shipments by Type</div>
+            <div class="chart-sub">Distribution across shipment categories</div>
+          </div>
+        </div>
+        <div class="chart-body" id="cb1">
+          <canvas id="chartTypes"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 2: Delivery Schedule -->
+      <div class="chart-card">
+        <div class="chart-head">
+          <div>
+            <div class="chart-title">Delivery Schedule</div>
+            <div class="chart-sub">Shipments due by month — on track vs overdue</div>
+          </div>
+        </div>
+        <div class="chart-body" id="cb2">
+          <canvas id="chartDelivery"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 3: Stage Planning Coverage -->
+      <div class="chart-card">
+        <div class="chart-head">
+          <div>
+            <div class="chart-title">Stage Planning Coverage</div>
+            <div class="chart-sub">Stages with dates set per shipment</div>
+          </div>
+        </div>
+        <div class="chart-body h-tall" id="cb3">
+          <canvas id="chartCoverage"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 4: Checkpoint Definitions by Type -->
+      <div class="chart-card">
+        <div class="chart-head">
+          <div>
+            <div class="chart-title">Checkpoint Definitions</div>
+            <div class="chart-sub">Count by control type</div>
+          </div>
+        </div>
+        <div class="chart-body" id="cb4">
+          <canvas id="chartCps"></canvas>
+        </div>
+      </div>
+
     </div>
 
     <!-- Navigation cards -->
@@ -296,9 +399,9 @@
         <div class="info-card-title">Getting Started</div>
         <div class="info-card-body">
           Open <strong>Execution Controls</strong> to add shipments, configure stage
-          timelines, and define checkpoint definitions. Use the sidebar to navigate
-          between modules. Stats on this dashboard reflect live data from the
-          Execution Controls module.
+          timelines, and define checkpoint definitions. All data is automatically saved
+          to your browser's local storage — stats above update every time you return
+          to this dashboard. Use the sidebar or module cards to navigate.
         </div>
       </div>
     </div>
@@ -308,55 +411,295 @@
 
 <div class="toast-area" id="toastArea"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="common.js"></script>
 <script>
-// ── DASHBOARD STATS ────────────────────────────────────
-// Reads live data from the Execution Controls module (shared sessionStorage/globals
-// won't exist cross-page, so we show placeholder dashes by default)
-(function loadStats() {
-  // If the execution controls data is ever persisted to localStorage in future,
-  // this block will read it automatically.
-  var shipments = [];
-  var checkpoints = [];
+// ═══════════════════════════════════════════════════
+// DASHBOARD — Stats + Charts
+// Data persisted by Execution Controls via localStorage
+// ═══════════════════════════════════════════════════
+
+var _charts = {};
+var MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function cv(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+// ── LOAD DATA ─────────────────────────────────────
+function loadData() {
+  var shipments = [], checkpoints = [], hasData = false;
   try {
-    var raw = localStorage.getItem('cpShipments');
-    if (raw) shipments = JSON.parse(raw);
+    var raw   = localStorage.getItem('cpShipments');
     var rawCp = localStorage.getItem('cpCheckpoints');
-    if (rawCp) checkpoints = JSON.parse(rawCp);
+    if (raw)   { shipments    = JSON.parse(raw);   hasData = true; }
+    if (rawCp) { checkpoints  = JSON.parse(rawCp); hasData = true; }
   } catch(e) {}
+  return { shipments: shipments, checkpoints: checkpoints, hasData: hasData };
+}
 
-  var today = new Date();
-  today.setHours(0,0,0,0);
+// ── STAT CARDS ────────────────────────────────────
+function renderStats(shipments, checkpoints) {
+  function setText(id, val) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+  var lastSaved = localStorage.getItem('cpLastSaved');
+  if (lastSaved) {
+    try {
+      var d = new Date(lastSaved);
+      setText('lastSavedLabel', 'Updated ' + d.toLocaleString(undefined,{
+        month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'
+      }));
+    } catch(e) {}
+  }
+  var total = shipments.length;
+  setText('statTotal', total);
+  setText('statTotalSub', total === 1 ? '1 shipment tracked' : total + ' shipments tracked');
+  var cpCount = checkpoints.length;
+  setText('statCp', cpCount);
+  setText('statCpSub', cpCount === 1 ? '1 definition' : cpCount + ' definitions');
+  var now = new Date();
+  var overdue = shipments.filter(function(s) {
+    var dates = (s.timeline||[]).map(function(t){ return t.date ? new Date(t.date) : null; }).filter(Boolean);
+    if (!dates.length) return false;
+    return new Date(Math.max.apply(null, dates)) < now;
+  }).length;
+  setText('statOverdue', overdue);
+  setText('statOverdueSub', overdue === 0 ? 'all on track' : overdue + ' need attention');
+  var overdueBorder = document.querySelector('.stat-card.sc-c');
+  var overdueVal = document.getElementById('statOverdue');
+  if (overdue > 0) {
+    if (overdueBorder) overdueBorder.style.borderColor = 'var(--danger)';
+    if (overdueVal)    overdueVal.style.color = 'var(--danger)';
+  } else {
+    if (overdueBorder) overdueBorder.style.borderColor = '';
+    if (overdueVal)    overdueVal.style.color = '';
+  }
+  var allStages = shipments.reduce(function(a,s){ return a.concat(s.timeline||[]); },[]);
+  var planned = allStages.filter(function(t){ return !!t.date; }).length;
+  setText('statPlanned', planned);
+  setText('statPlannedSub', planned + ' of ' + allStages.length + ' stages');
+}
 
-  var overdue = 0;
-  shipments.forEach(function(s) {
-    if (s.stages) {
-      s.stages.forEach(function(st) {
-        if (st.date) {
-          var d = new Date(st.date);
-          d.setHours(0,0,0,0);
-          if (d < today && !st.completed) overdue++;
-        }
-      });
+// ── CHART HELPERS ─────────────────────────────────
+function destroyChart(id) {
+  if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
+}
+
+function showEmpty(containerId, iconHtml, msg) {
+  var wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  var canvas = wrap.querySelector('canvas');
+  if (canvas) canvas.style.display = 'none';
+  var e = wrap.querySelector('.chart-empty');
+  if (!e) { e = document.createElement('div'); e.className = 'chart-empty'; wrap.appendChild(e); }
+  e.style.display = '';
+  e.innerHTML = '<div class="chart-empty-ico">' + iconHtml + '</div><div>' + msg + '</div>';
+}
+
+function clearEmpty(containerId) {
+  var wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  var canvas = wrap.querySelector('canvas');
+  if (canvas) canvas.style.display = '';
+  var e = wrap.querySelector('.chart-empty');
+  if (e) e.style.display = 'none';
+}
+
+function tooltipDefaults() {
+  return {
+    backgroundColor: cv('--panel2'),
+    titleColor:      cv('--text'),
+    bodyColor:       cv('--text2'),
+    borderColor:     cv('--border2'),
+    borderWidth: 1,
+    padding: 10,
+  };
+}
+
+// ── CHART 1: SHIPMENTS BY TYPE (Doughnut) ─────────
+function renderChartTypes(shipments) {
+  destroyChart('chartTypes');
+  if (!shipments.length) {
+    showEmpty('cb1','&#9673;','No shipments yet.<br>Add shipments in Execution Controls.');
+    return;
+  }
+  clearEmpty('cb1');
+  var counts = {};
+  shipments.forEach(function(s){ counts[s.type] = (counts[s.type]||0)+1; });
+  var labels = Object.keys(counts);
+  var data   = labels.map(function(l){ return counts[l]; });
+  var COLORS = [cv('--accent'), cv('--info'), cv('--warning'), cv('--success'), cv('--danger')];
+  var bgs    = COLORS.slice(0,labels.length).map(function(c){ return c+'bb'; });
+  _charts['chartTypes'] = new Chart(document.getElementById('chartTypes'), {
+    type: 'doughnut',
+    data: { labels: labels, datasets: [{ data: data, backgroundColor: bgs, borderColor: COLORS, borderWidth: 2, hoverOffset: 8 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '60%',
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: { color: cv('--text2'), font: { family:"'DM Sans',sans-serif", size:11 }, padding:14, boxWidth:11, usePointStyle:true }
+        },
+        tooltip: Object.assign(tooltipDefaults(), {
+          callbacks: {
+            label: function(ctx){
+              return '  ' + ctx.label + ': ' + ctx.parsed + ' (' + Math.round(ctx.parsed/shipments.length*100) + '%)';
+            }
+          }
+        })
+      }
     }
   });
+}
 
-  var total  = shipments.length;
-  var active = shipments.filter(function(s){ return !s.completed; }).length;
-  var cpCount= checkpoints.length;
-
-  function setVal(id, val) {
-    var el = document.getElementById(id);
-    if (el) el.textContent = val !== undefined && val !== null ? val : '—';
+// ── CHART 2: DELIVERY SCHEDULE (Stacked Bar by Month) ──
+function renderChartDelivery(shipments) {
+  destroyChart('chartDelivery');
+  var withDates = shipments.filter(function(s){ return (s.timeline||[]).some(function(t){ return t.date; }); });
+  if (!withDates.length) {
+    showEmpty('cb2','&#128197;','No stage dates set yet.');
+    return;
   }
+  clearEmpty('cb2');
+  var now = new Date();
+  var monthMap = {};
+  withDates.forEach(function(s) {
+    var dates = (s.timeline||[]).filter(function(t){ return t.date; }).map(function(t){ return new Date(t.date); });
+    if (!dates.length) return;
+    var last = new Date(Math.max.apply(null,dates));
+    var key  = last.getFullYear() + '-' + String(last.getMonth()+1).padStart(2,'0');
+    if (!monthMap[key]) monthMap[key] = { label: MONTHS_SHORT[last.getMonth()]+' '+String(last.getFullYear()).slice(2), on:0, late:0 };
+    if (last < now) monthMap[key].late++; else monthMap[key].on++;
+  });
+  var keys   = Object.keys(monthMap).sort();
+  var labels = keys.map(function(k){ return monthMap[k].label; });
+  var onArr  = keys.map(function(k){ return monthMap[k].on; });
+  var lateArr= keys.map(function(k){ return monthMap[k].late; });
+  var accent = cv('--accent'), danger = cv('--danger');
+  var gridC  = cv('--border'), textC  = cv('--muted2');
+  _charts['chartDelivery'] = new Chart(document.getElementById('chartDelivery'), {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        { label:'On Track', data:onArr,  backgroundColor:accent+'99', borderColor:accent, borderWidth:1, borderRadius:4 },
+        { label:'Overdue',  data:lateArr,backgroundColor:danger+'99', borderColor:danger, borderWidth:1, borderRadius:4 }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      scales: {
+        x: { stacked:true, ticks:{color:textC,font:{size:10,family:"'DM Mono',monospace"}}, grid:{color:gridC} },
+        y: { stacked:true, beginAtZero:true, ticks:{color:textC,stepSize:1,font:{size:10,family:"'DM Mono',monospace"}}, grid:{color:gridC} }
+      },
+      plugins: {
+        legend:{ labels:{ color:cv('--text2'), font:{family:"'DM Sans',sans-serif",size:11}, boxWidth:11, usePointStyle:true } },
+        tooltip: tooltipDefaults()
+      }
+    }
+  });
+}
 
-  if (total > 0) {
-    setVal('statTotal',   total);
-    setVal('statActive',  active);
-    setVal('statOverdue', overdue);
-    setVal('statCp',      cpCount);
+// ── CHART 3: STAGE COVERAGE PER SHIPMENT (H-Bar) ──
+function renderChartCoverage(shipments) {
+  destroyChart('chartCoverage');
+  if (!shipments.length) {
+    showEmpty('cb3','&#9636;','No shipments yet.');
+    return;
   }
-})();
+  clearEmpty('cb3');
+  // Show latest 12 shipments to keep chart readable
+  var slice = shipments.slice(-12);
+  var labels    = slice.map(function(s){ return s.id; });
+  var planned   = slice.map(function(s){ return (s.timeline||[]).filter(function(t){ return  t.date; }).length; });
+  var unplanned = slice.map(function(s){ return (s.timeline||[]).filter(function(t){ return !t.date; }).length; });
+  var accent = cv('--accent'), border2 = cv('--border2');
+  var gridC  = cv('--border'), textC   = cv('--muted2');
+  _charts['chartCoverage'] = new Chart(document.getElementById('chartCoverage'), {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        { label:'Planned',   data:planned,   backgroundColor:accent+'bb',  borderColor:accent,  borderWidth:1, borderRadius:3 },
+        { label:'Unplanned', data:unplanned, backgroundColor:border2+'66', borderColor:border2, borderWidth:1, borderRadius:3 }
+      ]
+    },
+    options: {
+      indexAxis:'y',
+      responsive:true, maintainAspectRatio:false,
+      scales: {
+        x: { stacked:true, beginAtZero:true, ticks:{color:textC,stepSize:1,font:{size:10,family:"'DM Mono',monospace"}}, grid:{color:gridC}, title:{display:true,text:'Stages',color:textC,font:{size:10}} },
+        y: { stacked:true, ticks:{color:textC,font:{size:10,family:"'DM Mono',monospace"}}, grid:{display:false} }
+      },
+      plugins: {
+        legend:{ labels:{ color:cv('--text2'), font:{family:"'DM Sans',sans-serif",size:11}, boxWidth:11, usePointStyle:true } },
+        tooltip: tooltipDefaults()
+      }
+    }
+  });
+}
+
+// ── CHART 4: CHECKPOINTS BY CONTROL TYPE (Bar) ────
+function renderChartCps(checkpoints) {
+  destroyChart('chartCps');
+  if (!checkpoints.length) {
+    showEmpty('cb4','&#9711;','No checkpoint definitions yet.');
+    return;
+  }
+  clearEmpty('cb4');
+  var TYPES   = ['COMMERCIAL TERMS','TECHNICAL TERMS','SHIPPING TERMS'];
+  var LBLS    = ['Commercial','Technical','Shipping'];
+  var COLORS  = [cv('--accent'), cv('--info'), cv('--success')];
+  var counts  = TYPES.map(function(t){ return checkpoints.filter(function(c){ return c.type===t; }).length; });
+  var gridC   = cv('--border'), textC = cv('--muted2');
+  _charts['chartCps'] = new Chart(document.getElementById('chartCps'), {
+    type: 'bar',
+    data: {
+      labels: LBLS,
+      datasets: [{
+        label:'Definitions',
+        data: counts,
+        backgroundColor: COLORS.map(function(c){ return c+'bb'; }),
+        borderColor: COLORS,
+        borderWidth: 1.5,
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      scales: {
+        x: { ticks:{color:textC,font:{size:11,family:"'DM Sans',sans-serif"}}, grid:{display:false} },
+        y: { beginAtZero:true, ticks:{color:textC,stepSize:1,font:{size:10,family:"'DM Mono',monospace"}}, grid:{color:gridC} }
+      },
+      plugins: {
+        legend:{ display:false },
+        tooltip: tooltipDefaults()
+      }
+    }
+  });
+}
+
+// ── RENDER ALL ────────────────────────────────────
+function renderDashboard() {
+  var d = loadData();
+  renderStats(d.shipments, d.checkpoints);
+  renderChartTypes(d.shipments);
+  renderChartDelivery(d.shipments);
+  renderChartCoverage(d.shipments);
+  renderChartCps(d.checkpoints);
+}
+
+renderDashboard();
+
+// Re-render when theme switches so chart colors update
+var _origToggle = window.toggleTheme;
+window.toggleTheme = function() {
+  _origToggle();
+  setTimeout(renderDashboard, 60);
+};
 </script>
 
 <!--Start of Tawk.to Script-->
