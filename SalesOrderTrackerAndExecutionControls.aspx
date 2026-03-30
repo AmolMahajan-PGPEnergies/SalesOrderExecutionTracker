@@ -1,4 +1,4 @@
-<%@ Page Language="VB" AutoEventWireup="true" CodeBehind="SalesOrderTrackerAndExecutionControls.aspx.vb" Inherits="SalesOrderExecutionTracker.SalesOrderTrackerAndExecutionControls" %>
+<%@ Page Language="VB" AutoEventWireup="true" CodeFile="SalesOrderTrackerAndExecutionControls.aspx.vb" Inherits="SalesOrderTrackerAndExecutionControls" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -296,10 +296,10 @@ select.sel option{background:var(--panel2)}
   <div class="hdr-right">
     <span class="hdr-page" id="pageTitleLabel">Execution Controls</span>
     <div class="hdr-acts">
-      <button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
-      <button class="btn btn-ghost btn-sm" id="openExecModalBtn">+ Checkpoint</button>
-      <button class="btn btn-accent btn-sm" id="openAddShipBtn">+ Add Shipment</button>
-      <button class="theme-toggle" onclick="toggleTheme()" title="Switch to light mode">&#x2600;&#xFE0F;</button>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="openExecModalBtn">+ Checkpoint</button>
+      <button type="button" class="btn btn-accent btn-sm" id="openAddShipBtn">+ Add Shipment</button>
+      <button type="button" class="theme-toggle" onclick="toggleTheme()" title="Switch to light mode">&#x2600;&#xFE0F;</button>
     </div>
   </div>
 </header>
@@ -330,7 +330,7 @@ select.sel option{background:var(--panel2)}
     </a>
   </div>
   <div class="sb-footer">
-    <button class="sb-toggle" onclick="toggleSidebar()">
+    <button type="button" class="sb-toggle" onclick="toggleSidebar()">
       <span id="sbIcon">◁</span><span id="sbLbl" style="font-size:11px">Collapse</span>
     </button>
   </div>
@@ -347,9 +347,9 @@ select.sel option{background:var(--panel2)}
         <p>Track shipment stages and manage checkpoint definitions</p>
       </div>
       <div class="pg-acts">
-        <button class="btn btn-ghost" onclick="exportCSV()">⬇ Export CSV</button>
-        <button class="btn btn-ghost" id="openExecModalBtn2">+ Checkpoint Definition</button>
-        <button class="btn btn-accent" id="openAddShipBtn2">+ Add Shipment</button>
+        <button type="button" class="btn btn-ghost" onclick="exportCSV()">⬇ Export CSV</button>
+        <button type="button" class="btn btn-ghost" id="openExecModalBtn2">+ Checkpoint Definition</button>
+        <button type="button" class="btn btn-accent" id="openAddShipBtn2">+ Add Shipment</button>
       </div>
     </div>
 
@@ -381,7 +381,7 @@ select.sel option{background:var(--panel2)}
         <span class="card-title">Checkpoint Definition Library</span>
         <div style="display:flex;align-items:center;gap:8px">
           <span id="cpCountLabel" style="font-size:12px;color:var(--muted2)">0 checkpoints</span>
-          <button class="btn btn-ghost btn-sm" id="openExecModalBtn3">+ Add</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="openExecModalBtn3">+ Add</button>
         </div>
       </div>
       <div class="card-body" id="cpLibBody"></div>
@@ -398,7 +398,7 @@ select.sel option{background:var(--panel2)}
         <h3 id="addShipTitle">Add New Shipment</h3>
         <p id="addShipSubtitle">Fill in shipment details and configure stage dates.</p>
       </div>
-      <button class="modal-close" onclick="closeModal('addShipmentModal')">✕</button>
+      <button type="button" class="modal-close" onclick="closeModal('addShipmentModal')">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-grid" style="margin-bottom:16px">
@@ -425,8 +425,8 @@ select.sel option{background:var(--panel2)}
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('addShipmentModal')">Cancel</button>
-      <button class="btn btn-accent" id="saveShipBtn" onclick="saveShipment()">Add Shipment</button>
+      <button type="button" class="btn btn-ghost" onclick="closeModal('addShipmentModal')">Cancel</button>
+      <button type="button" class="btn btn-accent" id="saveShipBtn" onclick="saveShipment()">Add Shipment</button>
     </div>
   </div>
 </div>
@@ -436,13 +436,13 @@ select.sel option{background:var(--panel2)}
   <div class="modal modal-sm">
     <div class="modal-head">
       <div><h3>Select Optional Stages</h3><p>Choose which optional stages to include.</p></div>
-      <button class="modal-close" onclick="closeModal('optionalStageModal')">✕</button>
+      <button type="button" class="modal-close" onclick="closeModal('optionalStageModal')">✕</button>
     </div>
     <div class="modal-body">
       <div class="stg-toggle-list" id="stgToggleToolbar"></div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-accent" onclick="closeModal('optionalStageModal')">Done</button>
+      <button type="button" class="btn btn-accent" onclick="closeModal('optionalStageModal')">Done</button>
     </div>
   </div>
 </div>
@@ -455,7 +455,7 @@ select.sel option{background:var(--panel2)}
         <h3 id="ecModalTitle">Add Checkpoint Definition</h3>
         <p id="ecModalSubtitle">Define once, auto-applies to all matching shipments.</p>
       </div>
-      <button class="modal-close" onclick="closeModal('execControlModal')">✕</button>
+      <button type="button" class="modal-close" onclick="closeModal('execControlModal')">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-grid" style="margin-bottom:14px">
@@ -494,8 +494,8 @@ select.sel option{background:var(--panel2)}
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('execControlModal')">Cancel</button>
-      <button class="btn btn-accent" id="ecSaveBtn" onclick="saveCheckpoint()">Add Checkpoint</button>
+      <button type="button" class="btn btn-ghost" onclick="closeModal('execControlModal')">Cancel</button>
+      <button type="button" class="btn btn-accent" id="ecSaveBtn" onclick="saveCheckpoint()">Add Checkpoint</button>
     </div>
   </div>
 </div>
@@ -505,7 +505,7 @@ select.sel option{background:var(--panel2)}
   <div class="modal">
     <div class="modal-head">
       <div><h3 id="cpListTitle">Linked Checkpoints</h3><p id="cpListSubtitle"></p></div>
-      <button class="modal-close" onclick="closeModal('cpListModal')">✕</button>
+      <button type="button" class="modal-close" onclick="closeModal('cpListModal')">✕</button>
     </div>
     <div class="modal-body" id="cpListBody"></div>
   </div>
@@ -1086,8 +1086,8 @@ function _buildDpDOM(){
       <div id="dpR" class="dp-month-col"></div>
     </div>
     <div class="dp-footer">
-      <button class="dp-reset" type="button" id="dpBtnReset">Reset</button>
-      <button class="dp-apply" type="button" id="dpBtnApply">Apply</button>
+      <button type="button" class="dp-reset" type="button" id="dpBtnReset">Reset</button>
+      <button type="button" class="dp-apply" type="button" id="dpBtnApply">Apply</button>
     </div>`;
   p.querySelector('#dpBtnReset').addEventListener('click',e=>{
     e.stopPropagation();
@@ -1132,9 +1132,9 @@ function _renderDpMonth(id,year,month,side){
   const title=new Date(year,month,1).toLocaleDateString(undefined,{month:'long',year:'numeric'});
   el.innerHTML=`
     <div class="dp-nav">
-      ${side==='prev'?`<button class="dp-nav-btn" id="dpPrev" type="button">&#8249;</button>`:`<span class="dp-nav-spc"></span>`}
+      ${side==='prev'?`<button type="button" class="dp-nav-btn" id="dpPrev" type="button">&#8249;</button>`:`<span class="dp-nav-spc"></span>`}
       <div class="dp-month-title">${title}</div>
-      ${side==='next'?`<button class="dp-nav-btn" id="dpNext" type="button">&#8250;</button>`:`<span class="dp-nav-spc"></span>`}
+      ${side==='next'?`<button type="button" class="dp-nav-btn" id="dpNext" type="button">&#8250;</button>`:`<span class="dp-nav-spc"></span>`}
     </div>
     <div class="dp-grid">
       <div class="dp-dow">Mon</div><div class="dp-dow">Tue</div><div class="dp-dow">Wed</div>
@@ -1430,7 +1430,7 @@ function renderShipments() {
     const cpPills = Object.keys(catCounts).length
       ? Object.keys(catCounts).sort().map(k=>{
           const it=catCounts[k];
-          return `<button class="count-pill" onclick="openCpList('${encodeURIComponent(it.type)}','${encodeURIComponent(it.category)}')">${it.type}: ${it.category} (${it.count})</button>`;
+          return `<button type="button" class="count-pill" onclick="openCpList('${encodeURIComponent(it.type)}','${encodeURIComponent(it.category)}')">${it.type}: ${it.category} (${it.count})</button>`;
         }).join('')
       : '<span class="count-pill">No checkpoints</span>';
 
@@ -1473,8 +1473,8 @@ function renderShipments() {
           ${isLate?'<span style="font-size:11px;color:var(--danger);font-weight:700;background:var(--danger-bg);padding:2px 9px;border-radius:99px">Past Delivery</span>':''}
         </div>
         <div class="ship-acts">
-          <button class="btn btn-ghost btn-sm" onclick="openAddShipmentModal(${realIdx})">Edit</button>
-          <button class="btn btn-danger btn-sm" onclick="removeShipment(${realIdx})">Remove</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="openAddShipmentModal(${realIdx})">Edit</button>
+          <button type="button" class="btn btn-danger btn-sm" onclick="removeShipment(${realIdx})">Remove</button>
         </div>
       </div>
       <div class="ship-meta">
@@ -1525,8 +1525,8 @@ function renderCpLibrary() {
       <div class="cp-head">
         <div class="cp-title">${cp.type} | ${cp.category||'Uncategorized'}</div>
         <div class="cp-acts">
-          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openCheckpointModal(${i})">Edit</button>
-          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();removeCheckpoint(${i})">Remove</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openCheckpointModal(${i})">Edit</button>
+          <button type="button" class="btn btn-danger btn-sm" onclick="event.stopPropagation();removeCheckpoint(${i})">Remove</button>
         </div>
       </div>
       <div class="cp-meta">
