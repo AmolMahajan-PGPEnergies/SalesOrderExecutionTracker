@@ -26,6 +26,44 @@
     }
     .chat-page-header p { color: var(--muted2); font-size: 13px; margin-top: 3px; }
 
+    /* ── DOCUMENT SELECTOR ROW ──────────────────────── */
+    .doc-selector-row {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: var(--rl); padding: 12px 16px;
+      flex-shrink: 0; margin-bottom: 10px; position: relative;
+    }
+    .doc-selector-row::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      border-radius: var(--rl) var(--rl) 0 0;
+      background: linear-gradient(90deg, #7c3aed, var(--accent));
+    }
+    .doc-selector-label {
+      font-size: 11px; font-weight: 700; color: var(--muted2);
+      font-family: 'DM Mono', monospace; letter-spacing: .06em;
+      text-transform: uppercase; white-space: nowrap;
+    }
+    .doc-type-select, .doc-num-input {
+      padding: 7px 10px; border-radius: var(--r);
+      background: var(--bg2); border: 1px solid var(--border2);
+      color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px;
+      outline: none; transition: border-color .2s;
+    }
+    .doc-type-select { min-width: 160px; cursor: pointer; }
+    .doc-num-input { flex: 1; min-width: 140px; }
+    .doc-type-select:focus, .doc-num-input:focus { border-color: #7c3aed; }
+    .doc-num-input::placeholder { color: var(--muted); }
+    .doc-extract-btn {
+      padding: 7px 18px; border-radius: var(--r); border: none; cursor: pointer;
+      background: linear-gradient(135deg, #7c3aed, var(--accent));
+      color: #fff; font-size: 12px; font-weight: 700;
+      font-family: 'DM Sans', sans-serif; white-space: nowrap;
+      transition: opacity .15s, transform .15s;
+    }
+    .doc-extract-btn:hover { opacity: .85; transform: scale(1.03); }
+    .doc-extract-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+    .doc-selector-hint { font-size: 11px; color: var(--muted); flex-basis: 100%; margin-top: 2px; }
+
     /* ── DATA CONTEXT PANEL ──────────────────────────── */
     .data-context-panel {
       background: var(--panel); border: 1px solid var(--border);
@@ -54,6 +92,7 @@
     .dcp-badge.shipments { background: rgba(0,212,216,.1); border: 1px solid rgba(0,212,216,.25); color: var(--accent); }
     .dcp-badge.checkpoints { background: rgba(124,58,237,.1); border: 1px solid rgba(124,58,237,.25); color: #a78bfa; }
     .dcp-badge.seeded { background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.25); color: var(--success); }
+    .dcp-badge.pending { background: rgba(255,180,0,.1); border: 1px solid rgba(255,180,0,.3); color: #f59e0b; }
     .dcp-chevron {
       font-size: 10px; color: var(--muted); transition: transform .2s;
     }
@@ -456,14 +495,34 @@
       </div>
     </div>
 
+    <!-- Document Selector Row -->
+    <div class="doc-selector-row">
+      <span class="doc-selector-label">Document</span>
+      <select class="doc-type-select" id="docTypeSelect">
+        <option value="">— Select Type —</option>
+        <option value="Sales Order">Sales Order</option>
+        <option value="Shipment">Shipment</option>
+        <option value="Bill of Lading">Bill of Lading</option>
+        <option value="Delivery Order">Delivery Order</option>
+        <option value="Invoice">Invoice</option>
+        <option value="Purchase Order">Purchase Order</option>
+        <option value="Execution Record">Execution Record</option>
+      </select>
+      <input type="text" class="doc-num-input" id="docNumInput"
+        placeholder="Document / Reference Number…"
+        onkeydown="if(event.key==='Enter') extractData()">
+      <button class="doc-extract-btn" id="extractBtn" onclick="extractData()">&#x2B07; Extract Data</button>
+      <span class="doc-selector-hint">Enter a document type and number, then click Extract Data to load it into the AI context below.</span>
+    </div>
+
     <!-- Data Context Panel -->
     <div class="data-context-panel" id="dcpPanel">
       <div class="dcp-header" onclick="dcpToggle()">
         <div class="dcp-title">&#x26A1; Live Data Context</div>
         <div class="dcp-badges">
-          <span class="dcp-badge shipments" id="dcpShipBadge">0 Shipments</span>
-          <span class="dcp-badge checkpoints" id="dcpCkptBadge">0 Checkpoints</span>
-          <span class="dcp-badge seeded">&#x2713; Seeded in every AI response</span>
+          <span class="dcp-badge shipments" id="dcpShipBadge" style="display:none"></span>
+          <span class="dcp-badge checkpoints" id="dcpCkptBadge" style="display:none"></span>
+          <span class="dcp-badge pending" id="dcpStatusBadge">&#x26A0; No data extracted yet</span>
         </div>
         <span class="dcp-chevron" id="dcpChevron">&#9660;</span>
       </div>
@@ -478,7 +537,7 @@
             <div id="dcpCheckpointsTable"><span class="dcp-empty">No checkpoints defined.</span></div>
           </div>
         </div>
-        <div class="dcp-notice">This data is automatically included in the system prompt for every AI message. No upload required.</div>
+        <div class="dcp-notice" id="dcpNotice">Use the Document Selector above to extract data into this context. Extracted data will be seeded into every AI response.</div>
       </div>
     </div>
 
@@ -631,6 +690,8 @@ function loadData() {
 }
 
 // ── DATA CONTEXT PANEL ────────────────────────────────
+var extractedContext = null; // null until Extract Data is clicked
+
 function dcpToggle() {
   var body = document.getElementById('dcpBody');
   var chev = document.getElementById('dcpChevron');
@@ -638,35 +699,102 @@ function dcpToggle() {
   chev.classList.toggle('open', open);
 }
 
-function dcpRender() {
-  var d = loadData();
-  document.getElementById('dcpShipBadge').textContent = d.shipments.length + ' Shipment' + (d.shipments.length !== 1 ? 's' : '');
-  document.getElementById('dcpCkptBadge').textContent = d.checkpoints.length + ' Checkpoint' + (d.checkpoints.length !== 1 ? 's' : '');
+function extractData() {
+  var docType = document.getElementById('docTypeSelect').value.trim();
+  var docNum  = document.getElementById('docNumInput').value.trim();
 
-  // Shipments table
-  var shipDiv = document.getElementById('dcpShipmentsTable');
-  if (!d.shipments.length) {
-    shipDiv.innerHTML = '<span class="dcp-empty">No shipments recorded.</span>';
-  } else {
-    shipDiv.innerHTML =
-      '<table class="dcp-table"><thead><tr><th>#</th><th>ID</th><th>Type</th><th>Stages</th></tr></thead><tbody>' +
-      d.shipments.map(function(s, i) {
-        var stageCount = (s.timeline && s.timeline.length) ? s.timeline.length : 0;
-        return '<tr><td>' + (i+1) + '</td><td>' + (s.id||'—') + '</td><td>' + (s.type||'—') + '</td><td>' + stageCount + '</td></tr>';
-      }).join('') +
-      '</tbody></table>';
+  if (!docType || !docNum) {
+    showToast('Please select a Document Type and enter a Document Number.', 'danger');
+    return;
   }
 
+  var d = loadData();
+  var numLower = docNum.toLowerCase();
+
+  // Match shipments: check id, type, soNumber, reference fields (case-insensitive)
+  var matched = d.shipments.filter(function(s) {
+    return (s.id         && s.id.toString().toLowerCase()         === numLower) ||
+           (s.soNumber   && s.soNumber.toString().toLowerCase()   === numLower) ||
+           (s.reference  && s.reference.toString().toLowerCase()  === numLower) ||
+           (s.bolNumber  && s.bolNumber.toString().toLowerCase()  === numLower) ||
+           (s.invoiceNo  && s.invoiceNo.toString().toLowerCase()  === numLower) ||
+           (s.poNumber   && s.poNumber.toString().toLowerCase()   === numLower) ||
+           (s.doNumber   && s.doNumber.toString().toLowerCase()   === numLower);
+  });
+
+  if (!matched.length) {
+    showToast('No record found for ' + docType + ' — ' + docNum, 'danger');
+    return;
+  }
+
+  extractedContext = {
+    docType: docType,
+    docNum: docNum,
+    shipments: matched,
+    checkpoints: d.checkpoints  // checkpoint definitions are global
+  };
+
+  dcpRender();
+
+  // Auto-open the panel so the user sees the data
+  var body = document.getElementById('dcpBody');
+  var chev = document.getElementById('dcpChevron');
+  if (!body.classList.contains('open')) {
+    body.classList.add('open');
+    chev.classList.add('open');
+  }
+
+  showToast('Extracted ' + matched.length + ' record(s) for ' + docType + ' ' + docNum, 'success');
+}
+
+function dcpRender() {
+  var shipBadge   = document.getElementById('dcpShipBadge');
+  var ckptBadge   = document.getElementById('dcpCkptBadge');
+  var statusBadge = document.getElementById('dcpStatusBadge');
+  var notice      = document.getElementById('dcpNotice');
+  var shipDiv     = document.getElementById('dcpShipmentsTable');
+  var ckptDiv     = document.getElementById('dcpCheckpointsTable');
+
+  if (!extractedContext) {
+    shipBadge.style.display   = 'none';
+    ckptBadge.style.display   = 'none';
+    statusBadge.className     = 'dcp-badge pending';
+    statusBadge.textContent   = '⚠ No data extracted yet';
+    shipDiv.innerHTML  = '<span class="dcp-empty">No data extracted. Use the Document Selector above.</span>';
+    ckptDiv.innerHTML  = '<span class="dcp-empty">No data extracted. Use the Document Selector above.</span>';
+    notice.textContent = 'Use the Document Selector above to extract data into this context. Extracted data will be seeded into every AI response.';
+    return;
+  }
+
+  var s = extractedContext.shipments;
+  var c = extractedContext.checkpoints;
+
+  shipBadge.style.display   = 'inline-flex';
+  ckptBadge.style.display   = 'inline-flex';
+  shipBadge.textContent     = s.length + ' Shipment' + (s.length !== 1 ? 's' : '');
+  ckptBadge.textContent     = c.length + ' Checkpoint' + (c.length !== 1 ? 's' : '');
+  statusBadge.className     = 'dcp-badge seeded';
+  statusBadge.textContent   = '✓ Seeded — ' + extractedContext.docType + ' ' + extractedContext.docNum;
+  notice.textContent        = 'This extracted data is included in the system prompt for every AI message in this session.';
+
+  // Shipments table
+  shipDiv.innerHTML =
+    '<table class="dcp-table"><thead><tr><th>#</th><th>ID</th><th>Type</th><th>Stages</th></tr></thead><tbody>' +
+    s.map(function(sh, i) {
+      var stageCount = (sh.timeline && sh.timeline.length) ? sh.timeline.length : 0;
+      return '<tr><td>' + (i+1) + '</td><td>' + (sh.id||'—') + '</td><td>' + (sh.type||'—') + '</td><td>' + stageCount + '</td></tr>';
+    }).join('') +
+    '</tbody></table>';
+
   // Checkpoints table
-  var ckptDiv = document.getElementById('dcpCheckpointsTable');
-  if (!d.checkpoints.length) {
-    ckptDiv.innerHTML = '<span class="dcp-empty">No checkpoints defined.</span>';
+  if (!c.length) {
+    ckptDiv.innerHTML = '<span class="dcp-empty">No checkpoint definitions found.</span>';
   } else {
     ckptDiv.innerHTML =
       '<table class="dcp-table"><thead><tr><th>#</th><th>Type</th><th>Category</th><th>Stages</th></tr></thead><tbody>' +
-      d.checkpoints.map(function(c, i) {
-        var stages = (c.verificationStages && c.verificationStages.length) ? c.verificationStages.join(', ') : 'all';
-        return '<tr><td>' + (i+1) + '</td><td>' + (c.type||'—') + '</td><td>' + (c.category||'—') + '</td><td title="' + stages + '">' + stages + '</td></tr>';
+      c.map(function(cp, i) {
+        var stages = (cp.verificationStages && cp.verificationStages.length) ? cp.verificationStages.join(', ') : 'all';
+        return '<tr><td>' + (i+1) + '</td><td>' + (cp.type||'—') + '</td><td>' + (cp.category||'—') + '</td><td title="' + stages + '">' + stages + '</td></tr>';
       }).join('') +
       '</tbody></table>';
   }
@@ -859,43 +987,54 @@ var AI_KEY_LS = 'cpApiKey';
     ta.style.height = Math.min(ta.scrollHeight, 140) + 'px';
   });
 
-  dcpRender();
+  dcpRender(); // renders empty/pending state on load
 })();
 
 function aiBuildContext() {
-  var d = loadData();
   var lines = [];
-  lines.push('=== COREPULSE — Live Data Context ===');
+  lines.push('=== COREPULSE — Extracted Data Context ===');
   lines.push('Date/time now: ' + new Date().toLocaleString());
-  lines.push('');
-  lines.push('--- SHIPMENTS (' + d.shipments.length + ') ---');
-  if (!d.shipments.length) {
-    lines.push('No shipments recorded yet.');
-  } else {
-    d.shipments.forEach(function(s, i) {
-      lines.push((i+1) + '. Shipment ID: ' + s.id + '  |  Type: ' + s.type);
-      if (s.timeline && s.timeline.length) {
-        s.timeline.forEach(function(t) {
-          var start = t.startDate ? '  Start: ' + t.startDate : '';
-          var end   = t.date      ? '  End: '   + t.date      : '';
-          lines.push('   Stage: ' + t.name + start + end);
-        });
-      } else {
-        lines.push('   No stages defined.');
-      }
-    });
+
+  if (!extractedContext) {
+    lines.push('');
+    lines.push('No document data has been extracted. The user has not yet used the Document Selector.');
+    lines.push('Prompt the user to enter a Document Type and Number and click Extract Data before analysis.');
+    return lines.join('\n');
   }
+
+  lines.push('Document Type: ' + extractedContext.docType);
+  lines.push('Document Number: ' + extractedContext.docNum);
   lines.push('');
-  lines.push('--- CHECKPOINT DEFINITIONS (' + d.checkpoints.length + ') ---');
-  if (!d.checkpoints.length) {
-    lines.push('No checkpoints defined yet.');
+
+  var shipments    = extractedContext.shipments;
+  var checkpoints  = extractedContext.checkpoints;
+
+  lines.push('--- SHIPMENTS / EXECUTION RECORDS (' + shipments.length + ') ---');
+  shipments.forEach(function(s, i) {
+    lines.push((i+1) + '. Shipment ID: ' + (s.id||'—') + '  |  Type: ' + (s.type||'—'));
+    if (s.timeline && s.timeline.length) {
+      s.timeline.forEach(function(t) {
+        var start = t.startDate ? '  Start: ' + t.startDate : '';
+        var end   = t.date      ? '  End: '   + t.date      : '';
+        lines.push('   Stage: ' + t.name + start + end);
+      });
+    } else {
+      lines.push('   No stages defined.');
+    }
+  });
+
+  lines.push('');
+  lines.push('--- CHECKPOINT DEFINITIONS (' + checkpoints.length + ') ---');
+  if (!checkpoints.length) {
+    lines.push('No checkpoint definitions found.');
   } else {
-    d.checkpoints.forEach(function(c, i) {
+    checkpoints.forEach(function(c, i) {
       lines.push((i+1) + '. [' + (c.type||'') + '] ' + (c.category||'') +
         ' — Stages: ' + ((c.verificationStages||[]).join(', ')||'all') +
         ' — ' + (c.checklistDetails||'').substring(0, 120));
     });
   }
+
   return lines.join('\n');
 }
 
