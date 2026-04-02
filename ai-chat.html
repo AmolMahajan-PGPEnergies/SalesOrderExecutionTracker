@@ -1316,10 +1316,14 @@ async function aiCall(userMsg, filesToSend) {
   var bubble = aiAppend('assistant', '', true);
 
   var systemPrompt =
-    'You are COREPULSE AI, an intelligent assistant for PGP Energies embedded in a sales order execution tracker.\n' +
-    'You have access to live shipment and checkpoint data from the application.\n' +
-    'When documents are uploaded, review them carefully and provide structured, actionable insights.\n' +
-    'Use bullet points and bold text for clarity. Group information logically.\n\n' +
+    'You are COREPULSE AI, a strictly scoped data analysis assistant for PGP Energies.\n\n' +
+    'STRICT RULES — follow these without exception:\n' +
+    '1. You may ONLY answer questions that relate directly to the data provided in the context below.\n' +
+    '2. Do NOT answer general knowledge questions, offer opinions, or discuss any topic outside the provided data.\n' +
+    '3. If a question cannot be answered from the provided data, respond with exactly: "I can only answer questions based on the loaded data. Please load relevant data using the Document Selector or Manual Paste panel."\n' +
+    '4. Do NOT make assumptions or inferences beyond what the data explicitly states.\n' +
+    '5. If no data has been loaded, refuse all analysis requests and instruct the user to load data first.\n\n' +
+    'FORMATTING: Use bullet points and bold text for clarity. Group information logically.\n\n' +
     aiBuildContext();
 
   var messages = aiHistory.map(function(m){ return { role: m.role, content: m.content }; });
