@@ -647,9 +647,7 @@ function renderFileList() {
   var clearBtn = document.getElementById('fpClearBtn');
 
   if (!pendingFiles.length) {
-    list.innerHTML = '';
-    list.appendChild(empty);
-    empty.style.display = '';
+    list.innerHTML = '<div class="fp-empty" id="fpEmpty">No files attached yet.<br>Upload files above to include them in your AI conversation.</div>';
     head.style.display = 'none';
     clearBtn.style.display = 'none';
     return;
@@ -657,7 +655,6 @@ function renderFileList() {
 
   head.style.display = '';
   clearBtn.style.display = '';
-  empty.style.display = 'none';
 
   list.innerHTML = pendingFiles.map(function(f) {
     return '<div class="fp-file-item">' +
@@ -689,7 +686,13 @@ var aiStreaming = false;
 
 var AI_USE_PROXY = (function() {
   var h = window.location.hostname;
-  return h === 'localhost' || h === '127.0.0.1' || h.startsWith('192.168.') || h.startsWith('10.');
+  // Use proxy when served by Express (localhost, Codespaces, LAN)
+  // Use direct API key on GitHub Pages or other static hosts
+  if (h === 'localhost' || h === '127.0.0.1') return true;
+  if (h.endsWith('.github.io') || h.endsWith('.githubusercontent.com')) return false;
+  if (window.location.protocol === 'file:') return false;
+  // Codespaces, Gitpod, and other cloud dev environments → use proxy
+  return true;
 })();
 
 var AI_KEY_LS = 'cpApiKey';
