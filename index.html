@@ -353,6 +353,31 @@
       white-space: nowrap; height: 40px; flex-shrink: 0; transition: all .15s;
     }
     .ai-summarize-btn:hover { border-color: #7c3aed; color: #a78bfa; }
+    .ai-attach-btn {
+      width: 40px; height: 40px; border-radius: var(--r); border: 1px solid var(--border2);
+      background: var(--bg3); color: var(--muted2); font-size: 17px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      transition: all .15s; padding: 0;
+    }
+    .ai-attach-btn:hover { border-color: #7c3aed; color: #a78bfa; }
+    .ai-attach-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .ai-attach-btn.has-file { border-color: #7c3aed; color: #a78bfa; background: #7c3aed18; }
+    .ai-file-badge {
+      display: flex; align-items: center; gap: 7px;
+      padding: 6px 18px 0; font-size: 12px; color: var(--muted2);
+    }
+    .ai-file-badge-inner {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 3px 8px 3px 10px; border-radius: 99px;
+      background: #7c3aed18; border: 1px solid rgba(124,58,237,.3); color: #a78bfa;
+      font-size: 11px; font-weight: 600; max-width: 260px;
+    }
+    .ai-file-badge-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ai-file-remove {
+      background: none; border: none; cursor: pointer; color: #a78bfa;
+      font-size: 13px; padding: 0; line-height: 1; flex-shrink: 0;
+    }
+    .ai-file-remove:hover { color: var(--danger); }
 
     @media (max-width: 900px) {
       .charts-grid { grid-template-columns: 1fr; }
@@ -511,7 +536,18 @@
           </div>
         </div>
 
+        <div class="ai-file-badge" id="aiFileBadge" style="display:none">
+          <div class="ai-file-badge-inner">
+            <span>&#128206;</span>
+            <span class="ai-file-badge-name" id="aiFileBadgeName"></span>
+            <button class="ai-file-remove" onclick="aiRemoveFile()" title="Remove file">&#10005;</button>
+          </div>
+        </div>
+        <input type="file" id="aiFileInput" style="display:none"
+          accept=".txt,.csv,.md,.json,.xml,.pdf,.png,.jpg,.jpeg,.webp,.gif"
+          onchange="aiFileSelected(event)">
         <div class="ai-input-row">
+          <button class="ai-attach-btn" id="aiAttachBtn" onclick="aiAttachClick()" title="Attach a file for review">&#128206;</button>
           <textarea class="ai-textarea" id="aiInput" rows="1"
             placeholder="Ask about shipments, stages, overdue items…"
             onkeydown="aiKeyDown(event)"></textarea>
@@ -1037,6 +1073,7 @@ window.toggleTheme = function() {
 // ═══════════════════════════════════════════════════
 var aiHistory  = [];
 var aiStreaming = false;
+var aiPendingFile = null; // { name, contentBlocks: [{type,source,...}|{type,text}], displayText }
 
 // TRUE  → running on the Node.js proxy server (localhost / private IP)
 // FALSE → static hosting (GitHub Pages etc.) — browser calls Anthropic directly
@@ -1157,11 +1194,93 @@ function aiSetBusy(busy) {
   aiStreaming = busy;
   var btn = document.getElementById('aiSendBtn');
   var ta  = document.getElementById('aiInput');
+  var att = document.getElementById('aiAttachBtn');
   if (btn) btn.disabled = busy;
   if (ta)  ta.disabled  = busy;
+  if (att) att.disabled = busy;
 }
 
-async function aiCall(userMsg) {
+function aiAttachClick() {
+  var fi = document.getElementById('aiFileInput');
+  if (fi) fi.click();
+}
+
+function aiFileSelected(e) {
+  var file = e.target.files && e.target.files[0];
+  if (!file) return;
+  // Reset input so the same file can be re-selected
+  e.target.value = '';
+
+  var name = file.name;
+  var ext = name.split('.').pop().toLowerCase();
+  var textTypes = ['txt','csv','md','json','xml','html'];
+  var imageTypes = ['png','jpg','jpeg','webp','gif'];
+
+  var reader = new FileReader();
+
+  if (textTypes.indexOf(ext) !== -1) {
+    reader.onload = function(ev) {
+      var text = ev.target.result;
+      aiPendingFile = {
+        name: name,
+        contentBlocks: [{ type: 'text', text: '--- Attached file: ' + name + ' ---\n' + text + '\n--- End of file ---' }],
+        displayText: '[File: ' + name + ']'
+      };
+      aiShowFileBadge(name);
+    };
+    reader.readAsText(file);
+
+  } else if (ext === 'pdf') {
+    reader.onload = function(ev) {
+      var b64 = ev.target.result.split(',')[1];
+      aiPendingFile = {
+        name: name,
+        contentBlocks: [{ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } }],
+        displayText: '[PDF: ' + name + ']',
+        needsPdfBeta: true
+      };
+      aiShowFileBadge(name);
+    };
+    reader.readAsDataURL(file);
+
+  } else if (imageTypes.indexOf(ext) !== -1) {
+    reader.onload = function(ev) {
+      var dataUrl = ev.target.result;
+      var mimeMatch = dataUrl.match(/^data:([^;]+);/);
+      var mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+      var b64 = dataUrl.split(',')[1];
+      aiPendingFile = {
+        name: name,
+        contentBlocks: [{ type: 'image', source: { type: 'base64', media_type: mime, data: b64 } }],
+        displayText: '[Image: ' + name + ']'
+      };
+      aiShowFileBadge(name);
+    };
+    reader.readAsDataURL(file);
+
+  } else {
+    showToast('Unsupported file type. Use PDF, image, or text files.', 'danger');
+  }
+}
+
+function aiShowFileBadge(name) {
+  var badge = document.getElementById('aiFileBadge');
+  var badgeName = document.getElementById('aiFileBadgeName');
+  var attachBtn = document.getElementById('aiAttachBtn');
+  if (badgeName) badgeName.textContent = name;
+  if (badge) badge.style.display = 'flex';
+  if (attachBtn) attachBtn.classList.add('has-file');
+}
+
+function aiRemoveFile() {
+  aiPendingFile = null;
+  var badge = document.getElementById('aiFileBadge');
+  var attachBtn = document.getElementById('aiAttachBtn');
+  if (badge) badge.style.display = 'none';
+  if (attachBtn) attachBtn.classList.remove('has-file');
+}
+
+async function aiCall(userMsg, pendingFile) {
   // On GitHub Pages, check the key first
   if (!AI_USE_PROXY) {
     var inp = document.getElementById('aiKeyInp');
@@ -1173,8 +1292,20 @@ async function aiCall(userMsg) {
     }
   }
 
-  aiHistory.push({ role: 'user', content: userMsg });
-  aiAppend('user', aiMarkdown(userMsg));
+  // Build message content — array if file attached, string otherwise
+  var userContent;
+  var displayText = userMsg;
+  var needsPdfBeta = false;
+  if (pendingFile && pendingFile.contentBlocks && pendingFile.contentBlocks.length) {
+    userContent = pendingFile.contentBlocks.concat([{ type: 'text', text: userMsg || 'Please review the attached file.' }]);
+    displayText = (pendingFile.displayText ? pendingFile.displayText + ' ' : '') + (userMsg || 'Please review the attached file.');
+    if (pendingFile.needsPdfBeta) needsPdfBeta = true;
+  } else {
+    userContent = userMsg;
+  }
+
+  aiHistory.push({ role: 'user', content: userContent });
+  aiAppend('user', aiMarkdown(displayText));
   aiSetBusy(true);
 
   var bubble = aiAppend('assistant', '', true);
@@ -1194,22 +1325,24 @@ async function aiCall(userMsg) {
       res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ system: systemPrompt, messages: messages })
+        body: JSON.stringify({ system: systemPrompt, messages: messages, needsPdfBeta: needsPdfBeta })
       });
     } else {
       // GitHub Pages: call Anthropic directly from the browser
       var apiKey = (document.getElementById('aiKeyInp') || {}).value || sessionStorage.getItem(AI_KEY_LS) || '';
+      var directHeaders = {
+        'content-type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      };
+      if (needsPdfBeta) directHeaders['anthropic-beta'] = 'pdfs-2024-09-25';
       res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
+        headers: directHeaders,
         body: JSON.stringify({
           model: 'claude-opus-4-6',
-          max_tokens: 1024,
+          max_tokens: 2048,
           system: systemPrompt,
           messages: messages,
           stream: true
@@ -1273,9 +1406,11 @@ function aiSend() {
   if (aiStreaming) return;
   var ta = document.getElementById('aiInput');
   var msg = ta ? ta.value.trim() : '';
-  if (!msg) return;
-  ta.value = ''; ta.style.height = 'auto';
-  aiCall(msg);
+  if (!msg && !aiPendingFile) return;
+  if (ta) { ta.value = ''; ta.style.height = 'auto'; }
+  var file = aiPendingFile;
+  aiRemoveFile();
+  aiCall(msg, file);
 }
 
 function aiSummarise() {
@@ -1285,6 +1420,7 @@ function aiSummarise() {
 
 function aiClear() {
   aiHistory = [];
+  aiRemoveFile();
   var box = document.getElementById('aiMessages');
   if (!box) return;
   box.innerHTML = '';

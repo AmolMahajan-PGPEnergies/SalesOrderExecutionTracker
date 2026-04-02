@@ -16,22 +16,25 @@ app.post('/api/chat', async (req, res) => {
     return res.status(500).json({ error: 'ANTHROPIC_API_KEY is not configured on the server.' });
   }
 
-  const { messages, system } = req.body;
+  const { messages, system, needsPdfBeta } = req.body;
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: 'messages array required.' });
   }
 
+  const upstreamHeaders = {
+    'content-type': 'application/json',
+    'x-api-key': apiKey,
+    'anthropic-version': '2023-06-01'
+  };
+  if (needsPdfBeta) upstreamHeaders['anthropic-beta'] = 'pdfs-2024-09-25';
+
   try {
     const upstream = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
-      },
+      headers: upstreamHeaders,
       body: JSON.stringify({
         model: process.env.CLAUDE_MODEL || 'claude-opus-4-6',
-        max_tokens: 1024,
+        max_tokens: needsPdfBeta ? 2048 : 1024,
         system: system || '',
         messages,
         stream: true
