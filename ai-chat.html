@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COREPULSE — AI Assistant</title>
+  <script>(function(){if(localStorage.getItem('cpTheme')==='light')document.documentElement.classList.add('light');})()</script>
+  <link rel="stylesheet" href="common.css">
+  <style>
+    /* ── PAGE LAYOUT ─────────────────────────────────── */
+    .chat-page {
+      padding: 24px 24px 0;
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - var(--hh));
+      gap: 0;
+    }
+
+    .chat-page-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      margin-bottom: 20px; gap: 12px; flex-wrap: wrap; flex-shrink: 0;
+    }
+    .chat-page-header h2 {
+      font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800;
+      color: var(--text); letter-spacing: -.2px;
+    }
+    .chat-page-header p { color: var(--muted2); font-size: 13px; margin-top: 3px; }
+
+    .chat-body {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 20px;
+      flex: 1;
+      min-height: 0;
+      padding-bottom: 24px;
+    }
+
+    /* ── LEFT: FILE PANEL ────────────────────────────── */
+    .file-panel {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: var(--rl); display: flex; flex-direction: column;
+      gap: 0; overflow: hidden; position: relative;
+    }
+    .file-panel::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--accent), #7c3aed, var(--accent));
+    }
+
+    .fp-head {
+      padding: 14px 16px; border-bottom: 1px solid var(--border);
+    }
+    .fp-title {
+      font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 800;
+      color: var(--text); letter-spacing: -.1px;
+    }
+    .fp-sub { font-size: 11px; color: var(--muted2); margin-top: 2px; }
+
+    /* Drop zone */
+    .drop-zone {
+      margin: 14px; border: 2px dashed var(--border2); border-radius: var(--rl);
+      padding: 28px 16px; text-align: center; cursor: pointer;
+      transition: all .2s; position: relative;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: #7c3aed; background: #7c3aed0a;
+    }
+    .drop-zone input[type="file"] {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      opacity: 0; cursor: pointer;
+    }
+    .dz-icon { font-size: 30px; margin-bottom: 10px; opacity: .55; }
+    .dz-label {
+      font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 5px;
+    }
+    .dz-hint { font-size: 11px; color: var(--muted); line-height: 1.5; }
+    .dz-types {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin-top: 10px;
+    }
+    .dz-type-tag {
+      padding: 2px 7px; border-radius: 99px; font-size: 10px; font-weight: 600;
+      background: var(--bg3); border: 1px solid var(--border2); color: var(--muted2);
+    }
+
+    /* File list */
+    .fp-files-head {
+      padding: 6px 16px 4px;
+      font-family: 'DM Mono', monospace; font-size: 9px; font-weight: 500;
+      color: var(--muted); letter-spacing: .12em; text-transform: uppercase;
+    }
+    .fp-files-list {
+      flex: 1; overflow-y: auto; padding: 0 10px 10px;
+      display: flex; flex-direction: column; gap: 6px;
+      scrollbar-width: thin;
+    }
+    .fp-file-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 10px; border-radius: var(--r);
+      background: var(--bg3); border: 1px solid var(--border);
+      transition: border-color .15s;
+    }
+    .fp-file-item:hover { border-color: var(--border2); }
+    .fp-file-icon {
+      width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 14px;
+    }
+    .fp-file-icon.type-pdf  { background: rgba(255,77,109,.12); }
+    .fp-file-icon.type-img  { background: rgba(0,212,216,.12); }
+    .fp-file-icon.type-text { background: rgba(124,58,237,.12); }
+    .fp-file-info { flex: 1; min-width: 0; }
+    .fp-file-name {
+      font-size: 12px; font-weight: 600; color: var(--text2);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .fp-file-size { font-size: 10px; color: var(--muted); margin-top: 1px; }
+    .fp-file-remove {
+      background: none; border: none; cursor: pointer; color: var(--muted);
+      font-size: 14px; padding: 0; line-height: 1; flex-shrink: 0;
+      transition: color .15s;
+    }
+    .fp-file-remove:hover { color: var(--danger); }
+    .fp-empty {
+      padding: 16px; text-align: center; color: var(--muted);
+      font-size: 12px; line-height: 1.6;
+    }
+
+    /* Context info */
+    .fp-context {
+      margin: 0 14px 14px; padding: 10px 12px; border-radius: var(--r);
+      background: var(--accent-g2); border: 1px solid rgba(0,212,216,.15);
+    }
+    .fp-context-title {
+      font-size: 10px; font-weight: 700; color: var(--accent);
+      font-family: 'DM Mono', monospace; letter-spacing: .06em;
+      text-transform: uppercase; margin-bottom: 4px;
+    }
+    .fp-context-text { font-size: 11px; color: var(--muted2); line-height: 1.5; }
+
+    /* Clear files btn */
+    .fp-clear-btn {
+      margin: 0 14px 14px; padding: 7px; border-radius: var(--r);
+      background: transparent; border: 1px solid var(--border2); color: var(--muted2);
+      font-size: 11px; font-weight: 600; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: all .15s; width: calc(100% - 28px);
+    }
+    .fp-clear-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* ── RIGHT: CHAT PANEL ───────────────────────────── */
+    .chat-panel {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: var(--rl); display: flex; flex-direction: column;
+      overflow: hidden; position: relative; min-height: 0;
+    }
+    .chat-panel::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, #7c3aed, var(--accent), #7c3aed);
+    }
+
+    .cp-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px; border-bottom: 1px solid var(--border); gap: 12px; flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+    .cp-head-left { display: flex; align-items: center; gap: 10px; }
+    .cp-avatar {
+      width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+      background: linear-gradient(135deg, #7c3aed, var(--accent));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; color: #fff; font-weight: 700;
+    }
+    .cp-head-title {
+      font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800;
+      color: var(--text); letter-spacing: -.1px;
+    }
+    .cp-head-sub { font-size: 11px; color: var(--muted2); margin-top: 1px; }
+    .cp-head-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    .ai-key-wrap { position: relative; display: flex; align-items: center; }
+    .ai-key-inp {
+      width: 220px; padding: 6px 32px 6px 10px;
+      background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--r);
+      color: var(--text); font-family: 'DM Mono', monospace; font-size: 11px;
+      outline: none; transition: border-color .2s;
+    }
+    .ai-key-inp:focus { border-color: #7c3aed; }
+    .ai-key-inp::placeholder { color: var(--muted); }
+    .ai-key-toggle {
+      position: absolute; right: 7px; background: none; border: none;
+      color: var(--muted2); cursor: pointer; font-size: 13px; padding: 0;
+      line-height: 1; transition: color .15s;
+    }
+    .ai-key-toggle:hover { color: var(--accent); }
+    .ai-key-badge {
+      display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px;
+      border-radius: 99px; background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.25);
+      color: var(--success); font-size: 10px; font-weight: 700; letter-spacing: .04em;
+      font-family: 'DM Mono', monospace;
+    }
+    .cp-clear-btn {
+      padding: 6px 12px; border-radius: var(--r); background: transparent;
+      border: 1px solid var(--border2); color: var(--muted2); font-size: 11px;
+      font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif;
+      transition: all .15s; white-space: nowrap;
+    }
+    .cp-clear-btn:hover { border-color: var(--border3); color: var(--text2); }
+
+    /* Messages */
+    .ai-messages {
+      flex: 1; overflow-y: auto; padding: 18px 20px;
+      display: flex; flex-direction: column; gap: 14px;
+      scroll-behavior: smooth; scrollbar-width: thin; min-height: 0;
+    }
+    .ai-msg { display: flex; gap: 10px; max-width: 88%; }
+    .ai-msg.ai-user { align-self: flex-end; flex-direction: row-reverse; }
+    .ai-msg-avatar {
+      width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; margin-top: 2px;
+    }
+    .ai-msg.ai-bot .ai-msg-avatar {
+      background: linear-gradient(135deg, #7c3aed, var(--accent)); color: #fff;
+    }
+    .ai-msg.ai-user .ai-msg-avatar {
+      background: var(--bg3); border: 1px solid var(--border2); color: var(--muted2);
+    }
+    .ai-bubble {
+      padding: 11px 15px; border-radius: 14px; font-size: 13.5px; line-height: 1.7;
+      color: var(--text2); max-width: 100%; word-break: break-word;
+    }
+    .ai-msg.ai-bot .ai-bubble {
+      background: var(--bg3); border: 1px solid var(--border);
+      border-top-left-radius: 3px;
+    }
+    .ai-msg.ai-user .ai-bubble {
+      background: linear-gradient(135deg, #7c3aed22, var(--accent-g));
+      border: 1px solid rgba(124,58,237,.2); border-top-right-radius: 3px;
+      color: var(--text);
+    }
+    .ai-bubble p { margin: 0 0 7px; } .ai-bubble p:last-child { margin: 0; }
+    .ai-bubble strong { color: var(--accent); font-weight: 700; }
+    .ai-bubble ul, .ai-bubble ol { padding-left: 20px; margin: 5px 0; }
+    .ai-bubble li { margin-bottom: 3px; }
+    .ai-bubble code {
+      font-family: 'DM Mono', monospace; font-size: 11.5px;
+      background: var(--bg2); padding: 2px 6px; border-radius: 5px; color: var(--accent);
+    }
+    .ai-thinking { display: flex; gap: 5px; align-items: center; padding: 12px 15px; }
+    .ai-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--muted);
+      animation: aiPulse 1.2s ease-in-out infinite;
+    }
+    .ai-dot:nth-child(2) { animation-delay: .2s; }
+    .ai-dot:nth-child(3) { animation-delay: .4s; }
+    @keyframes aiPulse {
+      0%,80%,100% { opacity: .3; transform: scale(.8); }
+      40%          { opacity: 1; transform: scale(1); }
+    }
+
+    /* File attachment tag inside messages */
+    .ai-file-tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 2px 9px; border-radius: 99px; font-size: 11px; font-weight: 600;
+      background: #7c3aed18; border: 1px solid rgba(124,58,237,.3); color: #a78bfa;
+      margin-right: 6px; vertical-align: middle;
+    }
+
+    /* Active files strip */
+    .active-files-strip {
+      padding: 8px 20px 0; display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0;
+    }
+    .active-files-strip:empty { display: none; }
+    .afs-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px 4px 10px; border-radius: 99px;
+      background: #7c3aed14; border: 1px solid rgba(124,58,237,.25); color: #a78bfa;
+      font-size: 11px; font-weight: 600; max-width: 200px;
+    }
+    .afs-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .afs-remove {
+      background: none; border: none; cursor: pointer; color: #a78bfa;
+      font-size: 12px; padding: 0; line-height: 1; flex-shrink: 0;
+    }
+    .afs-remove:hover { color: var(--danger); }
+
+    /* Input row */
+    .cp-input-wrap { flex-shrink: 0; border-top: 1px solid var(--border); }
+    .cp-input-row {
+      padding: 12px 20px 14px; display: flex; gap: 8px; align-items: flex-end;
+    }
+    .ai-textarea {
+      flex: 1; padding: 10px 14px; background: var(--bg2);
+      border: 1px solid var(--border2); border-radius: var(--r);
+      color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13.5px;
+      outline: none; resize: none; line-height: 1.55; min-height: 44px; max-height: 140px;
+      transition: border-color .2s; scrollbar-width: thin;
+    }
+    .ai-textarea:focus { border-color: #7c3aed; }
+    .ai-textarea::placeholder { color: var(--muted); }
+    .cp-send-btn {
+      width: 44px; height: 44px; border-radius: var(--r); border: none; flex-shrink: 0;
+      background: linear-gradient(135deg, #7c3aed, var(--accent));
+      color: #fff; font-size: 17px; cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+      transition: opacity .15s, transform .15s; padding: 0;
+    }
+    .cp-send-btn:hover { opacity: .85; transform: scale(1.05); }
+    .cp-send-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    .cp-summarize-btn {
+      padding: 10px 14px; border-radius: var(--r);
+      background: var(--bg3); border: 1px solid var(--border2);
+      color: var(--text2); font-size: 12px; font-weight: 600;
+      cursor: pointer; font-family: 'DM Sans', sans-serif;
+      white-space: nowrap; height: 44px; flex-shrink: 0; transition: all .15s;
+    }
+    .cp-summarize-btn:hover { border-color: #7c3aed; color: #a78bfa; }
+    .cp-summarize-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* Quick prompt chips */
+    .quick-prompts {
+      padding: 0 20px 12px; display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0;
+    }
+    .qp-chip {
+      padding: 5px 12px; border-radius: 99px; font-size: 11px; font-weight: 600;
+      background: var(--bg3); border: 1px solid var(--border2); color: var(--muted2);
+      cursor: pointer; transition: all .15s; font-family: 'DM Sans', sans-serif;
+    }
+    .qp-chip:hover { border-color: #7c3aed; color: #a78bfa; background: #7c3aed0a; }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .chat-body { grid-template-columns: 1fr; }
+      .file-panel { max-height: 340px; }
+      .ai-key-inp { width: 160px; }
+    }
+    @media (max-width: 600px) {
+      .chat-page { padding: 14px 14px 0; }
+      .chat-body { gap: 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header>
+  <a class="hdr-logo" href="index.html" aria-label="PGP Energies home">
+    <img class="logo-img logo-img-dark"  src="PGP Energies - Full logo - Main.png" alt="PGP Energies">
+    <img class="logo-img logo-img-light" src="PgpEnergies Light Teme Logo.png"     alt="PGP Energies">
+  </a>
+  <div class="hdr-right">
+    <span class="hdr-page">AI Assistant</span>
+    <div class="hdr-acts">
+      <button class="theme-toggle" onclick="toggleTheme()" title="Switch theme">&#x2600;&#xFE0F;</button>
+    </div>
+  </div>
+</header>
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar" id="sidebar">
+  <div class="sb-section">
+    <div class="sb-label">Navigation</div>
+    <a class="nav-item" href="index.html">
+      <span class="nav-icon">&#9646;</span>
+      <span class="nav-lbl">Dashboard</span>
+    </a>
+    <a class="nav-item" href="SalesOrderTrackerAndExecutionControls.html">
+      <span class="nav-icon">&#9672;</span>
+      <span class="nav-lbl">Execution Controls</span>
+    </a>
+    <a class="nav-item active" href="ai-chat.html">
+      <span class="nav-icon">&#x2726;</span>
+      <span class="nav-lbl">AI Assistant</span>
+    </a>
+  </div>
+  <div class="sb-footer">
+    <button class="sb-toggle" onclick="toggleSidebar()">
+      <span id="sbIcon">&#9665;</span>
+      <span id="sbLbl" style="font-size:11px">Collapse</span>
+    </button>
+  </div>
+</aside>
+
+<!-- ── MAIN ── -->
+<main>
+  <div class="chat-page">
+
+    <!-- Page header -->
+    <div class="chat-page-header">
+      <div>
+        <h2>AI Assistant</h2>
+        <p>Upload documents for review, or ask anything about your shipments and execution data.</p>
+      </div>
+    </div>
+
+    <div class="chat-body">
+
+      <!-- LEFT: File Upload Panel -->
+      <div class="file-panel">
+        <div class="fp-head">
+          <div class="fp-title">Document Upload</div>
+          <div class="fp-sub">Attach files to include in your conversation</div>
+        </div>
+
+        <!-- Drop zone -->
+        <div class="drop-zone" id="dropZone"
+             ondragover="dzDragOver(event)" ondragleave="dzDragLeave(event)" ondrop="dzDrop(event)">
+          <input type="file" id="fileInput" multiple
+            accept=".txt,.csv,.md,.json,.xml,.html,.pdf,.png,.jpg,.jpeg,.webp,.gif"
+            onchange="handleFilePick(event)">
+          <div class="dz-icon">&#128196;</div>
+          <div class="dz-label">Drop files here or click to browse</div>
+          <div class="dz-hint">Files are attached to your next message</div>
+          <div class="dz-types">
+            <span class="dz-type-tag">PDF</span>
+            <span class="dz-type-tag">PNG / JPG</span>
+            <span class="dz-type-tag">CSV</span>
+            <span class="dz-type-tag">TXT</span>
+            <span class="dz-type-tag">JSON</span>
+            <span class="dz-type-tag">MD</span>
+          </div>
+        </div>
+
+        <!-- Attached files list -->
+        <div class="fp-files-head" id="fpFilesHead" style="display:none">Attached Files</div>
+        <div class="fp-files-list" id="fpFilesList">
+          <div class="fp-empty" id="fpEmpty">No files attached yet.<br>Upload files above to include them in your AI conversation.</div>
+        </div>
+
+        <button class="fp-clear-btn" id="fpClearBtn" style="display:none" onclick="clearAllFiles()">Remove All Files</button>
+
+        <!-- Context notice -->
+        <div class="fp-context">
+          <div class="fp-context-title">&#x26A1; Live Data Context</div>
+          <div class="fp-context-text">The AI always has access to your shipments, stages, and checkpoint definitions — no upload needed for that data.</div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Chat Panel -->
+      <div class="chat-panel">
+
+        <!-- Chat header -->
+        <div class="cp-head">
+          <div class="cp-head-left">
+            <div class="cp-avatar">AI</div>
+            <div>
+              <div class="cp-head-title">COREPULSE AI Assistant</div>
+              <div class="cp-head-sub">Powered by Claude &mdash; document review &amp; shipment intelligence</div>
+            </div>
+          </div>
+          <div class="cp-head-right">
+            <div class="ai-key-wrap" id="aiKeyWrap" style="display:none">
+              <input type="password" class="ai-key-inp" id="aiKeyInp"
+                placeholder="Paste Anthropic API key…"
+                autocomplete="off" spellcheck="false">
+              <button class="ai-key-toggle" id="aiKeyToggle" title="Show / hide key">&#128065;</button>
+            </div>
+            <div id="aiServerBadge" class="ai-key-badge" style="display:none">&#x2713; Secure Server</div>
+            <button class="cp-clear-btn" onclick="aiClear()">Clear Chat</button>
+          </div>
+        </div>
+
+        <!-- Active files strip (shows queued files) -->
+        <div class="active-files-strip" id="activeFilesStrip"></div>
+
+        <!-- Messages -->
+        <div class="ai-messages" id="aiMessages">
+          <div class="ai-msg ai-bot">
+            <div class="ai-msg-avatar">AI</div>
+            <div class="ai-bubble">
+              <p>Hello! I'm your COREPULSE AI Assistant. I have full access to your shipment and checkpoint data.</p>
+              <p>You can also <strong>upload documents</strong> using the panel on the left &mdash; PDFs, spreadsheets, images, and text files &mdash; and I'll review them alongside your live data. Ask me anything!</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick prompt chips -->
+        <div class="quick-prompts" id="quickPrompts">
+          <button class="qp-chip" onclick="qpSend('Summarise all shipments and highlight anything overdue or at risk.')">&#128200; Summarise shipments</button>
+          <button class="qp-chip" onclick="qpSend('List all checkpoint definitions grouped by control type.')">&#9711; List checkpoints</button>
+          <button class="qp-chip" onclick="qpSend('Which shipments are missing stage dates?')">&#9888; Missing dates</button>
+          <button class="qp-chip" onclick="qpSend('Review the uploaded document and provide a detailed summary.')">&#128196; Review uploaded file</button>
+        </div>
+
+        <!-- Input area -->
+        <div class="cp-input-wrap">
+          <div class="cp-input-row">
+            <textarea class="ai-textarea" id="aiInput" rows="1"
+              placeholder="Ask about shipments, upload documents for review, or type any question…"
+              onkeydown="aiKeyDown(event)"></textarea>
+            <button class="cp-summarize-btn" id="aiSumBtn" onclick="aiSummarise()" title="Summarise all data">&#128196; Summarise</button>
+            <button class="cp-send-btn" id="aiSendBtn" onclick="aiSend()" title="Send">&#10148;</button>
+          </div>
+        </div>
+
+      </div><!-- /.chat-panel -->
+
+    </div><!-- /.chat-body -->
+  </div><!-- /.chat-page -->
+</main>
+
+<!-- Toast area -->
+<div class="toast-area" id="toastArea"></div>
+
+<script>
+// ── THEME & SIDEBAR ────────────────────────────────────
+function toggleTheme() {
+  var isLight = document.documentElement.classList.toggle('light');
+  localStorage.setItem('cpTheme', isLight ? 'light' : 'dark');
+}
+function toggleSidebar() {
+  var col = document.body.classList.toggle('sb-col');
+  document.getElementById('sbIcon').innerHTML = col ? '&#9655;' : '&#9665;';
+  document.getElementById('sbLbl').textContent = col ? 'Expand' : 'Collapse';
+  localStorage.setItem('cpSbCol', col ? '1' : '');
+}
+(function(){
+  if (localStorage.getItem('cpSbCol') === '1') {
+    document.body.classList.add('sb-col');
+    document.getElementById('sbIcon').innerHTML = '&#9655;';
+    document.getElementById('sbLbl').textContent = 'Expand';
+  }
+})();
+
+// ── TOAST ──────────────────────────────────────────────
+function showToast(msg, type) {
+  var area = document.getElementById('toastArea');
+  var t = document.createElement('div');
+  t.className = 'toast ' + (type||'');
+  t.textContent = msg;
+  area.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 3500);
+}
+
+// ── DATA ──────────────────────────────────────────────
+function loadData() {
+  try {
+    var s = JSON.parse(localStorage.getItem('cpShipments') || '[]');
+    var c = JSON.parse(localStorage.getItem('cpCheckpoints') || '[]');
+    return { shipments: s, checkpoints: c };
+  } catch(e) { return { shipments: [], checkpoints: [] }; }
+}
+
+// ── FILE STATE ─────────────────────────────────────────
+var pendingFiles = []; // array of { name, size, iconClass, contentBlocks, needsPdfBeta }
+
+// ── DROP ZONE ──────────────────────────────────────────
+function dzDragOver(e) {
+  e.preventDefault();
+  document.getElementById('dropZone').classList.add('drag-over');
+}
+function dzDragLeave(e) {
+  document.getElementById('dropZone').classList.remove('drag-over');
+}
+function dzDrop(e) {
+  e.preventDefault();
+  document.getElementById('dropZone').classList.remove('drag-over');
+  var files = e.dataTransfer.files;
+  for (var i = 0; i < files.length; i++) processFile(files[i]);
+}
+function handleFilePick(e) {
+  var files = e.target.files;
+  for (var i = 0; i < files.length; i++) processFile(files[i]);
+  e.target.value = '';
+}
+
+function fmtSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/(1024*1024)).toFixed(1) + ' MB';
+}
+
+function processFile(file) {
+  var name = file.name;
+  var ext = name.split('.').pop().toLowerCase();
+  var textTypes = ['txt','csv','md','json','xml','html'];
+  var imageTypes = ['png','jpg','jpeg','webp','gif'];
+
+  var iconClass, icon;
+  if (ext === 'pdf') { iconClass = 'type-pdf'; icon = '&#128220;'; }
+  else if (imageTypes.indexOf(ext) !== -1) { iconClass = 'type-img'; icon = '&#128247;'; }
+  else { iconClass = 'type-text'; icon = '&#128196;'; }
+
+  var reader = new FileReader();
+
+  if (textTypes.indexOf(ext) !== -1) {
+    reader.onload = function(ev) {
+      addPendingFile({
+        name: name, size: fmtSize(file.size), iconClass: iconClass, icon: icon,
+        contentBlocks: [{ type: 'text', text: '--- File: ' + name + ' ---\n' + ev.target.result + '\n--- End of file ---' }],
+        needsPdfBeta: false
+      });
+    };
+    reader.readAsText(file);
+
+  } else if (ext === 'pdf') {
+    reader.onload = function(ev) {
+      var b64 = ev.target.result.split(',')[1];
+      addPendingFile({
+        name: name, size: fmtSize(file.size), iconClass: iconClass, icon: icon,
+        contentBlocks: [{ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } }],
+        needsPdfBeta: true
+      });
+    };
+    reader.readAsDataURL(file);
+
+  } else if (imageTypes.indexOf(ext) !== -1) {
+    reader.onload = function(ev) {
+      var dataUrl = ev.target.result;
+      var mimeMatch = dataUrl.match(/^data:([^;]+);/);
+      var mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+      var b64 = dataUrl.split(',')[1];
+      addPendingFile({
+        name: name, size: fmtSize(file.size), iconClass: iconClass, icon: icon,
+        contentBlocks: [{ type: 'image', source: { type: 'base64', media_type: mime, data: b64 } }],
+        needsPdfBeta: false
+      });
+    };
+    reader.readAsDataURL(file);
+
+  } else {
+    showToast('Unsupported: ' + name + '. Use PDF, image, or text files.', 'danger');
+  }
+}
+
+function addPendingFile(fileObj) {
+  // avoid duplicates by name
+  pendingFiles = pendingFiles.filter(function(f){ return f.name !== fileObj.name; });
+  pendingFiles.push(fileObj);
+  renderFileList();
+  renderActiveStrip();
+}
+
+function removeFile(name) {
+  pendingFiles = pendingFiles.filter(function(f){ return f.name !== name; });
+  renderFileList();
+  renderActiveStrip();
+}
+
+function clearAllFiles() {
+  pendingFiles = [];
+  renderFileList();
+  renderActiveStrip();
+}
+
+function renderFileList() {
+  var list = document.getElementById('fpFilesList');
+  var empty = document.getElementById('fpEmpty');
+  var head = document.getElementById('fpFilesHead');
+  var clearBtn = document.getElementById('fpClearBtn');
+
+  if (!pendingFiles.length) {
+    list.innerHTML = '';
+    list.appendChild(empty);
+    empty.style.display = '';
+    head.style.display = 'none';
+    clearBtn.style.display = 'none';
+    return;
+  }
+
+  head.style.display = '';
+  clearBtn.style.display = '';
+  empty.style.display = 'none';
+
+  list.innerHTML = pendingFiles.map(function(f) {
+    return '<div class="fp-file-item">' +
+      '<div class="fp-file-icon ' + f.iconClass + '">' + f.icon + '</div>' +
+      '<div class="fp-file-info">' +
+        '<div class="fp-file-name" title="' + f.name + '">' + f.name + '</div>' +
+        '<div class="fp-file-size">' + f.size + '</div>' +
+      '</div>' +
+      '<button class="fp-file-remove" onclick="removeFile(' + JSON.stringify(f.name) + ')" title="Remove">&#10005;</button>' +
+    '</div>';
+  }).join('');
+}
+
+function renderActiveStrip() {
+  var strip = document.getElementById('activeFilesStrip');
+  if (!pendingFiles.length) { strip.innerHTML = ''; return; }
+  strip.innerHTML = pendingFiles.map(function(f) {
+    return '<div class="afs-tag">' +
+      '<span>&#128206;</span>' +
+      '<span class="afs-name" title="' + f.name + '">' + f.name + '</span>' +
+      '<button class="afs-remove" onclick="removeFile(' + JSON.stringify(f.name) + ')">&#10005;</button>' +
+    '</div>';
+  }).join('');
+}
+
+// ── AI CORE ────────────────────────────────────────────
+var aiHistory  = [];
+var aiStreaming = false;
+
+var AI_USE_PROXY = (function() {
+  var h = window.location.hostname;
+  return h === 'localhost' || h === '127.0.0.1' || h.startsWith('192.168.') || h.startsWith('10.');
+})();
+
+var AI_KEY_LS = 'cpApiKey';
+
+(function(){
+  if (AI_USE_PROXY) {
+    var badge = document.getElementById('aiServerBadge');
+    if (badge) badge.style.display = 'inline-flex';
+  } else {
+    var wrap = document.getElementById('aiKeyWrap');
+    if (wrap) wrap.style.display = 'flex';
+    var inp = document.getElementById('aiKeyInp');
+    if (inp) {
+      var saved = sessionStorage.getItem(AI_KEY_LS) || '';
+      if (saved) inp.value = saved;
+      inp.addEventListener('input', function(){
+        sessionStorage.setItem(AI_KEY_LS, inp.value.trim());
+      });
+    }
+    var toggle = document.getElementById('aiKeyToggle');
+    if (toggle && inp) toggle.addEventListener('click', function(){
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+      toggle.innerHTML = inp.type === 'password' ? '&#128065;' : '&#128064;';
+    });
+  }
+
+  var ta = document.getElementById('aiInput');
+  if (ta) ta.addEventListener('input', function(){
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(ta.scrollHeight, 140) + 'px';
+  });
+})();
+
+function aiBuildContext() {
+  var d = loadData();
+  var lines = [];
+  lines.push('=== COREPULSE — Live Data Context ===');
+  lines.push('Date/time now: ' + new Date().toLocaleString());
+  lines.push('');
+  lines.push('--- SHIPMENTS (' + d.shipments.length + ') ---');
+  if (!d.shipments.length) {
+    lines.push('No shipments recorded yet.');
+  } else {
+    d.shipments.forEach(function(s, i) {
+      lines.push((i+1) + '. Shipment ID: ' + s.id + '  |  Type: ' + s.type);
+      if (s.timeline && s.timeline.length) {
+        s.timeline.forEach(function(t) {
+          var start = t.startDate ? '  Start: ' + t.startDate : '';
+          var end   = t.date      ? '  End: '   + t.date      : '';
+          lines.push('   Stage: ' + t.name + start + end);
+        });
+      } else {
+        lines.push('   No stages defined.');
+      }
+    });
+  }
+  lines.push('');
+  lines.push('--- CHECKPOINT DEFINITIONS (' + d.checkpoints.length + ') ---');
+  if (!d.checkpoints.length) {
+    lines.push('No checkpoints defined yet.');
+  } else {
+    d.checkpoints.forEach(function(c, i) {
+      lines.push((i+1) + '. [' + (c.type||'') + '] ' + (c.category||'') +
+        ' — Stages: ' + ((c.verificationStages||[]).join(', ')||'all') +
+        ' — ' + (c.checklistDetails||'').substring(0, 120));
+    });
+  }
+  return lines.join('\n');
+}
+
+function aiMarkdown(text) {
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/^#{1,3}\s+(.+)$/gm,'<strong>$1</strong>')
+    .replace(/^[\-\*]\s+(.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+    .replace(/\n{2,}/g,'</p><p>')
+    .replace(/\n/g,'<br>')
+    .replace(/^(.+)$/,'<p>$1</p>');
+}
+
+function aiAppend(role, html, isStreaming) {
+  var box = document.getElementById('aiMessages');
+  if (!box) return null;
+  var wrap = document.createElement('div');
+  wrap.className = 'ai-msg ' + (role === 'user' ? 'ai-user' : 'ai-bot');
+  var avatar = document.createElement('div');
+  avatar.className = 'ai-msg-avatar';
+  avatar.textContent = role === 'user' ? 'You' : 'AI';
+  var bubble = document.createElement('div');
+  bubble.className = 'ai-bubble';
+  if (isStreaming) {
+    bubble.innerHTML = '<div class="ai-thinking"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>';
+  } else {
+    bubble.innerHTML = html;
+  }
+  wrap.appendChild(avatar); wrap.appendChild(bubble);
+  box.appendChild(wrap);
+  box.scrollTop = box.scrollHeight;
+  return bubble;
+}
+
+function aiSetBusy(busy) {
+  aiStreaming = busy;
+  var sendBtn = document.getElementById('aiSendBtn');
+  var sumBtn  = document.getElementById('aiSumBtn');
+  var ta      = document.getElementById('aiInput');
+  var qps     = document.querySelectorAll('.qp-chip');
+  if (sendBtn) sendBtn.disabled = busy;
+  if (sumBtn)  sumBtn.disabled  = busy;
+  if (ta)      ta.disabled      = busy;
+  qps.forEach(function(b){ b.disabled = busy; });
+}
+
+async function aiCall(userMsg, filesToSend) {
+  if (!AI_USE_PROXY) {
+    var inp = document.getElementById('aiKeyInp');
+    var key = (inp ? inp.value.trim() : '') || sessionStorage.getItem(AI_KEY_LS) || '';
+    if (!key) {
+      showToast('Paste your Anthropic API key in the header first.', 'danger');
+      if (inp) inp.focus();
+      return;
+    }
+  }
+
+  // Build content blocks
+  var allBlocks = [];
+  var needsPdfBeta = false;
+  var fileTags = '';
+
+  if (filesToSend && filesToSend.length) {
+    filesToSend.forEach(function(f) {
+      allBlocks = allBlocks.concat(f.contentBlocks);
+      if (f.needsPdfBeta) needsPdfBeta = true;
+      fileTags += '<span class="ai-file-tag">&#128206; ' + f.name + '</span>';
+    });
+  }
+
+  var msgText = userMsg || (filesToSend && filesToSend.length ? 'Please review the attached file(s) and provide a detailed analysis.' : '');
+  allBlocks.push({ type: 'text', text: msgText });
+
+  var userContent = (filesToSend && filesToSend.length) ? allBlocks : msgText;
+  var displayHtml = (fileTags ? fileTags + '<br>' : '') + aiMarkdown(msgText);
+
+  aiHistory.push({ role: 'user', content: userContent });
+  aiAppend('user', displayHtml);
+  aiSetBusy(true);
+
+  var bubble = aiAppend('assistant', '', true);
+
+  var systemPrompt =
+    'You are COREPULSE AI, an intelligent assistant for PGP Energies embedded in a sales order execution tracker.\n' +
+    'You have access to live shipment and checkpoint data from the application.\n' +
+    'When documents are uploaded, review them carefully and provide structured, actionable insights.\n' +
+    'Use bullet points and bold text for clarity. Group information logically.\n\n' +
+    aiBuildContext();
+
+  var messages = aiHistory.map(function(m){ return { role: m.role, content: m.content }; });
+
+  try {
+    var res;
+    if (AI_USE_PROXY) {
+      res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ system: systemPrompt, messages: messages, needsPdfBeta: needsPdfBeta })
+      });
+    } else {
+      var apiKey = (document.getElementById('aiKeyInp') || {}).value || sessionStorage.getItem(AI_KEY_LS) || '';
+      var hdrs = {
+        'content-type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      };
+      if (needsPdfBeta) hdrs['anthropic-beta'] = 'pdfs-2024-09-25';
+      res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: hdrs,
+        body: JSON.stringify({
+          model: 'claude-opus-4-6',
+          max_tokens: 4096,
+          system: systemPrompt,
+          messages: messages,
+          stream: true
+        })
+      });
+    }
+
+    if (!res.ok) {
+      var errJson = await res.json().catch(function(){ return {}; });
+      var errMsg = (errJson.error && errJson.error.message) || ('API error ' + res.status);
+      if (bubble) bubble.innerHTML = '<p style="color:var(--danger)">' + aiMarkdown(errMsg) + '</p>';
+      aiSetBusy(false);
+      return;
+    }
+
+    // Stream SSE
+    var reader = res.body.getReader();
+    var decoder = new TextDecoder();
+    var fullText = '';
+    bubble.innerHTML = '';
+
+    while (true) {
+      var chunk = await reader.read();
+      if (chunk.done) break;
+      var sseLines = decoder.decode(chunk.value, { stream: true }).split('\n');
+      for (var i = 0; i < sseLines.length; i++) {
+        var line = sseLines[i].trim();
+        if (!line.startsWith('data: ')) continue;
+        var data = line.slice(6);
+        if (data === '[DONE]') continue;
+        try {
+          var evt = JSON.parse(data);
+          if (evt.type === 'content_block_delta' && evt.delta && evt.delta.text) {
+            fullText += evt.delta.text;
+            bubble.innerHTML = aiMarkdown(fullText);
+            var box = document.getElementById('aiMessages');
+            if (box) box.scrollTop = box.scrollHeight;
+          }
+        } catch(e) {}
+      }
+    }
+
+    aiHistory.push({ role: 'assistant', content: fullText });
+
+  } catch(err) {
+    if (bubble) bubble.innerHTML = '<p style="color:var(--danger)">Error: ' + aiMarkdown(String(err)) + '</p>';
+  }
+
+  aiSetBusy(false);
+}
+
+function aiKeyDown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    aiSend();
+  }
+}
+
+function aiSend() {
+  if (aiStreaming) return;
+  var ta = document.getElementById('aiInput');
+  var msg = ta ? ta.value.trim() : '';
+  if (!msg && !pendingFiles.length) return;
+  if (ta) { ta.value = ''; ta.style.height = 'auto'; }
+  var files = pendingFiles.slice(); // copy
+  pendingFiles = [];
+  renderFileList();
+  renderActiveStrip();
+  aiCall(msg, files);
+}
+
+function qpSend(prompt) {
+  if (aiStreaming) return;
+  var files = pendingFiles.slice();
+  pendingFiles = [];
+  renderFileList();
+  renderActiveStrip();
+  aiCall(prompt, files);
+}
+
+function aiSummarise() {
+  if (aiStreaming) return;
+  var files = pendingFiles.slice();
+  pendingFiles = [];
+  renderFileList();
+  renderActiveStrip();
+  aiCall('Please summarise the full order execution plan — all shipments, their stages with dates, any overdue items, and overall readiness. Highlight anything that needs immediate attention.', files);
+}
+
+function aiClear() {
+  aiHistory = [];
+  pendingFiles = [];
+  renderFileList();
+  renderActiveStrip();
+  var box = document.getElementById('aiMessages');
+  if (!box) return;
+  box.innerHTML = '';
+  aiAppend('assistant', '<p>Chat cleared. I still have access to all your shipment and checkpoint data. Upload files or ask me anything!</p>');
+}
+</script>
+
+</body>
+</html>
