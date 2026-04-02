@@ -64,6 +64,61 @@
     .doc-extract-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
     .doc-selector-hint { font-size: 11px; color: var(--muted); flex-basis: 100%; margin-top: 2px; }
 
+    /* ── MANUAL PASTE PANEL ──────────────────────────── */
+    .manual-paste-panel {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: var(--rl); flex-shrink: 0; margin-bottom: 10px;
+      overflow: hidden; position: relative;
+    }
+    .manual-paste-panel::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      border-radius: var(--rl) var(--rl) 0 0;
+      background: linear-gradient(90deg, #7c3aed, #a78bfa);
+    }
+    .mpp-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px; cursor: pointer; user-select: none;
+    }
+    .mpp-header:hover { background: var(--bg3); }
+    .mpp-title {
+      font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 800;
+      color: var(--text); flex: 1;
+    }
+    .mpp-sub { font-size: 11px; color: var(--muted2); }
+    .mpp-chevron { font-size: 10px; color: var(--muted); transition: transform .2s; }
+    .mpp-chevron.open { transform: rotate(180deg); }
+    .mpp-body { display: none; border-top: 1px solid var(--border); padding: 14px 16px; }
+    .mpp-body.open { display: block; }
+    .mpp-textarea {
+      width: 100%; box-sizing: border-box;
+      min-height: 120px; max-height: 300px;
+      padding: 10px 12px; border-radius: var(--r);
+      background: var(--bg2); border: 1px solid var(--border2);
+      color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px;
+      line-height: 1.55; outline: none; resize: vertical;
+      transition: border-color .2s; scrollbar-width: thin;
+    }
+    .mpp-textarea:focus { border-color: #7c3aed; }
+    .mpp-textarea::placeholder { color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 12px; }
+    .mpp-actions {
+      display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap;
+    }
+    .mpp-load-btn {
+      padding: 7px 18px; border-radius: var(--r); border: none; cursor: pointer;
+      background: linear-gradient(135deg, #7c3aed, #a78bfa);
+      color: #fff; font-size: 12px; font-weight: 700;
+      font-family: 'DM Sans', sans-serif; transition: opacity .15s, transform .15s;
+    }
+    .mpp-load-btn:hover { opacity: .85; transform: scale(1.03); }
+    .mpp-clear-btn {
+      padding: 7px 14px; border-radius: var(--r); cursor: pointer;
+      background: transparent; border: 1px solid var(--border2);
+      color: var(--muted2); font-size: 12px; font-weight: 600;
+      font-family: 'DM Sans', sans-serif; transition: all .15s;
+    }
+    .mpp-clear-btn:hover { border-color: var(--danger); color: var(--danger); }
+    .mpp-hint { font-size: 11px; color: var(--muted); margin-left: auto; }
+
     /* ── DATA CONTEXT PANEL ──────────────────────────── */
     .data-context-panel {
       background: var(--panel); border: 1px solid var(--border);
@@ -515,6 +570,24 @@
       <span class="doc-selector-hint">Enter a document type and number, then click Extract Data to load it into the AI context below.</span>
     </div>
 
+    <!-- Manual Paste Panel -->
+    <div class="manual-paste-panel">
+      <div class="mpp-header" onclick="mppToggle()">
+        <div class="mpp-title">&#x270E; Paste Data Manually</div>
+        <span class="mpp-sub">Enter HTML or plain text to load as context</span>
+        <span class="mpp-chevron" id="mppChevron">&#9660;</span>
+      </div>
+      <div class="mpp-body" id="mppBody">
+        <textarea class="mpp-textarea" id="mppTextarea"
+          placeholder="Paste HTML or plain text here — e.g. a table copied from your ERP, a report, or any structured data you want the AI to analyse…"></textarea>
+        <div class="mpp-actions">
+          <button class="mpp-load-btn" onclick="loadManualData()">&#x2B07; Load as Context</button>
+          <button class="mpp-clear-btn" onclick="clearManualData()">Clear</button>
+          <span class="mpp-hint">Loaded content will appear in Live Data Context below and be seeded into every AI response.</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Data Context Panel -->
     <div class="data-context-panel" id="dcpPanel">
       <div class="dcp-header" onclick="dcpToggle()">
@@ -527,17 +600,21 @@
         <span class="dcp-chevron" id="dcpChevron">&#9660;</span>
       </div>
       <div class="dcp-body" id="dcpBody">
-        <div class="dcp-grid">
+        <div id="dcpRecordsGrid" class="dcp-grid">
           <div>
             <div class="dcp-section-title">Shipments</div>
-            <div id="dcpShipmentsTable"><span class="dcp-empty">No shipments recorded.</span></div>
+            <div id="dcpShipmentsTable"><span class="dcp-empty">No data extracted. Use the Document Selector or paste data manually above.</span></div>
           </div>
           <div>
             <div class="dcp-section-title">Checkpoint Definitions</div>
-            <div id="dcpCheckpointsTable"><span class="dcp-empty">No checkpoints defined.</span></div>
+            <div id="dcpCheckpointsTable"><span class="dcp-empty">No data extracted. Use the Document Selector or paste data manually above.</span></div>
           </div>
         </div>
-        <div class="dcp-notice" id="dcpNotice">Use the Document Selector above to extract data into this context. Extracted data will be seeded into every AI response.</div>
+        <div id="dcpManualView" style="display:none">
+          <div class="dcp-section-title">Pasted Content</div>
+          <div id="dcpManualContent" style="overflow:auto; max-height:280px; font-size:12.5px; color:var(--text2); line-height:1.6;"></div>
+        </div>
+        <div class="dcp-notice" id="dcpNotice">Use the Document Selector or paste data manually to load context. Loaded data will be seeded into every AI response.</div>
       </div>
     </div>
 
@@ -690,13 +767,45 @@ function loadData() {
 }
 
 // ── DATA CONTEXT PANEL ────────────────────────────────
-var extractedContext = null; // null until Extract Data is clicked
+var extractedContext = null; // null until data is extracted or pasted
 
 function dcpToggle() {
   var body = document.getElementById('dcpBody');
   var chev = document.getElementById('dcpChevron');
   var open = body.classList.toggle('open');
   chev.classList.toggle('open', open);
+}
+
+// ── MANUAL PASTE ──────────────────────────────────────
+function mppToggle() {
+  var body = document.getElementById('mppBody');
+  var chev = document.getElementById('mppChevron');
+  var open = body.classList.toggle('open');
+  chev.classList.toggle('open', open);
+}
+
+function loadManualData() {
+  var raw = (document.getElementById('mppTextarea').value || '').trim();
+  if (!raw) {
+    showToast('Paste some data first.', 'danger');
+    return;
+  }
+  extractedContext = { type: 'manual', raw: raw };
+  dcpRender();
+  // Auto-open the Live Data Context panel
+  var body = document.getElementById('dcpBody');
+  var chev = document.getElementById('dcpChevron');
+  if (!body.classList.contains('open')) { body.classList.add('open'); chev.classList.add('open'); }
+  showToast('Manual data loaded into AI context.', 'success');
+}
+
+function clearManualData() {
+  document.getElementById('mppTextarea').value = '';
+  if (extractedContext && extractedContext.type === 'manual') {
+    extractedContext = null;
+    dcpRender();
+    showToast('Manual data cleared.', '');
+  }
 }
 
 function extractData() {
@@ -748,45 +857,63 @@ function extractData() {
 }
 
 function dcpRender() {
-  var shipBadge   = document.getElementById('dcpShipBadge');
-  var ckptBadge   = document.getElementById('dcpCkptBadge');
-  var statusBadge = document.getElementById('dcpStatusBadge');
-  var notice      = document.getElementById('dcpNotice');
-  var shipDiv     = document.getElementById('dcpShipmentsTable');
-  var ckptDiv     = document.getElementById('dcpCheckpointsTable');
+  var shipBadge    = document.getElementById('dcpShipBadge');
+  var ckptBadge    = document.getElementById('dcpCkptBadge');
+  var statusBadge  = document.getElementById('dcpStatusBadge');
+  var notice       = document.getElementById('dcpNotice');
+  var recordsGrid  = document.getElementById('dcpRecordsGrid');
+  var manualView   = document.getElementById('dcpManualView');
+  var manualContent= document.getElementById('dcpManualContent');
+  var shipDiv      = document.getElementById('dcpShipmentsTable');
+  var ckptDiv      = document.getElementById('dcpCheckpointsTable');
 
+  // ── No context loaded ──
   if (!extractedContext) {
-    shipBadge.style.display   = 'none';
-    ckptBadge.style.display   = 'none';
-    statusBadge.className     = 'dcp-badge pending';
-    statusBadge.textContent   = '⚠ No data extracted yet';
-    shipDiv.innerHTML  = '<span class="dcp-empty">No data extracted. Use the Document Selector above.</span>';
-    ckptDiv.innerHTML  = '<span class="dcp-empty">No data extracted. Use the Document Selector above.</span>';
-    notice.textContent = 'Use the Document Selector above to extract data into this context. Extracted data will be seeded into every AI response.';
+    shipBadge.style.display  = 'none';
+    ckptBadge.style.display  = 'none';
+    statusBadge.className    = 'dcp-badge pending';
+    statusBadge.textContent  = '⚠ No data loaded yet';
+    recordsGrid.style.display = '';
+    manualView.style.display  = 'none';
+    shipDiv.innerHTML = '<span class="dcp-empty">No data loaded. Use Document Selector or paste data manually above.</span>';
+    ckptDiv.innerHTML = '<span class="dcp-empty">No data loaded. Use Document Selector or paste data manually above.</span>';
+    notice.textContent = 'Load data using the Document Selector or Manual Paste above — it will be seeded into every AI response.';
     return;
   }
 
+  // ── Manual paste mode ──
+  if (extractedContext.type === 'manual') {
+    shipBadge.style.display   = 'none';
+    ckptBadge.style.display   = 'none';
+    statusBadge.className     = 'dcp-badge seeded';
+    statusBadge.textContent   = '✓ Seeded — Manual Input';
+    recordsGrid.style.display = 'none';
+    manualView.style.display  = '';
+    manualContent.innerHTML   = extractedContext.raw; // render HTML as-is
+    notice.textContent        = 'Manually pasted data is included in the system prompt for every AI message in this session.';
+    return;
+  }
+
+  // ── Extracted records mode ──
   var s = extractedContext.shipments;
   var c = extractedContext.checkpoints;
-
   shipBadge.style.display   = 'inline-flex';
   ckptBadge.style.display   = 'inline-flex';
   shipBadge.textContent     = s.length + ' Shipment' + (s.length !== 1 ? 's' : '');
   ckptBadge.textContent     = c.length + ' Checkpoint' + (c.length !== 1 ? 's' : '');
   statusBadge.className     = 'dcp-badge seeded';
   statusBadge.textContent   = '✓ Seeded — ' + extractedContext.docType + ' ' + extractedContext.docNum;
-  notice.textContent        = 'This extracted data is included in the system prompt for every AI message in this session.';
+  recordsGrid.style.display = '';
+  manualView.style.display  = 'none';
+  notice.textContent        = 'Extracted data is included in the system prompt for every AI message in this session.';
 
-  // Shipments table
   shipDiv.innerHTML =
     '<table class="dcp-table"><thead><tr><th>#</th><th>ID</th><th>Type</th><th>Stages</th></tr></thead><tbody>' +
     s.map(function(sh, i) {
-      var stageCount = (sh.timeline && sh.timeline.length) ? sh.timeline.length : 0;
-      return '<tr><td>' + (i+1) + '</td><td>' + (sh.id||'—') + '</td><td>' + (sh.type||'—') + '</td><td>' + stageCount + '</td></tr>';
-    }).join('') +
-    '</tbody></table>';
+      var n = (sh.timeline && sh.timeline.length) ? sh.timeline.length : 0;
+      return '<tr><td>'+(i+1)+'</td><td>'+(sh.id||'—')+'</td><td>'+(sh.type||'—')+'</td><td>'+n+'</td></tr>';
+    }).join('') + '</tbody></table>';
 
-  // Checkpoints table
   if (!c.length) {
     ckptDiv.innerHTML = '<span class="dcp-empty">No checkpoint definitions found.</span>';
   } else {
@@ -794,9 +921,8 @@ function dcpRender() {
       '<table class="dcp-table"><thead><tr><th>#</th><th>Type</th><th>Category</th><th>Stages</th></tr></thead><tbody>' +
       c.map(function(cp, i) {
         var stages = (cp.verificationStages && cp.verificationStages.length) ? cp.verificationStages.join(', ') : 'all';
-        return '<tr><td>' + (i+1) + '</td><td>' + (cp.type||'—') + '</td><td>' + (cp.category||'—') + '</td><td title="' + stages + '">' + stages + '</td></tr>';
-      }).join('') +
-      '</tbody></table>';
+        return '<tr><td>'+(i+1)+'</td><td>'+(cp.type||'—')+'</td><td>'+(cp.category||'—')+'</td><td title="'+stages+'">'+stages+'</td></tr>';
+      }).join('') + '</tbody></table>';
   }
 }
 
@@ -990,24 +1116,39 @@ var AI_KEY_LS = 'cpApiKey';
   dcpRender(); // renders empty/pending state on load
 })();
 
+function htmlToText(html) {
+  var tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return tmp.innerText || tmp.textContent || '';
+}
+
 function aiBuildContext() {
   var lines = [];
-  lines.push('=== COREPULSE — Extracted Data Context ===');
+  lines.push('=== COREPULSE — Data Context ===');
   lines.push('Date/time now: ' + new Date().toLocaleString());
 
   if (!extractedContext) {
     lines.push('');
-    lines.push('No document data has been extracted. The user has not yet used the Document Selector.');
-    lines.push('Prompt the user to enter a Document Type and Number and click Extract Data before analysis.');
+    lines.push('No data has been loaded. Prompt the user to either extract a document record or paste data manually before requesting analysis.');
     return lines.join('\n');
   }
 
+  // ── Manual paste mode ──
+  if (extractedContext.type === 'manual') {
+    lines.push('Source: Manually pasted data');
+    lines.push('');
+    lines.push('--- PASTED DATA ---');
+    lines.push(htmlToText(extractedContext.raw));
+    return lines.join('\n');
+  }
+
+  // ── Extracted records mode ──
   lines.push('Document Type: ' + extractedContext.docType);
   lines.push('Document Number: ' + extractedContext.docNum);
   lines.push('');
 
-  var shipments    = extractedContext.shipments;
-  var checkpoints  = extractedContext.checkpoints;
+  var shipments   = extractedContext.shipments;
+  var checkpoints = extractedContext.checkpoints;
 
   lines.push('--- SHIPMENTS / EXECUTION RECORDS (' + shipments.length + ') ---');
   shipments.forEach(function(s, i) {
