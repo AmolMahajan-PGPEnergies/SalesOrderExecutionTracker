@@ -118,6 +118,24 @@
     }
     .mpp-clear-btn:hover { border-color: var(--danger); color: var(--danger); }
     .mpp-hint { font-size: 11px; color: var(--muted); margin-left: auto; }
+    .mpp-fmt-toggle {
+      display: flex; gap: 0; border: 1px solid var(--border2); border-radius: var(--r);
+      overflow: hidden; flex-shrink: 0;
+    }
+    .mpp-fmt-btn {
+      padding: 5px 13px; background: var(--bg2); border: none; cursor: pointer;
+      font-size: 11px; font-weight: 700; color: var(--muted2);
+      font-family: 'DM Mono', monospace; transition: all .15s;
+    }
+    .mpp-fmt-btn:not(:last-child) { border-right: 1px solid var(--border2); }
+    .mpp-fmt-btn.active { background: #7c3aed; color: #fff; }
+    .mpp-json-view {
+      overflow: auto; max-height: 280px; border-radius: var(--r);
+      background: var(--bg2); border: 1px solid var(--border);
+      padding: 10px 12px; font-family: 'DM Mono', monospace;
+      font-size: 11.5px; color: var(--accent); line-height: 1.6;
+      white-space: pre-wrap; word-break: break-all;
+    }
 
     /* ── DATA CONTEXT PANEL ──────────────────────────── */
     .data-context-panel {
@@ -578,12 +596,19 @@
         <span class="mpp-chevron" id="mppChevron">&#9660;</span>
       </div>
       <div class="mpp-body" id="mppBody">
+        <div class="mpp-actions" style="margin-top:0; margin-bottom:10px;">
+          <span style="font-size:11px; font-weight:700; color:var(--muted2); font-family:'DM Mono',monospace; text-transform:uppercase; letter-spacing:.06em;">Format</span>
+          <div class="mpp-fmt-toggle">
+            <button class="mpp-fmt-btn active" id="fmtHtml" onclick="mppSetFmt('html')">HTML</button>
+            <button class="mpp-fmt-btn" id="fmtJson" onclick="mppSetFmt('json')">JSON</button>
+          </div>
+        </div>
         <textarea class="mpp-textarea" id="mppTextarea"
-          placeholder="Paste HTML or plain text here — e.g. a table copied from your ERP, a report, or any structured data you want the AI to analyse…"></textarea>
+          placeholder="Paste HTML here — e.g. a table copied from your ERP or any structured report…"></textarea>
         <div class="mpp-actions">
           <button class="mpp-load-btn" onclick="loadManualData()">&#x2B07; Load as Context</button>
           <button class="mpp-clear-btn" onclick="clearManualData()">Clear</button>
-          <span class="mpp-hint">Loaded content will appear in Live Data Context below and be seeded into every AI response.</span>
+          <span class="mpp-hint">Loaded content appears in Live Data Context below and is seeded into every AI response.</span>
         </div>
       </div>
     </div>
@@ -777,6 +802,8 @@ function dcpToggle() {
 }
 
 // ── MANUAL PASTE ──────────────────────────────────────
+var mppFmt = 'html'; // 'html' or 'json'
+
 function mppToggle() {
   var body = document.getElementById('mppBody');
   var chev = document.getElementById('mppChevron');
@@ -784,19 +811,37 @@ function mppToggle() {
   chev.classList.toggle('open', open);
 }
 
+function mppSetFmt(fmt) {
+  mppFmt = fmt;
+  document.getElementById('fmtHtml').classList.toggle('active', fmt === 'html');
+  document.getElementById('fmtJson').classList.toggle('active', fmt === 'json');
+  var ta = document.getElementById('mppTextarea');
+  ta.placeholder = fmt === 'json'
+    ? 'Paste JSON here — e.g. an API response, exported record, or any JSON object / array…'
+    : 'Paste HTML here — e.g. a table copied from your ERP or any structured report…';
+}
+
 function loadManualData() {
   var raw = (document.getElementById('mppTextarea').value || '').trim();
-  if (!raw) {
-    showToast('Paste some data first.', 'danger');
-    return;
+  if (!raw) { showToast('Paste some data first.', 'danger'); return; }
+
+  if (mppFmt === 'json') {
+    try {
+      var parsed = JSON.parse(raw);
+      extractedContext = { type: 'manual', format: 'json', raw: JSON.stringify(parsed, null, 2) };
+    } catch(e) {
+      showToast('Invalid JSON — please check your data and try again.', 'danger');
+      return;
+    }
+  } else {
+    extractedContext = { type: 'manual', format: 'html', raw: raw };
   }
-  extractedContext = { type: 'manual', raw: raw };
+
   dcpRender();
-  // Auto-open the Live Data Context panel
   var body = document.getElementById('dcpBody');
   var chev = document.getElementById('dcpChevron');
   if (!body.classList.contains('open')) { body.classList.add('open'); chev.classList.add('open'); }
-  showToast('Manual data loaded into AI context.', 'success');
+  showToast((mppFmt === 'json' ? 'JSON' : 'HTML') + ' data loaded into AI context.', 'success');
 }
 
 function clearManualData() {
@@ -886,11 +931,18 @@ function dcpRender() {
     shipBadge.style.display   = 'none';
     ckptBadge.style.display   = 'none';
     statusBadge.className     = 'dcp-badge seeded';
-    statusBadge.textContent   = '✓ Seeded — Manual Input';
+    statusBadge.textContent   = '✓ Seeded — Manual ' + (extractedContext.format === 'json' ? 'JSON' : 'HTML');
     recordsGrid.style.display = 'none';
     manualView.style.display  = '';
-    manualContent.innerHTML   = extractedContext.raw; // render HTML as-is
-    notice.textContent        = 'Manually pasted data is included in the system prompt for every AI message in this session.';
+    if (extractedContext.format === 'json') {
+      manualContent.innerHTML = '<div class="mpp-json-view">' +
+        extractedContext.raw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') +
+        '</div>';
+    } else {
+      manualContent.innerHTML = extractedContext.raw;
+    }
+    notice.textContent = 'Manually pasted ' + (extractedContext.format === 'json' ? 'JSON' : 'HTML') +
+      ' data is included in the system prompt for every AI message in this session.';
     return;
   }
 
@@ -1135,10 +1187,11 @@ function aiBuildContext() {
 
   // ── Manual paste mode ──
   if (extractedContext.type === 'manual') {
-    lines.push('Source: Manually pasted data');
+    var fmt = extractedContext.format === 'json' ? 'JSON' : 'HTML';
+    lines.push('Source: Manually pasted ' + fmt + ' data');
     lines.push('');
     lines.push('--- PASTED DATA ---');
-    lines.push(htmlToText(extractedContext.raw));
+    lines.push(extractedContext.format === 'json' ? extractedContext.raw : htmlToText(extractedContext.raw));
     return lines.join('\n');
   }
 
