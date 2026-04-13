@@ -551,6 +551,10 @@ input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:defau
             <option value="Delayed">Delayed</option>
           </select>
         </div>
+        <div class="fg" style="grid-column:span 4">
+          <label style="color:var(--info)">Final Delivery Insurance Scope <span style="font-weight:400;text-transform:none;letter-spacing:0">(auto)</span></label>
+          <input type="text" id="finalInsuranceScope" readonly placeholder="Auto-filled from routing &amp; terms" tabindex="-1">
+        </div>
       </div>
 
       <!-- Stage config section — Gantt chart rendered here by JS -->
@@ -809,7 +813,7 @@ function openAddShipmentModal(idx) {
   ['srcName','srcLocation','srcPort','srcDeliveryLocation','srcDeliveryPort',
    'stopoverLocation','stopoverPort','stopoverWaitDays',
    'finalFromLocation','finalFromPort','finalFromCountry','finalToLocation','finalToPort',
-   'finalDeliveryLocation','promisedDate','supplierInsuranceScope'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+   'finalDeliveryLocation','promisedDate','supplierInsuranceScope','finalInsuranceScope'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   ['srcPortCountry','srcDeliveryCountry','stopoverCountry','finalToCountry','srcDeliveryTerm','clientDeliveryTerm'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('isStopover').checked = false;
   document.getElementById('isDelay').value = 'On Time';
@@ -864,6 +868,7 @@ function saveShipment() {
     finalToLocation: g('finalToLocation'), finalToPort: g('finalToPort'), finalToCountry: g('finalToCountry'),
     finalDeliveryLocation: g('finalDeliveryLocation'),
     clientDeliveryTerm: g('clientDeliveryTerm'),
+    finalInsuranceScope: g('finalInsuranceScope'),
     promisedDate: g('promisedDate'),
     isDelay: document.getElementById('isDelay')?.value||'On Time'
   };
@@ -976,6 +981,55 @@ function updateInsuranceScope() {
   }
 
   const el = document.getElementById('supplierInsuranceScope');
+  if (el) el.value = scope;
+  updateFinalInsuranceScope();
+}
+
+function updateFinalInsuranceScope() {
+  const supTerm       = document.getElementById('srcDeliveryTerm')?.value        || '';
+  const cliTerm       = document.getElementById('clientDeliveryTerm')?.value     || '';
+  const supScope      = document.getElementById('supplierInsuranceScope')?.value || '';
+  const srcCtry       = document.getElementById('srcDeliveryCountry')?.value     || '';
+  const finalFromCtry = document.getElementById('finalFromCountry')?.value       || '';
+  const finalToCtry   = document.getElementById('finalToCountry')?.value         || '';
+
+  let scope = '';
+
+  if (!supTerm) {
+    // Nothing to derive from yet
+    scope = '';
+
+  } else if (cliTerm === 'EXW' || supScope === 'Client Scope') {
+    // Client collects — they arrange insurance for the final leg
+    scope = 'Client Scope';
+
+  } else if (supScope === 'Supplier Scope') {
+    // Supplier already covers to their named delivery point.
+    // Does that coverage reach all the way to the final destination country?
+    const supplierCoversDestination = !srcCtry || !finalToCtry || srcCtry === finalToCtry;
+    if (supplierCoversDestination) {
+      // Supplier delivers into the same country as final destination — coverage holds
+      scope = 'Supplier Scope';
+    } else {
+      // Supplier delivered to an intermediate country (transhipment hub / stopover);
+      // the outbound final leg is beyond their named delivery point — we must cover it
+      scope = 'Our Scope till Client Final Delivery Location';
+    }
+
+  } else if (supScope === 'Our Scope Till Stopover Location') {
+    // We insured source → stopover; we now continue covering the onward final leg
+    scope = 'Our Scope till Client Final Delivery Location';
+
+  } else if (supScope === 'Our Scope till Client Final Delivery Location') {
+    scope = 'Our Scope till Client Final Delivery Location';
+
+  } else {
+    // Supplier scope not resolved yet — use final-leg geography as fallback
+    const crossBorderFinal = finalFromCtry && finalToCtry && finalFromCtry !== finalToCtry;
+    scope = crossBorderFinal ? 'Our Scope till Client Final Delivery Location' : '';
+  }
+
+  const el = document.getElementById('finalInsuranceScope');
   if (el) el.value = scope;
 }
 
@@ -1784,6 +1838,7 @@ function renderShipments() {
         ${shipment.finalToPort?`<div class="ov-item"><div class="ov-lbl">Sailing To</div><div class="ov-val" style="font-size:11px">${shipment.finalToPort}${shipment.finalToCountry?', '+shipment.finalToCountry:''}</div></div>`:''}
         ${shipment.finalDeliveryLocation?`<div class="ov-item"><div class="ov-lbl">Final Delivery</div><div class="ov-val" style="font-size:11px">${shipment.finalDeliveryLocation}</div></div>`:''}
         ${shipment.clientDeliveryTerm?`<div class="ov-item"><div class="ov-lbl">Client Delivery Term</div><div class="ov-val" style="font-size:11px">${shipment.clientDeliveryTerm}</div></div>`:''}
+        ${shipment.finalInsuranceScope?`<div class="ov-item"><div class="ov-lbl">Final Insurance Scope</div><div class="ov-val" style="font-size:11px">${shipment.finalInsuranceScope}</div></div>`:''}
         ${shipment.promisedDate?`<div class="ov-item"><div class="ov-lbl">Promised to Client</div><div class="ov-val" style="font-size:11px">${promisedFmt}</div></div>`:''}
       </div>` : ''}
       <div class="prog-wrap">
@@ -1869,7 +1924,7 @@ function exportCSV() {
     'Is Stopover Applicable','Stopover Delivery Location','Stopover Delivery Port','Stopover Delivery Country','Stopover Waiting Days',
     'Final Sailing From Location','Final Sailing From Port','Final Sailing From Country',
     'Final Sailing To Location','Final Sailing To Port','Final Sailing To Country',
-    'Final Delivery Location','Client Delivery Term','Promised Date to Client','Is Delay / On Time',
+    'Final Delivery Location','Client Delivery Term','Final Insurance Scope','Promised Date to Client','Is Delay / On Time',
     'Stage Name','Stage Date','Auto Checkpoints','Stage Coverage']];
   shipments.forEach(s=>{
     const auto = getAutoAppliedControls(s);
@@ -1884,7 +1939,7 @@ function exportCSV() {
       s.isStopover||'No', s.stopoverLocation||'', s.stopoverPort||'', s.stopoverCountry||'', s.stopoverWaitDays||'',
       s.finalFromLocation||'', s.finalFromPort||'', s.finalFromCountry||'',
       s.finalToLocation||'', s.finalToPort||'', s.finalToCountry||'',
-      s.finalDeliveryLocation||'', s.clientDeliveryTerm||'', s.promisedDate||'', s.isDelay||'On Time'
+      s.finalDeliveryLocation||'', s.clientDeliveryTerm||'', s.finalInsuranceScope||'', s.promisedDate||'', s.isDelay||'On Time'
     ];
     s.timeline.forEach(stage=>{
       rows.push([s.id, s.type, ...logisticsCols, stage.name, stage.date||'', auto.length, stageCheckMap[stage.name]||0]);
