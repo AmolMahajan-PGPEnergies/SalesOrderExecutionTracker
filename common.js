@@ -71,18 +71,4 @@ function showToast(msg, type) {
 // Sync theme icon (theme class already applied by inline <head> script)
 _syncThemeIcon();
 
-// Close modals on backdrop click
-document.querySelectorAll('.modal-overlay').forEach(function(m) {
-  m.addEventListener('click', function(e) {
-    if (e.target === m) m.classList.remove('open');
-  });
-});
-
-// Close modals on Escape key
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
-    document.querySelectorAll('.modal-overlay.open').forEach(function(m) {
-      m.classList.remove('open');
-    });
-  }
-});
+// Backdrop click and Escape key intentionally do NOT close modals.
