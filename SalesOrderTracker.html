@@ -426,8 +426,21 @@ input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:defau
           <select id="srcPortCountry" class="c-sel"></select>
         </div>
         <div class="fg">
-          <label>Source Delivery Term</label>
-          <input type="text" id="srcDeliveryTerm" placeholder="e.g. FOB, CIF, DAP…">
+          <label>Supplier Delivery Term</label>
+          <select id="srcDeliveryTerm">
+            <option value="">— Select Inco Term —</option>
+            <option value="EXW">EXW – Ex Works</option>
+            <option value="FCA">FCA – Free Carrier</option>
+            <option value="CPT">CPT – Carriage Paid To</option>
+            <option value="CIP">CIP – Carriage &amp; Insurance Paid To</option>
+            <option value="DAP">DAP – Delivered at Place</option>
+            <option value="DPU">DPU – Delivered at Place Unloaded</option>
+            <option value="DDP">DDP – Delivered Duty Paid</option>
+            <option value="FAS">FAS – Free Alongside Ship</option>
+            <option value="FOB">FOB – Free on Board</option>
+            <option value="CFR">CFR – Cost and Freight</option>
+            <option value="CIF">CIF – Cost, Insurance &amp; Freight</option>
+          </select>
         </div>
         <div class="fg">
           <label>Source Delivery Location</label>
@@ -498,13 +511,30 @@ input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:defau
         </div>
       </div>
 
-      <!-- Final Delivery — all 3 in one row -->
+      <!-- Final Delivery — all 4 in one row -->
       <div class="divider" style="margin:10px 0"></div>
       <span class="sec-label">Final Delivery</span>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">
         <div class="fg">
           <label>Final Delivery Location</label>
           <input type="text" id="finalDeliveryLocation" placeholder="e.g. Client Warehouse">
+        </div>
+        <div class="fg">
+          <label>Client Delivery Term</label>
+          <select id="clientDeliveryTerm">
+            <option value="">— Select Inco Term —</option>
+            <option value="EXW">EXW – Ex Works</option>
+            <option value="FCA">FCA – Free Carrier</option>
+            <option value="CPT">CPT – Carriage Paid To</option>
+            <option value="CIP">CIP – Carriage &amp; Insurance Paid To</option>
+            <option value="DAP">DAP – Delivered at Place</option>
+            <option value="DPU">DPU – Delivered at Place Unloaded</option>
+            <option value="DDP">DDP – Delivered Duty Paid</option>
+            <option value="FAS">FAS – Free Alongside Ship</option>
+            <option value="FOB">FOB – Free on Board</option>
+            <option value="CFR">CFR – Cost and Freight</option>
+            <option value="CIF">CIF – Cost, Insurance &amp; Freight</option>
+          </select>
         </div>
         <div class="fg">
           <label>Promised Date to Client</label>
@@ -772,11 +802,11 @@ function openAddShipmentModal(idx) {
   document.getElementById('shipmentId').value = '';
   document.getElementById('shipmentType').value = '';
   // Reset logistics fields
-  ['srcName','srcLocation','srcPort','srcDeliveryTerm','srcDeliveryLocation','srcDeliveryPort',
+  ['srcName','srcLocation','srcPort','srcDeliveryLocation','srcDeliveryPort',
    'stopoverLocation','stopoverPort','stopoverWaitDays',
    'finalFromLocation','finalFromPort','finalFromCountry','finalToLocation','finalToPort',
    'finalDeliveryLocation','promisedDate'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  ['srcPortCountry','srcDeliveryCountry','stopoverCountry','finalToCountry'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['srcPortCountry','srcDeliveryCountry','stopoverCountry','finalToCountry','srcDeliveryTerm','clientDeliveryTerm'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('isStopover').checked = false;
   document.getElementById('isDelay').value = 'On Time';
   toggleStopoverFields();
@@ -793,11 +823,11 @@ function openAddShipmentModal(idx) {
     document.getElementById('shipmentId').value = sh.id;
     document.getElementById('shipmentType').value = sh.type;
     // Populate logistics fields
-    ['srcName','srcLocation','srcPort','srcDeliveryTerm','srcDeliveryLocation','srcDeliveryPort',
+    ['srcName','srcLocation','srcPort','srcDeliveryLocation','srcDeliveryPort',
      'stopoverLocation','stopoverPort','stopoverWaitDays',
      'finalToLocation','finalToPort','finalDeliveryLocation','promisedDate'
     ].forEach(id=>{ const el=document.getElementById(id); if(el && sh[id]!==undefined) el.value=sh[id]; });
-    ['srcPortCountry','srcDeliveryCountry','stopoverCountry','finalToCountry'
+    ['srcPortCountry','srcDeliveryCountry','stopoverCountry','finalToCountry','srcDeliveryTerm','clientDeliveryTerm'
     ].forEach(id=>{ const el=document.getElementById(id); if(el && sh[id]) el.value=sh[id]; });
     document.getElementById('isStopover').checked = (sh.isStopover==='Yes');
     document.getElementById('isDelay').value = sh.isDelay||'On Time';
@@ -828,6 +858,7 @@ function saveShipment() {
     finalFromLocation: g('finalFromLocation'), finalFromPort: g('finalFromPort'), finalFromCountry: g('finalFromCountry'),
     finalToLocation: g('finalToLocation'), finalToPort: g('finalToPort'), finalToCountry: g('finalToCountry'),
     finalDeliveryLocation: g('finalDeliveryLocation'),
+    clientDeliveryTerm: g('clientDeliveryTerm'),
     promisedDate: g('promisedDate'),
     isDelay: document.getElementById('isDelay')?.value||'On Time'
   };
@@ -1687,12 +1718,13 @@ function renderShipments() {
         ${shipment.srcName?`<div class="ov-item"><div class="ov-lbl">Source</div><div class="ov-val" style="font-size:11px">${shipment.srcName}</div></div>`:''}
         ${shipment.srcLocation?`<div class="ov-item"><div class="ov-lbl">Source Location</div><div class="ov-val" style="font-size:11px">${shipment.srcLocation}</div></div>`:''}
         ${shipment.srcPort?`<div class="ov-item"><div class="ov-lbl">Source Port</div><div class="ov-val" style="font-size:11px">${shipment.srcPort}${shipment.srcPortCountry?', '+shipment.srcPortCountry:''}</div></div>`:''}
-        ${shipment.srcDeliveryTerm?`<div class="ov-item"><div class="ov-lbl">Delivery Term</div><div class="ov-val" style="font-size:11px">${shipment.srcDeliveryTerm}</div></div>`:''}
+        ${shipment.srcDeliveryTerm?`<div class="ov-item"><div class="ov-lbl">Supplier Delivery Term</div><div class="ov-val" style="font-size:11px">${shipment.srcDeliveryTerm}</div></div>`:''}
         ${shipment.srcDeliveryPort?`<div class="ov-item"><div class="ov-lbl">Src. Delivery Port</div><div class="ov-val" style="font-size:11px">${shipment.srcDeliveryPort}${shipment.srcDeliveryCountry?', '+shipment.srcDeliveryCountry:''}</div></div>`:''}
         ${shipment.isStopover==='Yes'?`<div class="ov-item"><div class="ov-lbl">Stopover</div><div class="ov-val" style="font-size:11px">${shipment.stopoverPort||'-'}${shipment.stopoverCountry?', '+shipment.stopoverCountry:''}${shipment.stopoverWaitDays?' ('+shipment.stopoverWaitDays+'d)':''}</div></div>`:''}
         ${shipment.finalFromPort?`<div class="ov-item"><div class="ov-lbl">Sailing From</div><div class="ov-val" style="font-size:11px">${shipment.finalFromPort}${shipment.finalFromCountry?', '+shipment.finalFromCountry:''}</div></div>`:''}
         ${shipment.finalToPort?`<div class="ov-item"><div class="ov-lbl">Sailing To</div><div class="ov-val" style="font-size:11px">${shipment.finalToPort}${shipment.finalToCountry?', '+shipment.finalToCountry:''}</div></div>`:''}
         ${shipment.finalDeliveryLocation?`<div class="ov-item"><div class="ov-lbl">Final Delivery</div><div class="ov-val" style="font-size:11px">${shipment.finalDeliveryLocation}</div></div>`:''}
+        ${shipment.clientDeliveryTerm?`<div class="ov-item"><div class="ov-lbl">Client Delivery Term</div><div class="ov-val" style="font-size:11px">${shipment.clientDeliveryTerm}</div></div>`:''}
         ${shipment.promisedDate?`<div class="ov-item"><div class="ov-lbl">Promised to Client</div><div class="ov-val" style="font-size:11px">${promisedFmt}</div></div>`:''}
       </div>` : ''}
       <div class="prog-wrap">
@@ -1778,7 +1810,7 @@ function exportCSV() {
     'Is Stopover Applicable','Stopover Delivery Location','Stopover Delivery Port','Stopover Delivery Country','Stopover Waiting Days',
     'Final Sailing From Location','Final Sailing From Port','Final Sailing From Country',
     'Final Sailing To Location','Final Sailing To Port','Final Sailing To Country',
-    'Final Delivery Location','Promised Date to Client','Is Delay / On Time',
+    'Final Delivery Location','Client Delivery Term','Promised Date to Client','Is Delay / On Time',
     'Stage Name','Stage Date','Auto Checkpoints','Stage Coverage']];
   shipments.forEach(s=>{
     const auto = getAutoAppliedControls(s);
@@ -1793,7 +1825,7 @@ function exportCSV() {
       s.isStopover||'No', s.stopoverLocation||'', s.stopoverPort||'', s.stopoverCountry||'', s.stopoverWaitDays||'',
       s.finalFromLocation||'', s.finalFromPort||'', s.finalFromCountry||'',
       s.finalToLocation||'', s.finalToPort||'', s.finalToCountry||'',
-      s.finalDeliveryLocation||'', s.promisedDate||'', s.isDelay||'On Time'
+      s.finalDeliveryLocation||'', s.clientDeliveryTerm||'', s.promisedDate||'', s.isDelay||'On Time'
     ];
     s.timeline.forEach(stage=>{
       rows.push([s.id, s.type, ...logisticsCols, stage.name, stage.date||'', auto.length, stageCheckMap[stage.name]||0]);
