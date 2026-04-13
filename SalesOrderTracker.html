@@ -427,7 +427,7 @@ input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:defau
         </div>
         <div class="fg">
           <label>Supplier Delivery Term</label>
-          <select id="srcDeliveryTerm">
+          <select id="srcDeliveryTerm" onchange="updateInsuranceScope()">
             <option value="">— Select Inco Term —</option>
             <option value="EXW">EXW – Ex Works</option>
             <option value="FCA">FCA – Free Carrier</option>
@@ -453,6 +453,10 @@ input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:defau
         <div class="fg">
           <label>Source Delivery Country</label>
           <select id="srcDeliveryCountry" class="c-sel" onchange="updateFinalSailingFrom()"></select>
+        </div>
+        <div class="fg" style="grid-column:span 4">
+          <label style="color:var(--info)">Supplier Delivery Insurance Scope <span style="font-weight:400;text-transform:none;letter-spacing:0">(auto)</span></label>
+          <input type="text" id="supplierInsuranceScope" readonly placeholder="Auto-filled from Inco Term &amp; Stopover" tabindex="-1">
         </div>
       </div>
 
@@ -805,7 +809,7 @@ function openAddShipmentModal(idx) {
   ['srcName','srcLocation','srcPort','srcDeliveryLocation','srcDeliveryPort',
    'stopoverLocation','stopoverPort','stopoverWaitDays',
    'finalFromLocation','finalFromPort','finalFromCountry','finalToLocation','finalToPort',
-   'finalDeliveryLocation','promisedDate'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+   'finalDeliveryLocation','promisedDate','supplierInsuranceScope'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   ['srcPortCountry','srcDeliveryCountry','stopoverCountry','finalToCountry','srcDeliveryTerm','clientDeliveryTerm'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('isStopover').checked = false;
   document.getElementById('isDelay').value = 'On Time';
@@ -852,6 +856,7 @@ function saveShipment() {
     srcName: g('srcName'), srcLocation: g('srcLocation'), srcPort: g('srcPort'), srcPortCountry: g('srcPortCountry'),
     srcDeliveryTerm: g('srcDeliveryTerm'), srcDeliveryLocation: g('srcDeliveryLocation'),
     srcDeliveryPort: g('srcDeliveryPort'), srcDeliveryCountry: g('srcDeliveryCountry'),
+    supplierInsuranceScope: g('supplierInsuranceScope'),
     isStopover: document.getElementById('isStopover')?.checked ? 'Yes' : 'No',
     stopoverLocation: g('stopoverLocation'), stopoverPort: g('stopoverPort'), stopoverCountry: g('stopoverCountry'),
     stopoverWaitDays: g('stopoverWaitDays'),
@@ -920,6 +925,24 @@ function toggleStopoverFields() {
   const panel = document.getElementById('stopoverPanel');
   if (panel) panel.style.display = on ? 'grid' : 'none';
   updateFinalSailingFrom();
+  updateInsuranceScope();
+}
+
+function updateInsuranceScope() {
+  const term = document.getElementById('srcDeliveryTerm')?.value || '';
+  const hasStopover = document.getElementById('isStopover')?.checked;
+  let scope = '';
+  if (term) {
+    if (['CIF','CIP','DAP','DPU','DDP'].includes(term)) {
+      scope = 'Supplier Scope';
+    } else if (hasStopover) {
+      scope = 'Our Scope Till Stopover Location';
+    } else {
+      scope = 'Our Scope till Client Final Delivery Location';
+    }
+  }
+  const el = document.getElementById('supplierInsuranceScope');
+  if (el) el.value = scope;
 }
 
 function updateFinalSailingFrom() {
@@ -1719,6 +1742,7 @@ function renderShipments() {
         ${shipment.srcLocation?`<div class="ov-item"><div class="ov-lbl">Source Location</div><div class="ov-val" style="font-size:11px">${shipment.srcLocation}</div></div>`:''}
         ${shipment.srcPort?`<div class="ov-item"><div class="ov-lbl">Source Port</div><div class="ov-val" style="font-size:11px">${shipment.srcPort}${shipment.srcPortCountry?', '+shipment.srcPortCountry:''}</div></div>`:''}
         ${shipment.srcDeliveryTerm?`<div class="ov-item"><div class="ov-lbl">Supplier Delivery Term</div><div class="ov-val" style="font-size:11px">${shipment.srcDeliveryTerm}</div></div>`:''}
+        ${shipment.supplierInsuranceScope?`<div class="ov-item"><div class="ov-lbl">Insurance Scope</div><div class="ov-val" style="font-size:11px">${shipment.supplierInsuranceScope}</div></div>`:''}
         ${shipment.srcDeliveryPort?`<div class="ov-item"><div class="ov-lbl">Src. Delivery Port</div><div class="ov-val" style="font-size:11px">${shipment.srcDeliveryPort}${shipment.srcDeliveryCountry?', '+shipment.srcDeliveryCountry:''}</div></div>`:''}
         ${shipment.isStopover==='Yes'?`<div class="ov-item"><div class="ov-lbl">Stopover</div><div class="ov-val" style="font-size:11px">${shipment.stopoverPort||'-'}${shipment.stopoverCountry?', '+shipment.stopoverCountry:''}${shipment.stopoverWaitDays?' ('+shipment.stopoverWaitDays+'d)':''}</div></div>`:''}
         ${shipment.finalFromPort?`<div class="ov-item"><div class="ov-lbl">Sailing From</div><div class="ov-val" style="font-size:11px">${shipment.finalFromPort}${shipment.finalFromCountry?', '+shipment.finalFromCountry:''}</div></div>`:''}
@@ -1806,7 +1830,7 @@ function exportCSV() {
   if (!shipments.length) { showToast('No shipments to export.','danger'); return; }
   const rows = [['Shipment ID','Type',
     'Source Name','Source Location','Source Port','Source Port Country',
-    'Source Delivery Term','Source Delivery Location','Source Delivery Port','Source Delivery Country',
+    'Source Delivery Term','Source Delivery Location','Source Delivery Port','Source Delivery Country','Supplier Insurance Scope',
     'Is Stopover Applicable','Stopover Delivery Location','Stopover Delivery Port','Stopover Delivery Country','Stopover Waiting Days',
     'Final Sailing From Location','Final Sailing From Port','Final Sailing From Country',
     'Final Sailing To Location','Final Sailing To Port','Final Sailing To Country',
@@ -1821,7 +1845,7 @@ function exportCSV() {
     }));
     const logisticsCols = [
       s.srcName||'', s.srcLocation||'', s.srcPort||'', s.srcPortCountry||'',
-      s.srcDeliveryTerm||'', s.srcDeliveryLocation||'', s.srcDeliveryPort||'', s.srcDeliveryCountry||'',
+      s.srcDeliveryTerm||'', s.srcDeliveryLocation||'', s.srcDeliveryPort||'', s.srcDeliveryCountry||'', s.supplierInsuranceScope||'',
       s.isStopover||'No', s.stopoverLocation||'', s.stopoverPort||'', s.stopoverCountry||'', s.stopoverWaitDays||'',
       s.finalFromLocation||'', s.finalFromPort||'', s.finalFromCountry||'',
       s.finalToLocation||'', s.finalToPort||'', s.finalToCountry||'',
