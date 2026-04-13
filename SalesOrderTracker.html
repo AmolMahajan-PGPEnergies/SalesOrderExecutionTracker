@@ -386,7 +386,8 @@ select.sel option{background:var(--panel2)}
       <button class="modal-close" onclick="closeModal('addShipmentModal')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="form-grid" style="margin-bottom:16px">
+      <!-- Row 1: Shipment ID + Type -->
+      <div class="form-grid" style="margin-bottom:14px">
         <div class="fg">
           <label>Shipment ID<span class="req">*</span></label>
           <input type="text" id="shipmentId" placeholder="e.g. SHP-001">
@@ -403,10 +404,10 @@ select.sel option{background:var(--panel2)}
         </div>
       </div>
 
-      <!-- Source Details -->
-      <div class="divider" style="margin:12px 0"></div>
+      <!-- Source Details — 4 per row -->
+      <div class="divider" style="margin:10px 0"></div>
       <span class="sec-label">Source Details</span>
-      <div class="form-grid" style="margin-bottom:16px">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">
         <div class="fg">
           <label>Source Name</label>
           <input type="text" id="srcName" placeholder="e.g. Supplier Co.">
@@ -441,10 +442,10 @@ select.sel option{background:var(--panel2)}
         </div>
       </div>
 
-      <!-- Stopover Details -->
-      <div class="divider" style="margin:12px 0"></div>
+      <!-- Stopover Details — toggle + 4 fields in one row -->
+      <div class="divider" style="margin:10px 0"></div>
       <span class="sec-label">Stopover Details</span>
-      <div class="form-grid" style="margin-bottom:8px">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">
         <div class="fg">
           <label>Is Stopover Applicable</label>
           <select id="isStopover" onchange="toggleStopoverFields()">
@@ -456,56 +457,54 @@ select.sel option{background:var(--panel2)}
           <label>Stopover Waiting Days</label>
           <input type="number" id="stopoverWaitDays" min="0" placeholder="0">
         </div>
-      </div>
-      <div class="form-grid" id="stopoverFieldsWrap" style="margin-bottom:16px;display:none">
-        <div class="fg">
+        <div class="fg" id="stopoverLocWrap" style="display:none">
           <label>Stopover Delivery Location</label>
           <input type="text" id="stopoverLocation" placeholder="e.g. Colombo">
         </div>
-        <div class="fg">
+        <div class="fg" id="stopoverPortWrap" style="display:none">
           <label>Stopover Delivery Port</label>
           <input type="text" id="stopoverPort" placeholder="e.g. Port of Colombo">
         </div>
-        <div class="fg">
+        <div class="fg" id="stopoverCountryWrap" style="display:none">
           <label>Stopover Delivery Country</label>
           <input type="text" id="stopoverCountry" placeholder="e.g. Sri Lanka">
         </div>
       </div>
 
-      <!-- Final Sailing -->
-      <div class="divider" style="margin:12px 0"></div>
+      <!-- Final Sailing — From (3) + To (3) in one row -->
+      <div class="divider" style="margin:10px 0"></div>
       <span class="sec-label">Final Sailing</span>
-      <div class="form-grid" style="margin-bottom:16px">
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:14px">
         <div class="fg">
-          <label>Final Sailing From Location</label>
+          <label>From Location</label>
           <input type="text" id="finalFromLocation" placeholder="e.g. Singapore">
         </div>
         <div class="fg">
-          <label>Final Sailing From Port</label>
+          <label>From Port</label>
           <input type="text" id="finalFromPort" placeholder="e.g. Port of Singapore">
         </div>
         <div class="fg">
-          <label>Final Sailing From Country</label>
+          <label>From Country</label>
           <input type="text" id="finalFromCountry" placeholder="e.g. Singapore">
         </div>
         <div class="fg">
-          <label>Final Sailing To Location</label>
+          <label>To Location</label>
           <input type="text" id="finalToLocation" placeholder="e.g. Abu Dhabi">
         </div>
         <div class="fg">
-          <label>Final Sailing To Port</label>
+          <label>To Port</label>
           <input type="text" id="finalToPort" placeholder="e.g. Khalifa Port">
         </div>
         <div class="fg">
-          <label>Final Sailing To Country</label>
+          <label>To Country</label>
           <input type="text" id="finalToCountry" placeholder="e.g. UAE">
         </div>
       </div>
 
-      <!-- Final Delivery -->
-      <div class="divider" style="margin:12px 0"></div>
+      <!-- Final Delivery — all 3 in one row -->
+      <div class="divider" style="margin:10px 0"></div>
       <span class="sec-label">Final Delivery</span>
-      <div class="form-grid" style="margin-bottom:16px">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px">
         <div class="fg">
           <label>Final Delivery Location</label>
           <input type="text" id="finalDeliveryLocation" placeholder="e.g. Client Warehouse">
@@ -857,10 +856,10 @@ function getSelectedTimeline(type) {
 
 function toggleStopoverFields() {
   const on = document.getElementById('isStopover')?.value === 'Yes';
-  const fw = document.getElementById('stopoverFieldsWrap');
-  const ww = document.getElementById('stopoverWaitDaysWrap');
-  if (fw) fw.style.display = on ? '' : 'none';
-  if (ww) ww.style.display = on ? '' : 'none';
+  ['stopoverWaitDaysWrap','stopoverLocWrap','stopoverPortWrap','stopoverCountryWrap'].forEach(id=>{
+    const el = document.getElementById(id);
+    if (el) el.style.display = on ? '' : 'none';
+  });
 }
 
 document.getElementById('shipmentType').addEventListener('change', renderStageConfigRows);
