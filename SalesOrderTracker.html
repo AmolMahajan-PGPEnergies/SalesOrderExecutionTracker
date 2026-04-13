@@ -511,7 +511,7 @@ input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:defau
         </div>
         <div class="fg">
           <label>To Country</label>
-          <select id="finalToCountry" class="c-sel"></select>
+          <select id="finalToCountry" class="c-sel" onchange="updateInsuranceScope()"></select>
         </div>
       </div>
 
@@ -525,7 +525,7 @@ input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:defau
         </div>
         <div class="fg">
           <label>Client Delivery Term</label>
-          <select id="clientDeliveryTerm">
+          <select id="clientDeliveryTerm" onchange="updateInsuranceScope()">
             <option value="">— Select Inco Term —</option>
             <option value="EXW">EXW – Ex Works</option>
             <option value="FCA">FCA – Free Carrier</option>
@@ -929,18 +929,52 @@ function toggleStopoverFields() {
 }
 
 function updateInsuranceScope() {
-  const term = document.getElementById('srcDeliveryTerm')?.value || '';
-  const hasStopover = document.getElementById('isStopover')?.checked;
+  const supTerm   = document.getElementById('srcDeliveryTerm')?.value    || '';
+  const cliTerm   = document.getElementById('clientDeliveryTerm')?.value || '';
+  const hasStop   = document.getElementById('isStopover')?.checked;
+  const srcCtry   = document.getElementById('srcDeliveryCountry')?.value || '';
+  const stopCtry  = document.getElementById('stopoverCountry')?.value    || '';
+  const finalCtry = document.getElementById('finalToCountry')?.value     || '';
+
   let scope = '';
-  if (term) {
-    if (['CIF','CIP','DAP','DPU','DDP'].includes(term)) {
+
+  if (supTerm) {
+    if (['CIF','CIP','DAP','DPU','DDP'].includes(supTerm)) {
+      // Supplier bears risk and provides insurance coverage to the named destination
       scope = 'Supplier Scope';
-    } else if (hasStopover) {
-      scope = 'Our Scope Till Stopover Location';
-    } else {
+
+    } else if (cliTerm === 'EXW') {
+      // Client collects at our origin point — they arrange their own insurance from there
+      scope = 'Client Scope';
+
+    } else if (['CIF','CIP','DAP','DPU','DDP'].includes(cliTerm)) {
+      // We sell to client on seller-risk terms — we must insure all the way to final delivery
       scope = 'Our Scope till Client Final Delivery Location';
+
+    } else {
+      // Buyer-risk supplier terms (EXW/FCA/FAS/FOB/CFR/CPT)
+      // + client either on buyer-risk terms or no term set yet
+      // Use geography to determine how far our insurance leg extends
+
+      // A true third-country stopover = stopover is in a country different from
+      // both the source delivery country AND the final sailing-to country
+      const thirdCtryStop = hasStop && stopCtry &&
+                            stopCtry !== srcCtry && stopCtry !== finalCtry;
+
+      // International shipment = source country differs from final destination country
+      const crossBorder = srcCtry && finalCtry && srcCtry !== finalCtry;
+
+      if (thirdCtryStop && crossBorder) {
+        // Goods transit through a distinct intermediate country before final destination —
+        // insurance exposure ends at that stopover hub; separate coverage needed beyond
+        scope = 'Our Scope Till Stopover Location';
+      } else {
+        // Same-country or direct international routing — we cover end-to-end
+        scope = 'Our Scope till Client Final Delivery Location';
+      }
     }
   }
+
   const el = document.getElementById('supplierInsuranceScope');
   if (el) el.value = scope;
 }
@@ -953,6 +987,7 @@ function updateFinalSailingFrom() {
   const ffl = document.getElementById('finalFromLocation'); if (ffl) ffl.value = loc||'';
   const ffp = document.getElementById('finalFromPort');     if (ffp) ffp.value = port||'';
   const ffc = document.getElementById('finalFromCountry');  if (ffc) ffc.value = ctry||'';
+  updateInsuranceScope();
 }
 
 document.getElementById('shipmentType').addEventListener('change', renderStageConfigRows);
