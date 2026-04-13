@@ -125,9 +125,11 @@ select.sel option{background:var(--panel2)}
 /* ── MODALS ── */
 .modal-overlay{position:fixed;inset:0;z-index:300;background:rgba(8,11,15,.87);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:20px}
 .modal-overlay.open{display:flex;animation:fadeUp .2s ease}
-.modal{background:var(--panel);border:1px solid var(--border2);border-radius:var(--rl);width:min(720px,90vw);max-height:88vh;overflow-y:auto;box-shadow:0 40px 80px rgba(0,0,0,.65)}
-.modal-lg{width:min(1000px,90vw);max-height:92vh}
-.modal-sm{width:min(460px,90vw)}
+.modal{background:var(--panel);border:1px solid var(--border2);border-radius:var(--rl);width:90%;max-width:900px;max-height:88vh;overflow-y:auto;box-shadow:0 40px 80px rgba(0,0,0,.65)}
+.modal-lg{width:90%;max-width:1400px;max-height:92vh}
+.modal-sm{width:90%;max-width:480px}
+input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:default}
+select:disabled{background:var(--bg3)!important;color:var(--muted2);cursor:default;opacity:1}
 .modal-head{padding:20px 22px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;position:sticky;top:0;background:var(--panel);z-index:2}
 .modal-head h3{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:var(--text)}
 .modal-head p{font-size:12px;color:var(--muted2);margin-top:3px}
@@ -422,7 +424,7 @@ select.sel option{background:var(--panel2)}
         </div>
         <div class="fg">
           <label>Source Port Country</label>
-          <input type="text" id="srcPortCountry" placeholder="e.g. China">
+          <select id="srcPortCountry"><option value="">Select country…</option></select>
         </div>
         <div class="fg">
           <label>Source Delivery Term</label>
@@ -430,65 +432,58 @@ select.sel option{background:var(--panel2)}
         </div>
         <div class="fg">
           <label>Source Delivery Location</label>
-          <input type="text" id="srcDeliveryLocation" placeholder="e.g. Warehouse A">
+          <input type="text" id="srcDeliveryLocation" placeholder="e.g. Warehouse A" oninput="updateFinalSailingFrom()">
         </div>
         <div class="fg">
           <label>Source Delivery Port</label>
-          <input type="text" id="srcDeliveryPort" placeholder="e.g. Jebel Ali">
+          <input type="text" id="srcDeliveryPort" placeholder="e.g. Jebel Ali" oninput="updateFinalSailingFrom()">
         </div>
         <div class="fg">
           <label>Source Delivery Country</label>
-          <input type="text" id="srcDeliveryCountry" placeholder="e.g. UAE">
+          <select id="srcDeliveryCountry" onchange="updateFinalSailingFrom()"><option value="">Select country…</option></select>
         </div>
       </div>
 
-      <!-- Row 4 — Stopover, 4 columns (3 hidden until Yes) -->
+      <!-- Row 4 — Stopover checkbox + 3 hidden fields -->
       <div class="divider" style="margin:10px 0"></div>
-      <span class="sec-label">Stopover Details</span>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">
-        <div class="fg">
-          <label>Is Stopover Applicable</label>
-          <select id="isStopover" onchange="toggleStopoverFields()">
-            <option value="No">No</option>
-            <option value="Yes">Yes</option>
-          </select>
-        </div>
-        <div class="fg" id="stopoverLocWrap" style="display:none">
-          <label>Stopover Delivery Location</label>
-          <input type="text" id="stopoverLocation" placeholder="e.g. Colombo">
-        </div>
-        <div class="fg" id="stopoverPortWrap" style="display:none">
-          <label>Stopover Delivery Port</label>
-          <input type="text" id="stopoverPort" placeholder="e.g. Port of Colombo">
-        </div>
-        <div class="fg" id="stopoverCountryWrap" style="display:none">
-          <label>Stopover Delivery Country</label>
-          <input type="text" id="stopoverCountry" placeholder="e.g. Sri Lanka">
-        </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <input type="checkbox" id="isStopover" onchange="toggleStopoverFields()" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0">
+        <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;cursor:pointer" onclick="document.getElementById('isStopover').click()">Is Stopover Applicable</span>
       </div>
-      <!-- Stopover Waiting Days — shown below when Yes -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px" id="stopoverWaitRow" style="display:none">
-        <div class="fg" id="stopoverWaitDaysWrap" style="display:none">
+      <div id="stopoverPanel" style="display:none;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">
+        <div class="fg">
+          <label>Stopover Delivery Location</label>
+          <input type="text" id="stopoverLocation" placeholder="e.g. Colombo" oninput="updateFinalSailingFrom()">
+        </div>
+        <div class="fg">
+          <label>Stopover Delivery Port</label>
+          <input type="text" id="stopoverPort" placeholder="e.g. Port of Colombo" oninput="updateFinalSailingFrom()">
+        </div>
+        <div class="fg">
+          <label>Stopover Delivery Country</label>
+          <select id="stopoverCountry" onchange="updateFinalSailingFrom()"><option value="">Select country…</option></select>
+        </div>
+        <div class="fg">
           <label>Stopover Waiting Days</label>
           <input type="number" id="stopoverWaitDays" min="0" placeholder="0">
         </div>
       </div>
 
-      <!-- Final Sailing — From (3) + To (3) in one row -->
+      <!-- Final Sailing — From auto-filled (3) + To editable (3) -->
       <div class="divider" style="margin:10px 0"></div>
       <span class="sec-label">Final Sailing</span>
       <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:14px">
         <div class="fg">
-          <label>From Location</label>
-          <input type="text" id="finalFromLocation" placeholder="e.g. Singapore">
+          <label style="color:var(--info)">From Location <span style="font-weight:400;text-transform:none;letter-spacing:0">(auto)</span></label>
+          <input type="text" id="finalFromLocation" readonly placeholder="Auto-filled">
         </div>
         <div class="fg">
-          <label>From Port</label>
-          <input type="text" id="finalFromPort" placeholder="e.g. Port of Singapore">
+          <label style="color:var(--info)">From Port <span style="font-weight:400;text-transform:none;letter-spacing:0">(auto)</span></label>
+          <input type="text" id="finalFromPort" readonly placeholder="Auto-filled">
         </div>
         <div class="fg">
-          <label>From Country</label>
-          <input type="text" id="finalFromCountry" placeholder="e.g. Singapore">
+          <label style="color:var(--info)">From Country <span style="font-weight:400;text-transform:none;letter-spacing:0">(auto)</span></label>
+          <select id="finalFromCountry" disabled><option value="">Auto-filled</option></select>
         </div>
         <div class="fg">
           <label>To Location</label>
@@ -500,7 +495,7 @@ select.sel option{background:var(--panel2)}
         </div>
         <div class="fg">
           <label>To Country</label>
-          <input type="text" id="finalToCountry" placeholder="e.g. UAE">
+          <select id="finalToCountry"><option value="">Select country…</option></select>
         </div>
       </div>
 
@@ -777,12 +772,14 @@ function openAddShipmentModal(idx) {
   document.getElementById('shipmentId').value = '';
   document.getElementById('shipmentType').value = '';
   // Reset all logistics fields
-  ['srcName','srcLocation','srcPort','srcPortCountry','srcDeliveryTerm','srcDeliveryLocation','srcDeliveryPort','srcDeliveryCountry',
-   'stopoverLocation','stopoverPort','stopoverCountry','stopoverWaitDays',
-   'finalFromLocation','finalFromPort','finalFromCountry','finalToLocation','finalToPort','finalToCountry',
+  ['srcName','srcLocation','srcPort','srcDeliveryTerm','srcDeliveryLocation','srcDeliveryPort',
+   'stopoverLocation','stopoverPort','stopoverWaitDays',
+   'finalFromLocation','finalFromPort','finalToLocation','finalToPort',
    'finalDeliveryLocation','promisedDate'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  document.getElementById('isStopover').value='No';
-  document.getElementById('isDelay').value='On Time';
+  ['srcPortCountry','srcDeliveryCountry','stopoverCountry','finalFromCountry','finalToCountry'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('isStopover').checked = false;
+  document.getElementById('isDelay').value = 'On Time';
+  populateCountrySelects();
   toggleStopoverFields();
   document.getElementById('stageConfigSection').style.display='none';
   document.getElementById('stageConfigContainer').innerHTML='';
@@ -797,11 +794,14 @@ function openAddShipmentModal(idx) {
     document.getElementById('shipmentId').value = sh.id;
     document.getElementById('shipmentType').value = sh.type;
     // Populate logistics fields
-    ['srcName','srcLocation','srcPort','srcPortCountry','srcDeliveryTerm','srcDeliveryLocation','srcDeliveryPort','srcDeliveryCountry',
-     'stopoverLocation','stopoverPort','stopoverCountry','stopoverWaitDays',
-     'finalFromLocation','finalFromPort','finalFromCountry','finalToLocation','finalToPort','finalToCountry',
-     'finalDeliveryLocation','promisedDate'].forEach(id=>{ const el=document.getElementById(id); if(el && sh[id]!==undefined) el.value=sh[id]; });
-    document.getElementById('isStopover').value = sh.isStopover||'No';
+    ['srcName','srcLocation','srcPort','srcDeliveryTerm','srcDeliveryLocation','srcDeliveryPort',
+     'stopoverLocation','stopoverPort','stopoverWaitDays',
+     'finalToLocation','finalToPort','finalDeliveryLocation','promisedDate'
+    ].forEach(id=>{ const el=document.getElementById(id); if(el && sh[id]!==undefined) el.value=sh[id]; });
+    // Country selects (must be populated first)
+    ['srcPortCountry','srcDeliveryCountry','stopoverCountry','finalFromCountry','finalToCountry'
+    ].forEach(id=>{ const el=document.getElementById(id); if(el && sh[id]) el.value=sh[id]; });
+    document.getElementById('isStopover').checked = (sh.isStopover==='Yes');
     document.getElementById('isDelay').value = sh.isDelay||'On Time';
     toggleStopoverFields();
     renderStageConfigRows();
@@ -824,7 +824,7 @@ function saveShipment() {
     srcName: g('srcName'), srcLocation: g('srcLocation'), srcPort: g('srcPort'), srcPortCountry: g('srcPortCountry'),
     srcDeliveryTerm: g('srcDeliveryTerm'), srcDeliveryLocation: g('srcDeliveryLocation'),
     srcDeliveryPort: g('srcDeliveryPort'), srcDeliveryCountry: g('srcDeliveryCountry'),
-    isStopover: document.getElementById('isStopover')?.value||'No',
+    isStopover: document.getElementById('isStopover')?.checked ? 'Yes' : 'No',
     stopoverLocation: g('stopoverLocation'), stopoverPort: g('stopoverPort'), stopoverCountry: g('stopoverCountry'),
     stopoverWaitDays: g('stopoverWaitDays'),
     finalFromLocation: g('finalFromLocation'), finalFromPort: g('finalFromPort'), finalFromCountry: g('finalFromCountry'),
@@ -856,11 +856,48 @@ function getSelectedTimeline(type) {
   return result;
 }
 
-function toggleStopoverFields() {
-  const on = document.getElementById('isStopover')?.value === 'Yes';
-  ['stopoverLocWrap','stopoverPortWrap','stopoverCountryWrap','stopoverWaitDaysWrap'].forEach(id=>{
-    const el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none';
+const COUNTRIES = [
+  'Afghanistan','Albania','Algeria','Andorra','Angola','Argentina','Armenia','Australia','Austria','Azerbaijan',
+  'Bahrain','Bangladesh','Belarus','Belgium','Belize','Bolivia','Bosnia and Herzegovina','Botswana','Brazil','Brunei','Bulgaria',
+  'Cambodia','Cameroon','Canada','Chile','China','Colombia','Croatia','Cuba','Cyprus','Czech Republic',
+  'Denmark','Dominican Republic','Ecuador','Egypt','El Salvador','Estonia','Ethiopia',
+  'Finland','France','Georgia','Germany','Ghana','Greece','Guatemala','Honduras','Hong Kong','Hungary',
+  'India','Indonesia','Iran','Iraq','Ireland','Israel','Italy','Jamaica','Japan','Jordan',
+  'Kazakhstan','Kenya','Kuwait','Kyrgyzstan','Latvia','Lebanon','Libya','Lithuania','Luxembourg',
+  'Malaysia','Malta','Mexico','Moldova','Mongolia','Morocco','Mozambique','Myanmar',
+  'Nepal','Netherlands','New Zealand','Nicaragua','Nigeria','North Korea','Norway',
+  'Oman','Pakistan','Panama','Paraguay','Peru','Philippines','Poland','Portugal',
+  'Qatar','Romania','Russia','Saudi Arabia','Senegal','Serbia','Singapore','Slovakia','Slovenia',
+  'Somalia','South Africa','South Korea','Spain','Sri Lanka','Sudan','Sweden','Switzerland','Syria',
+  'Taiwan','Tanzania','Thailand','Tunisia','Turkey','Turkmenistan','Uganda','Ukraine',
+  'United Arab Emirates','United Kingdom','United States','Uruguay','Uzbekistan','Venezuela','Vietnam','Yemen','Zimbabwe'
+];
+
+function populateCountrySelects() {
+  const opts = '<option value="">Select country…</option>' + COUNTRIES.map(c=>`<option value="${c}">${c}</option>`).join('');
+  ['srcPortCountry','srcDeliveryCountry','stopoverCountry','finalToCountry'].forEach(id=>{
+    const el = document.getElementById(id); if (el) el.innerHTML = opts;
   });
+  // finalFromCountry is auto-filled separately
+  const ffc = document.getElementById('finalFromCountry');
+  if (ffc) ffc.innerHTML = '<option value="">Auto-filled</option>' + COUNTRIES.map(c=>`<option value="${c}">${c}</option>`).join('');
+}
+
+function toggleStopoverFields() {
+  const on = document.getElementById('isStopover')?.checked;
+  const panel = document.getElementById('stopoverPanel');
+  if (panel) { panel.style.display = on ? 'grid' : 'none'; }
+  updateFinalSailingFrom();
+}
+
+function updateFinalSailingFrom() {
+  const stopoverOn = document.getElementById('isStopover')?.checked;
+  const loc  = stopoverOn ? document.getElementById('stopoverLocation')?.value  : document.getElementById('srcDeliveryLocation')?.value;
+  const port = stopoverOn ? document.getElementById('stopoverPort')?.value      : document.getElementById('srcDeliveryPort')?.value;
+  const ctry = stopoverOn ? document.getElementById('stopoverCountry')?.value   : document.getElementById('srcDeliveryCountry')?.value;
+  const ffl = document.getElementById('finalFromLocation'); if (ffl) ffl.value = loc||'';
+  const ffp = document.getElementById('finalFromPort');     if (ffp) ffp.value = port||'';
+  const ffc = document.getElementById('finalFromCountry');  if (ffc) ffc.value = ctry||'';
 }
 
 document.getElementById('shipmentType').addEventListener('change', renderStageConfigRows);
@@ -1812,6 +1849,7 @@ function renderAll() {
 }
 
 // Init
+populateCountrySelects();
 renderAll();
 
 // Tawk.to
