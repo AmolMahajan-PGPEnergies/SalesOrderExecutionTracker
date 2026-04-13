@@ -129,7 +129,6 @@ select.sel option{background:var(--panel2)}
 .modal-lg{width:90%;max-width:1400px;max-height:92vh}
 .modal-sm{width:90%;max-width:480px}
 input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:default}
-select:disabled{background:var(--bg3)!important;color:var(--muted2);cursor:default;opacity:1}
 .modal-head{padding:20px 22px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;position:sticky;top:0;background:var(--panel);z-index:2}
 .modal-head h3{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:var(--text)}
 .modal-head p{font-size:12px;color:var(--muted2);margin-top:3px}
@@ -424,7 +423,7 @@ select:disabled{background:var(--bg3)!important;color:var(--muted2);cursor:defau
         </div>
         <div class="fg">
           <label>Source Port Country</label>
-          <select id="srcPortCountry"><option value="">Select country…</option></select>
+          <select id="srcPortCountry" class="c-sel"></select>
         </div>
         <div class="fg">
           <label>Source Delivery Term</label>
@@ -440,7 +439,7 @@ select:disabled{background:var(--bg3)!important;color:var(--muted2);cursor:defau
         </div>
         <div class="fg">
           <label>Source Delivery Country</label>
-          <select id="srcDeliveryCountry" onchange="updateFinalSailingFrom()"><option value="">Select country…</option></select>
+          <select id="srcDeliveryCountry" class="c-sel" onchange="updateFinalSailingFrom()"></select>
         </div>
       </div>
 
@@ -461,7 +460,7 @@ select:disabled{background:var(--bg3)!important;color:var(--muted2);cursor:defau
         </div>
         <div class="fg">
           <label>Stopover Delivery Country</label>
-          <select id="stopoverCountry" onchange="updateFinalSailingFrom()"><option value="">Select country…</option></select>
+          <select id="stopoverCountry" class="c-sel" onchange="updateFinalSailingFrom()"></select>
         </div>
         <div class="fg">
           <label>Stopover Waiting Days</label>
@@ -483,7 +482,7 @@ select:disabled{background:var(--bg3)!important;color:var(--muted2);cursor:defau
         </div>
         <div class="fg">
           <label style="color:var(--info)">From Country <span style="font-weight:400;text-transform:none;letter-spacing:0">(auto)</span></label>
-          <select id="finalFromCountry" disabled><option value="">Auto-filled</option></select>
+          <input type="text" id="finalFromCountry" readonly placeholder="Auto-filled" tabindex="-1">
         </div>
         <div class="fg">
           <label>To Location</label>
@@ -495,7 +494,7 @@ select:disabled{background:var(--bg3)!important;color:var(--muted2);cursor:defau
         </div>
         <div class="fg">
           <label>To Country</label>
-          <select id="finalToCountry"><option value="">Select country…</option></select>
+          <select id="finalToCountry" class="c-sel"></select>
         </div>
       </div>
 
@@ -765,6 +764,7 @@ function filterView(type, el) {
 // ADD SHIPMENT MODAL
 // ═══════════════════════════════════════
 function openAddShipmentModal(idx) {
+  populateCountrySelects();   // ensure dropdowns are filled before anything else
   editingShipIdx = typeof idx==='number' ? idx : null;
   document.getElementById('addShipTitle').textContent = editingShipIdx!==null ? 'Edit Shipment' : 'Add New Shipment';
   document.getElementById('addShipSubtitle').textContent = editingShipIdx!==null ? 'Update shipment details and stage dates.' : 'Fill in shipment details and configure stage dates.';
@@ -779,7 +779,6 @@ function openAddShipmentModal(idx) {
   ['srcPortCountry','srcDeliveryCountry','stopoverCountry','finalFromCountry','finalToCountry'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('isStopover').checked = false;
   document.getElementById('isDelay').value = 'On Time';
-  populateCountrySelects();
   toggleStopoverFields();
   document.getElementById('stageConfigSection').style.display='none';
   document.getElementById('stageConfigContainer').innerHTML='';
@@ -856,6 +855,9 @@ function getSelectedTimeline(type) {
   return result;
 }
 
+// ═══════════════════════════════════════
+// COUNTRY DROPDOWN POPULATION
+// ═══════════════════════════════════════
 const COUNTRIES = [
   'Afghanistan','Albania','Algeria','Andorra','Angola','Argentina','Armenia','Australia','Austria','Azerbaijan',
   'Bahrain','Bangladesh','Belarus','Belgium','Belize','Bolivia','Bosnia and Herzegovina','Botswana','Brazil','Brunei','Bulgaria',
@@ -874,13 +876,13 @@ const COUNTRIES = [
 ];
 
 function populateCountrySelects() {
-  const opts = '<option value="">Select country…</option>' + COUNTRIES.map(c=>`<option value="${c}">${c}</option>`).join('');
-  ['srcPortCountry','srcDeliveryCountry','stopoverCountry','finalToCountry'].forEach(id=>{
-    const el = document.getElementById(id); if (el) el.innerHTML = opts;
+  const opts = '<option value="">— Select Country —</option>' +
+    COUNTRIES.map(c => `<option value="${c}">${c}</option>`).join('');
+  document.querySelectorAll('select.c-sel').forEach(sel => {
+    const prev = sel.value;          // remember previously selected value
+    sel.innerHTML = opts;
+    if (prev) sel.value = prev;      // restore it if options now include it
   });
-  // finalFromCountry is auto-filled separately
-  const ffc = document.getElementById('finalFromCountry');
-  if (ffc) ffc.innerHTML = '<option value="">Auto-filled</option>' + COUNTRIES.map(c=>`<option value="${c}">${c}</option>`).join('');
 }
 
 function toggleStopoverFields() {
@@ -1861,5 +1863,6 @@ var Tawk_API=Tawk_API||{},Tawk_LoadStart=new Date();
   s0.parentNode.insertBefore(s1,s0);
 })();
 </script>
+
 </body>
 </html>
