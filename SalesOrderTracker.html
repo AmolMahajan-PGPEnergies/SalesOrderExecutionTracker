@@ -403,7 +403,128 @@ select.sel option{background:var(--panel2)}
         </div>
       </div>
 
+      <!-- Source Details -->
+      <div class="divider" style="margin:12px 0"></div>
+      <span class="sec-label">Source Details</span>
+      <div class="form-grid" style="margin-bottom:16px">
+        <div class="fg">
+          <label>Source Name</label>
+          <input type="text" id="srcName" placeholder="e.g. Supplier Co.">
+        </div>
+        <div class="fg">
+          <label>Source Location</label>
+          <input type="text" id="srcLocation" placeholder="e.g. Shanghai">
+        </div>
+        <div class="fg">
+          <label>Source Port</label>
+          <input type="text" id="srcPort" placeholder="e.g. Port of Shanghai">
+        </div>
+        <div class="fg">
+          <label>Source Port Country</label>
+          <input type="text" id="srcPortCountry" placeholder="e.g. China">
+        </div>
+        <div class="fg">
+          <label>Source Delivery Term</label>
+          <input type="text" id="srcDeliveryTerm" placeholder="e.g. FOB, CIF, DAP…">
+        </div>
+        <div class="fg">
+          <label>Source Delivery Location</label>
+          <input type="text" id="srcDeliveryLocation" placeholder="e.g. Warehouse A">
+        </div>
+        <div class="fg">
+          <label>Source Delivery Port</label>
+          <input type="text" id="srcDeliveryPort" placeholder="e.g. Jebel Ali">
+        </div>
+        <div class="fg">
+          <label>Source Delivery Country</label>
+          <input type="text" id="srcDeliveryCountry" placeholder="e.g. UAE">
+        </div>
+      </div>
+
+      <!-- Stopover Details -->
+      <div class="divider" style="margin:12px 0"></div>
+      <span class="sec-label">Stopover Details</span>
+      <div class="form-grid" style="margin-bottom:8px">
+        <div class="fg">
+          <label>Is Stopover Applicable</label>
+          <select id="isStopover" onchange="toggleStopoverFields()">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+          </select>
+        </div>
+        <div class="fg" id="stopoverWaitDaysWrap" style="display:none">
+          <label>Stopover Waiting Days</label>
+          <input type="number" id="stopoverWaitDays" min="0" placeholder="0">
+        </div>
+      </div>
+      <div class="form-grid" id="stopoverFieldsWrap" style="margin-bottom:16px;display:none">
+        <div class="fg">
+          <label>Stopover Delivery Location</label>
+          <input type="text" id="stopoverLocation" placeholder="e.g. Colombo">
+        </div>
+        <div class="fg">
+          <label>Stopover Delivery Port</label>
+          <input type="text" id="stopoverPort" placeholder="e.g. Port of Colombo">
+        </div>
+        <div class="fg">
+          <label>Stopover Delivery Country</label>
+          <input type="text" id="stopoverCountry" placeholder="e.g. Sri Lanka">
+        </div>
+      </div>
+
+      <!-- Final Sailing -->
+      <div class="divider" style="margin:12px 0"></div>
+      <span class="sec-label">Final Sailing</span>
+      <div class="form-grid" style="margin-bottom:16px">
+        <div class="fg">
+          <label>Final Sailing From Location</label>
+          <input type="text" id="finalFromLocation" placeholder="e.g. Singapore">
+        </div>
+        <div class="fg">
+          <label>Final Sailing From Port</label>
+          <input type="text" id="finalFromPort" placeholder="e.g. Port of Singapore">
+        </div>
+        <div class="fg">
+          <label>Final Sailing From Country</label>
+          <input type="text" id="finalFromCountry" placeholder="e.g. Singapore">
+        </div>
+        <div class="fg">
+          <label>Final Sailing To Location</label>
+          <input type="text" id="finalToLocation" placeholder="e.g. Abu Dhabi">
+        </div>
+        <div class="fg">
+          <label>Final Sailing To Port</label>
+          <input type="text" id="finalToPort" placeholder="e.g. Khalifa Port">
+        </div>
+        <div class="fg">
+          <label>Final Sailing To Country</label>
+          <input type="text" id="finalToCountry" placeholder="e.g. UAE">
+        </div>
+      </div>
+
+      <!-- Final Delivery -->
+      <div class="divider" style="margin:12px 0"></div>
+      <span class="sec-label">Final Delivery</span>
+      <div class="form-grid" style="margin-bottom:16px">
+        <div class="fg">
+          <label>Final Delivery Location</label>
+          <input type="text" id="finalDeliveryLocation" placeholder="e.g. Client Warehouse">
+        </div>
+        <div class="fg">
+          <label>Promised Date to Client</label>
+          <input type="date" id="promisedDate">
+        </div>
+        <div class="fg">
+          <label>Is Delay / On Time</label>
+          <select id="isDelay">
+            <option value="On Time">On Time</option>
+            <option value="Delayed">Delayed</option>
+          </select>
+        </div>
+      </div>
+
       <!-- Stage config section — Gantt chart rendered here by JS -->
+      <div class="divider" style="margin:12px 0"></div>
       <div id="stageConfigSection" style="display:none">
         <button type="button" class="stg-trigger" id="stgToggleTrigger" style="display:none" onclick="openOptionalModal()">Choose Optional Stages</button>
         <div id="stageConfigContainer"></div>
@@ -653,6 +774,14 @@ function openAddShipmentModal(idx) {
   document.getElementById('saveShipBtn').textContent = editingShipIdx!==null ? 'Save Changes' : 'Add Shipment';
   document.getElementById('shipmentId').value = '';
   document.getElementById('shipmentType').value = '';
+  // Reset logistics fields
+  ['srcName','srcLocation','srcPort','srcPortCountry','srcDeliveryTerm','srcDeliveryLocation','srcDeliveryPort','srcDeliveryCountry',
+   'stopoverLocation','stopoverPort','stopoverCountry','stopoverWaitDays',
+   'finalFromLocation','finalFromPort','finalFromCountry','finalToLocation','finalToPort','finalToCountry',
+   'finalDeliveryLocation','promisedDate'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('isStopover').value='No';
+  document.getElementById('isDelay').value='On Time';
+  toggleStopoverFields();
   document.getElementById('stageConfigSection').style.display='none';
   document.getElementById('stageConfigContainer').innerHTML='';
   document.getElementById('stgToggleToolbar').innerHTML='';
@@ -665,6 +794,15 @@ function openAddShipmentModal(idx) {
     activeShipDraft = { id:sh.id, type:sh.type, timeline:sh.timeline.map(s=>({name:s.name, startDate:s.startDate||'', date:s.date||''})) };
     document.getElementById('shipmentId').value = sh.id;
     document.getElementById('shipmentType').value = sh.type;
+    // Populate logistics fields
+    const lf = ['srcName','srcLocation','srcPort','srcPortCountry','srcDeliveryTerm','srcDeliveryLocation','srcDeliveryPort','srcDeliveryCountry',
+                 'stopoverLocation','stopoverPort','stopoverCountry','stopoverWaitDays',
+                 'finalFromLocation','finalFromPort','finalFromCountry','finalToLocation','finalToPort','finalToCountry',
+                 'finalDeliveryLocation','promisedDate'];
+    lf.forEach(id=>{ const el=document.getElementById(id); if(el && sh[id]!==undefined) el.value=sh[id]; });
+    document.getElementById('isStopover').value = sh.isStopover||'No';
+    document.getElementById('isDelay').value = sh.isDelay||'On Time';
+    toggleStopoverFields();
     renderStageConfigRows();
   }
   openModal('addShipmentModal');
@@ -679,7 +817,21 @@ function saveShipment() {
   if (!timeline.length) { showToast('Please configure at least one stage date.','danger'); return; }
   const dup = shipments.findIndex(s=>s.id===id);
   if (dup!==-1 && dup!==editingShipIdx) { showToast('Shipment ID already exists.','danger'); return; }
-  const ship = {id, type, timeline};
+  const g = id => document.getElementById(id)?.value.trim()||'';
+  const ship = {
+    id, type, timeline,
+    srcName: g('srcName'), srcLocation: g('srcLocation'), srcPort: g('srcPort'), srcPortCountry: g('srcPortCountry'),
+    srcDeliveryTerm: g('srcDeliveryTerm'), srcDeliveryLocation: g('srcDeliveryLocation'),
+    srcDeliveryPort: g('srcDeliveryPort'), srcDeliveryCountry: g('srcDeliveryCountry'),
+    isStopover: document.getElementById('isStopover')?.value||'No',
+    stopoverLocation: g('stopoverLocation'), stopoverPort: g('stopoverPort'), stopoverCountry: g('stopoverCountry'),
+    stopoverWaitDays: g('stopoverWaitDays'),
+    finalFromLocation: g('finalFromLocation'), finalFromPort: g('finalFromPort'), finalFromCountry: g('finalFromCountry'),
+    finalToLocation: g('finalToLocation'), finalToPort: g('finalToPort'), finalToCountry: g('finalToCountry'),
+    finalDeliveryLocation: g('finalDeliveryLocation'),
+    promisedDate: g('promisedDate'),
+    isDelay: document.getElementById('isDelay')?.value||'On Time'
+  };
   if (editingShipIdx===null) shipments.push(ship);
   else shipments[editingShipIdx] = ship;
   closeModal('addShipmentModal');
@@ -701,6 +853,14 @@ function getSelectedTimeline(type) {
     });
   });
   return result;
+}
+
+function toggleStopoverFields() {
+  const on = document.getElementById('isStopover')?.value === 'Yes';
+  const fw = document.getElementById('stopoverFieldsWrap');
+  const ww = document.getElementById('stopoverWaitDaysWrap');
+  if (fw) fw.style.display = on ? '' : 'none';
+  if (ww) ww.style.display = on ? '' : 'none';
 }
 
 document.getElementById('shipmentType').addEventListener('change', renderStageConfigRows);
@@ -1453,11 +1613,18 @@ function renderShipments() {
     };
     const pipsHTML = shipment.timeline.map(s=>`<div class="stage-pip ${pipColor(s)}"></div>`).join('');
 
+    const isDelayed = (shipment.isDelay||'On Time') === 'Delayed';
+    const statusBadge = isDelayed
+      ? '<span style="font-size:11px;color:var(--danger);font-weight:700;background:var(--danger-bg);padding:2px 9px;border-radius:99px">Delayed</span>'
+      : '<span style="font-size:11px;color:var(--success);font-weight:700;background:rgba(16,217,138,.12);padding:2px 9px;border-radius:99px">On Time</span>';
+    const promisedFmt = shipment.promisedDate ? fmtDisp(parseLocalDate(shipment.promisedDate)) : '-';
+
     return `<div class="shipment-card${isLate?' shipment-card--late':''}">
       <div class="ship-head">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <span class="ship-id">Shipment #${shipment.id}</span>
           ${isLate?'<span style="font-size:11px;color:var(--danger);font-weight:700;background:var(--danger-bg);padding:2px 9px;border-radius:99px">Past Delivery</span>':''}
+          ${statusBadge}
         </div>
         <div class="ship-acts">
           <button class="btn btn-ghost btn-sm" onclick="openAddShipmentModal(${realIdx})">Edit</button>
@@ -1476,6 +1643,20 @@ function renderShipments() {
         <div class="ov-item"><div class="ov-lbl">Auto Checkpoints</div><div class="ov-val">${auto.length}</div></div>
         <div class="ov-item"><div class="ov-lbl">CP Coverage</div><div class="ov-val">${new Set(auto.flatMap(c=>c.verificationStages)).size}/${total}</div></div>
       </div>
+      ${(shipment.srcName||shipment.srcPort||shipment.finalDeliveryLocation||shipment.promisedDate) ? `
+      <div class="divider" style="margin:10px 0"></div>
+      <div class="overview-grid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">
+        ${shipment.srcName?`<div class="ov-item"><div class="ov-lbl">Source</div><div class="ov-val" style="font-size:11px">${shipment.srcName}</div></div>`:''}
+        ${shipment.srcLocation?`<div class="ov-item"><div class="ov-lbl">Source Location</div><div class="ov-val" style="font-size:11px">${shipment.srcLocation}</div></div>`:''}
+        ${shipment.srcPort?`<div class="ov-item"><div class="ov-lbl">Source Port</div><div class="ov-val" style="font-size:11px">${shipment.srcPort}${shipment.srcPortCountry?', '+shipment.srcPortCountry:''}</div></div>`:''}
+        ${shipment.srcDeliveryTerm?`<div class="ov-item"><div class="ov-lbl">Delivery Term</div><div class="ov-val" style="font-size:11px">${shipment.srcDeliveryTerm}</div></div>`:''}
+        ${shipment.srcDeliveryPort?`<div class="ov-item"><div class="ov-lbl">Src. Delivery Port</div><div class="ov-val" style="font-size:11px">${shipment.srcDeliveryPort}${shipment.srcDeliveryCountry?', '+shipment.srcDeliveryCountry:''}</div></div>`:''}
+        ${shipment.isStopover==='Yes'?`<div class="ov-item"><div class="ov-lbl">Stopover</div><div class="ov-val" style="font-size:11px">${shipment.stopoverPort||'-'}${shipment.stopoverCountry?', '+shipment.stopoverCountry:''}${shipment.stopoverWaitDays?' ('+shipment.stopoverWaitDays+'d)':''}</div></div>`:''}
+        ${shipment.finalFromPort?`<div class="ov-item"><div class="ov-lbl">Sailing From</div><div class="ov-val" style="font-size:11px">${shipment.finalFromPort}${shipment.finalFromCountry?', '+shipment.finalFromCountry:''}</div></div>`:''}
+        ${shipment.finalToPort?`<div class="ov-item"><div class="ov-lbl">Sailing To</div><div class="ov-val" style="font-size:11px">${shipment.finalToPort}${shipment.finalToCountry?', '+shipment.finalToCountry:''}</div></div>`:''}
+        ${shipment.finalDeliveryLocation?`<div class="ov-item"><div class="ov-lbl">Final Delivery</div><div class="ov-val" style="font-size:11px">${shipment.finalDeliveryLocation}</div></div>`:''}
+        ${shipment.promisedDate?`<div class="ov-item"><div class="ov-lbl">Promised to Client</div><div class="ov-val" style="font-size:11px">${promisedFmt}</div></div>`:''}
+      </div>` : ''}
       <div class="prog-wrap">
         <div class="prog-labels"><span>Stage Progress</span><strong>${pct}%</strong></div>
         <div class="stage-pips">${pipsHTML}</div>
@@ -1553,7 +1734,14 @@ window.openCpList = openCpList;
 // ═══════════════════════════════════════
 function exportCSV() {
   if (!shipments.length) { showToast('No shipments to export.','danger'); return; }
-  const rows = [['Shipment ID','Type','Stage Name','Stage Date','Auto Checkpoints','Stage Coverage']];
+  const rows = [['Shipment ID','Type',
+    'Source Name','Source Location','Source Port','Source Port Country',
+    'Source Delivery Term','Source Delivery Location','Source Delivery Port','Source Delivery Country',
+    'Is Stopover Applicable','Stopover Delivery Location','Stopover Delivery Port','Stopover Delivery Country','Stopover Waiting Days',
+    'Final Sailing From Location','Final Sailing From Port','Final Sailing From Country',
+    'Final Sailing To Location','Final Sailing To Port','Final Sailing To Country',
+    'Final Delivery Location','Promised Date to Client','Is Delay / On Time',
+    'Stage Name','Stage Date','Auto Checkpoints','Stage Coverage']];
   shipments.forEach(s=>{
     const auto = getAutoAppliedControls(s);
     const stageCheckMap={};
@@ -1561,8 +1749,16 @@ function exportCSV() {
       if (!stageCheckMap[st]) stageCheckMap[st]=0;
       stageCheckMap[st]++;
     }));
+    const logisticsCols = [
+      s.srcName||'', s.srcLocation||'', s.srcPort||'', s.srcPortCountry||'',
+      s.srcDeliveryTerm||'', s.srcDeliveryLocation||'', s.srcDeliveryPort||'', s.srcDeliveryCountry||'',
+      s.isStopover||'No', s.stopoverLocation||'', s.stopoverPort||'', s.stopoverCountry||'', s.stopoverWaitDays||'',
+      s.finalFromLocation||'', s.finalFromPort||'', s.finalFromCountry||'',
+      s.finalToLocation||'', s.finalToPort||'', s.finalToCountry||'',
+      s.finalDeliveryLocation||'', s.promisedDate||'', s.isDelay||'On Time'
+    ];
     s.timeline.forEach(stage=>{
-      rows.push([s.id, s.type, stage.name, stage.date||'', auto.length, stageCheckMap[stage.name]||0]);
+      rows.push([s.id, s.type, ...logisticsCols, stage.name, stage.date||'', auto.length, stageCheckMap[stage.name]||0]);
     });
   });
   const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
