@@ -2269,6 +2269,14 @@ function renderShipments() {
       stageCheckMap[s].push(cp);
     }));
 
+    // Stage status helper — must be defined before milestonesHTML
+    const pipColor = s => {
+      const d=parseLocalDate(s.date);
+      if (!d) return '';
+      if (d<now) return 'done';
+      return 'active';
+    };
+
     const milestonesHTML = shipment.timeline.map(stage=>{
       const d = parseLocalDate(stage.date);
       const checks = stageCheckMap[stage.name]||[];
@@ -2285,14 +2293,6 @@ function renderShipments() {
         ${summaryPills ? `<div class="mc-summary">${summaryPills}</div><div class="mc-detail-list">${detailItems}</div>` : ''}
       </div>`;
     }).join('');
-
-    // Stage status helper
-    const pipColor = s => {
-      const d=parseLocalDate(s.date);
-      if (!d) return '';
-      if (d<now) return 'done';
-      return 'active';
-    };
 
     const isDelayed = (shipment.isDelay||'On Time') === 'Delayed';
     const statusBadge = isDelayed
