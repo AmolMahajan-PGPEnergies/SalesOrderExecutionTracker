@@ -1095,7 +1095,7 @@ function renderStageConfigRows() {
     if (ed <= sd) ed = addDays(sd,1);
     const applicable = stage.mandatory || !activeShipDraft || existMap.has(stage.name);
     ganttData[stage.name] = { startDate:sd, endDate:ed, applicable:!!applicable, days:exDays };
-    cursor = new Date(ed);
+    if(!!applicable) cursor = new Date(ed); // disabled stages don't advance the cursor
   });
 
   // Calc gantt time range (month-aligned + 1 month padding each side)
@@ -1153,6 +1153,9 @@ function renderStageConfigRows() {
         ganttData[stage.name].applicable=on;
         inner.querySelector(`.gantt-row[data-sn="${_esc(stage.name)}"]`)?.classList.toggle('g-off',!on);
         updateTriggerLabel();
+        // Re-cascade from this stage so active neighbours reposition correctly
+        const stageIdx=stages.findIndex(s=>s.name===stage.name);
+        _cascadeFrom(stages, stageIdx);
       });
       toolbar.appendChild(chip);
     });
@@ -1308,56 +1311,63 @@ function _syncRowDates(stageName){
   if(ei) ei.value=fmtDisp(data.endDate);
 }
 
-// Apply a days value to a stage and cascade all downstream stages
-function _applyDays(stageName, daysVal){
-  const days = parseInt(daysVal, 10);
-  const type = document.getElementById('shipmentType').value;
-  const stages = shipmentTimelines[type]||[];
-  const idx = stages.findIndex(s=>s.name===stageName);
-  if(idx===-1) return;
-
-  if(!isNaN(days) && days>0){
-    ganttData[stageName].days = days;
-    ganttData[stageName].endDate = addDays(ganttData[stageName].startDate, days);
-  } else {
-    ganttData[stageName].days = null;
+// Returns the endDate of the last ACTIVE (applicable) stage before index i.
+// Falls back to SO Booked Date (or today) when no active predecessor exists.
+function _prevActiveEnd(stages, i){
+  for(let j=i-1; j>=0; j--){
+    const d=ganttData[stages[j].name];
+    if(d && d.applicable) return new Date(d.endDate);
   }
-  _refreshBar(stageName);
-  _syncRowDates(stageName);
+  const v=document.getElementById('soBookedDate')?.value||'';
+  const so=v?parseLocalDate(v):null;
+  const base=so?new Date(so):new Date();
+  base.setHours(0,0,0,0);
+  return base;
+}
 
-  // Cascade: every stage after the changed one shifts forward
-  for(let i=idx+1; i<stages.length; i++){
-    const prev = ganttData[stages[i-1].name];
-    const cur  = ganttData[stages[i].name];
-    if(!prev||!cur) continue;
-    const dur = cur.days || Math.max(1, daysBetween(cur.startDate, cur.endDate));
-    cur.startDate = new Date(prev.endDate);
-    cur.endDate   = addDays(cur.startDate, dur);
+// Cascade positions for all stages from fromIdx onward.
+// Each stage's start = end of last ACTIVE predecessor (skips disabled stages).
+function _cascadeFrom(stages, fromIdx){
+  for(let i=fromIdx; i<stages.length; i++){
+    const cur=ganttData[stages[i].name];
+    if(!cur) continue;
+    const start=_prevActiveEnd(stages, i);
+    const dur=cur.days||Math.max(1, daysBetween(cur.startDate, cur.endDate));
+    cur.startDate=start;
+    cur.endDate=addDays(start, dur);
     _refreshBar(stages[i].name);
     _syncRowDates(stages[i].name);
   }
   _maybeExpandGantt();
 }
 
+// Apply a days value to a stage and cascade all downstream stages
+function _applyDays(stageName, daysVal){
+  const days=parseInt(daysVal, 10);
+  const type=document.getElementById('shipmentType').value;
+  const stages=shipmentTimelines[type]||[];
+  const idx=stages.findIndex(s=>s.name===stageName);
+  if(idx===-1) return;
+
+  if(!isNaN(days) && days>0){
+    ganttData[stageName].days=days;
+    ganttData[stageName].endDate=addDays(ganttData[stageName].startDate, days);
+  } else {
+    ganttData[stageName].days=null;
+  }
+  _refreshBar(stageName);
+  _syncRowDates(stageName);
+  _cascadeFrom(stages, idx+1);
+}
+
 // Recalculate all stage dates from the SO Booked Date (preserves days / duration)
 function _recalcFromSODate(){
-  const v = document.getElementById('soBookedDate')?.value||'';
-  const soDate = v ? parseLocalDate(v) : null;
-  if(!soDate || !Object.keys(ganttData).length) return;
-  const type = document.getElementById('shipmentType').value;
-  const stages = shipmentTimelines[type]||[];
-  let cursor = new Date(soDate);
-  stages.forEach(stage=>{
-    const data = ganttData[stage.name];
-    if(!data) return;
-    const dur = data.days || Math.max(1, daysBetween(data.startDate, data.endDate));
-    data.startDate = new Date(cursor);
-    data.endDate   = addDays(cursor, dur);
-    cursor = new Date(data.endDate);
-    _refreshBar(stage.name);
-    _syncRowDates(stage.name);
-  });
-  _maybeExpandGantt();
+  const v=document.getElementById('soBookedDate')?.value||'';
+  const soDate=v?parseLocalDate(v):null;
+  if(!soDate||!Object.keys(ganttData).length) return;
+  const type=document.getElementById('shipmentType').value;
+  const stages=shipmentTimelines[type]||[];
+  _cascadeFrom(stages, 0);
 }
 
 function _maybeExpandGantt(){
