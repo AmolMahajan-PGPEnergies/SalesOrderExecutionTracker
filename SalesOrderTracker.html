@@ -553,7 +553,7 @@ input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:defau
         </div>
         <div class="fg">
           <label>Promised Date to Client</label>
-          <input type="date" id="promisedDate">
+          <input type="date" id="promisedDate" onchange="if(ganttRange.start) _updateCutoffLine()">
         </div>
         <div class="fg">
           <label>Is Delay / On Time</label>
@@ -1191,7 +1191,7 @@ function _buildRuler(gS,gE,tlW){
   if(co&&co>=gS&&co<=gE){
     const cm=document.createElement('div'); cm.className='gantt-ruler-cutoff';
     cm.style.left=dateToX(co)+'px';
-    cm.innerHTML=`<span class="gantt-cutoff-tag">CUTOFF ${co.getDate()} ${MONTHS[co.getMonth()]}</span>`;
+    cm.innerHTML=`<span class="gantt-cutoff-tag">Promised Date ${co.getDate()} ${MONTHS[co.getMonth()]}</span>`;
     ruler.appendChild(cm);
   }
   clip.appendChild(ruler); hdr.appendChild(clip); return hdr;
@@ -1374,6 +1374,65 @@ function _recalcFromSODate(){
   _cascadeFrom(stages, 0);
 }
 
+function _updateCutoffLine(){
+  if(!ganttRange.start) return;
+  const co=_ganttCutoff();
+
+  // Expand the visible range if the new date falls beyond the right edge
+  if(co && co>ganttRange.end){
+    ganttRange.end=new Date(co.getFullYear(),co.getMonth()+2,0);
+    const totalD=daysBetween(ganttRange.start,ganttRange.end)+1;
+    const tlW=totalD*DAY_PX;
+    const inner=document.querySelector('.gantt-inner');
+    if(inner) inner.style.width=(220+tlW)+'px';
+    const ruler=ganttHdrEl&&ganttHdrEl.querySelector('.gantt-ruler');
+    if(ruler){
+      ruler.style.width=tlW+'px';
+      ruler.querySelectorAll('.gantt-month').forEach(el=>el.remove());
+      let cur=new Date(ganttRange.start.getFullYear(),ganttRange.start.getMonth(),1);
+      while(cur<=ganttRange.end){
+        const x=dateToX(cur); const w=daysInMonth(cur)*DAY_PX;
+        const m=document.createElement('div'); m.className='gantt-month';
+        m.style.left=x+'px'; m.style.width=w+'px';
+        m.innerHTML=`<span class="gantt-month-lbl">${cur.toLocaleDateString(undefined,{month:'short',year:'2-digit'})}</span>`;
+        ruler.appendChild(m);
+        cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);
+      }
+    }
+    document.querySelectorAll('.gantt-track').forEach(track=>{
+      track.style.width=tlW+'px';
+      track.querySelectorAll('.gantt-grid-vline').forEach(v=>v.remove());
+      let cur=new Date(ganttRange.start.getFullYear(),ganttRange.start.getMonth(),1);
+      while(cur<=ganttRange.end){
+        const gl=document.createElement('div'); gl.className='gantt-grid-vline';
+        gl.style.left=dateToX(cur)+'px'; track.appendChild(gl);
+        cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);
+      }
+    });
+  }
+
+  // Refresh ruler marker
+  const ruler=ganttHdrEl&&ganttHdrEl.querySelector('.gantt-ruler');
+  if(ruler){
+    ruler.querySelectorAll('.gantt-ruler-cutoff').forEach(el=>el.remove());
+    if(co&&co>=ganttRange.start&&co<=ganttRange.end){
+      const cm=document.createElement('div'); cm.className='gantt-ruler-cutoff';
+      cm.style.left=dateToX(co)+'px';
+      cm.innerHTML=`<span class="gantt-cutoff-tag">Promised Date ${co.getDate()} ${MONTHS[co.getMonth()]}</span>`;
+      ruler.appendChild(cm);
+    }
+  }
+
+  // Refresh per-track lines
+  document.querySelectorAll('.gantt-track').forEach(track=>{
+    track.querySelectorAll('.gantt-track-cutoff').forEach(el=>el.remove());
+    if(co&&co>=ganttRange.start&&co<=ganttRange.end){
+      const cl=document.createElement('div'); cl.className='gantt-track-cutoff';
+      cl.style.left=dateToX(co)+'px'; track.appendChild(cl);
+    }
+  });
+}
+
 function _maybeExpandGantt(){
   const allEnds=Object.values(ganttData).map(d=>d.endDate.getTime());
   if(!allEnds.length) return;
@@ -1411,7 +1470,7 @@ function _maybeExpandGantt(){
     if(co&&co>=ganttRange.start&&co<=ganttRange.end){
       const cm=document.createElement('div'); cm.className='gantt-ruler-cutoff';
       cm.style.left=dateToX(co)+'px';
-      cm.innerHTML=`<span class="gantt-cutoff-tag">CUTOFF ${co.getDate()} ${MONTHS[co.getMonth()]}</span>`;
+      cm.innerHTML=`<span class="gantt-cutoff-tag">Promised Date ${co.getDate()} ${MONTHS[co.getMonth()]}</span>`;
       ruler.appendChild(cm);
     }
   }
