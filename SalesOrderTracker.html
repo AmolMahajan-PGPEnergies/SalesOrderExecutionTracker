@@ -1228,6 +1228,7 @@ function _applyInventoryFilter(){
   const affectedIdxs = PROD_STAGES_ALL
     .map(n=>stages.findIndex(s=>s.name===n)).filter(i=>i>=0);
   if(affectedIdxs.length) _cascadeFrom(stages, Math.min(...affectedIdxs));
+  updateTriggerLabel();
 }
 
 // Stopover stages managed by the Is Stopover Applicable checkbox
@@ -1281,6 +1282,7 @@ function _applyStopoverFilter(){
   const affectedIdxs=STOPOVER_STAGES
     .map(n=>stages.findIndex(s=>s.name===n)).filter(i=>i>=0);
   if(affectedIdxs.length) _cascadeFrom(stages, Math.min(...affectedIdxs));
+  updateTriggerLabel();
 }
 
 function _esc(s){ return s.replace(/["\\]/g,'\\$&'); }
@@ -1843,9 +1845,10 @@ function _updRangeCls(){
 }
 
 function updateTriggerLabel() {
-  const chips = document.querySelectorAll('#stgToggleToolbar .stg-chip');
+  const allChips = [...document.querySelectorAll('#stgToggleToolbar .stg-chip')];
+  const chips    = allChips.filter(c=>c.style.display!=='none');
   if (!chips.length) { document.getElementById('stgToggleTrigger').style.display='none'; return; }
-  const active = [...chips].filter(c=>c.classList.contains('is-active')).length;
+  const active = chips.filter(c=>c.classList.contains('is-active')).length;
   document.getElementById('stgToggleTrigger').style.display='inline-flex';
   document.getElementById('stgToggleTrigger').textContent=`Choose Optional Stages (${active}/${chips.length} selected)`;
 }
