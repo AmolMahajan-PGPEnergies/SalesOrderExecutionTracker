@@ -56,27 +56,58 @@ select.sel option{background:var(--panel2)}
 .alert-warning{background:var(--warn-bg);border-color:rgba(245,158,11,.3);color:var(--warning)}
 
 /* ── SHIPMENT CARDS ── */
-.shipment-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--rl);padding:20px;margin-bottom:14px;transition:border-color .2s}
-.shipment-card:hover{border-color:var(--border2)}
-.ship-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}
-.ship-id{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--accent)}
-.ship-acts{display:flex;gap:7px}
-.ship-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.shipment-card{background:var(--panel);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:16px;transition:border-color .2s,box-shadow .2s}
+.shipment-card:hover{border-color:var(--border2);box-shadow:0 6px 28px rgba(0,0,0,.22)}
+.shipment-card--late{border-color:rgba(239,68,68,.35)}
+.ship-accent{height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.shipment-card--late .ship-accent{background:linear-gradient(90deg,var(--danger),#f97316)}
+
+/* Header */
+.ship-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px 20px 12px;flex-wrap:wrap}
+.ship-head-left{display:flex;flex-direction:column;gap:7px}
+.ship-id{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.3px}
+.ship-badges{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ship-acts{display:flex;gap:7px;flex-shrink:0}
+
+/* Type + status pills */
 .type-pill{display:inline-flex;align-items:center;padding:3px 11px;border-radius:99px;background:var(--accent-g);border:1px solid rgba(0,212,216,.35);color:var(--accent);font-size:11px;font-weight:700;letter-spacing:.04em}
 .count-pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;background:var(--panel2);border:1px solid var(--border2);color:var(--muted2);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}
 .count-pill:hover{background:var(--accent-g);border-color:rgba(0,212,216,.35);color:var(--accent)}
 
-/* Overview grid */
+/* Metrics strip */
+.ship-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.ship-metric{padding:10px 16px;border-right:1px solid var(--border)}
+.ship-metric:last-child{border-right:none}
+.ship-metric-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+.ship-metric-val{font-size:12px;font-weight:700;color:var(--text2)}
+.ship-metric-val.accent{color:var(--accent)}
+
+/* Details grid */
+.ship-details{padding:12px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.ov-item{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:9px 12px}
+.ov-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+.ov-val{font-size:12px;color:var(--text2);font-weight:600}
+/* keep overview-grid for other usages */
 .overview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:14px}
-.ov-item{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:11px 13px}
-.ov-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
-.ov-val{font-size:13px;color:var(--accent);font-weight:700}
+
+/* Checkpoints strip */
+.ship-cp-strip{padding:4px 20px 10px;display:flex;gap:6px;flex-wrap:wrap}
 
 /* Progress */
+.ship-progress{padding:10px 20px 12px}
+.prog-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.prog-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.prog-pct{font-size:12px;font-weight:700;color:var(--accent)}
+.stage-pips{display:flex;gap:2px;margin-bottom:5px}
+.stage-pip{height:5px;flex:1;border-radius:3px;background:var(--border2)}
+.stage-pip.done{background:var(--accent)}
+.stage-pip.active{background:var(--warning)}
+.stage-pip.late{background:var(--danger)}
+.prog-track{width:100%;height:5px;border-radius:99px;background:var(--border2);overflow:hidden}
+.prog-fill{height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s ease}
+/* legacy aliases */
 .prog-wrap{margin-bottom:14px}
 .prog-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--muted2);margin-bottom:5px}
-.prog-track{width:100%;height:6px;border-radius:99px;background:var(--border2);overflow:hidden}
-.prog-fill{height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s ease}
 
 /* Milestones */
 .milestones-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
@@ -2137,55 +2168,83 @@ function renderShipments() {
     const soBookedFmt  = shipment.soBookedDate  ? fmtDisp(parseLocalDate(shipment.soBookedDate))  : null;
 
     return `<div class="shipment-card${isLate?' shipment-card--late':''}">
+      <div class="ship-accent"></div>
+
+      <!-- Header -->
       <div class="ship-head">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <span class="ship-id">Shipment #${shipment.id}</span>
-          ${soBookedFmt?`<span style="font-size:11px;color:var(--muted2);font-weight:600">SO: ${soBookedFmt}</span>`:''}
-          ${shipment.supplierInventory?`<span style="font-size:11px;color:var(--info);font-weight:700;background:var(--info-bg);padding:2px 9px;border-radius:99px">${shipment.supplierInventory}</span>`:''}
-          ${isLate?'<span style="font-size:11px;color:var(--danger);font-weight:700;background:var(--danger-bg);padding:2px 9px;border-radius:99px">Past Delivery</span>':''}
-          ${statusBadge}
+        <div class="ship-head-left">
+          <div class="ship-id">Shipment #${shipment.id}</div>
+          <div class="ship-badges">
+            <span class="type-pill">${shipment.type}</span>
+            ${statusBadge}
+            ${isLate?'<span style="font-size:11px;color:var(--danger);font-weight:700;background:var(--danger-bg);padding:2px 9px;border-radius:99px">Past Delivery</span>':''}
+            ${shipment.supplierInventory?`<span style="font-size:11px;color:var(--info);font-weight:700;background:var(--info-bg);padding:2px 9px;border-radius:99px">${shipment.supplierInventory}</span>`:''}
+            ${soBookedFmt?`<span style="font-size:11px;color:var(--muted2);font-weight:600;background:var(--bg3);padding:2px 9px;border-radius:99px;border:1px solid var(--border)">SO: ${soBookedFmt}</span>`:''}
+          </div>
         </div>
         <div class="ship-acts">
           <button class="btn btn-ghost btn-sm" onclick="openAddShipmentModal(${realIdx})">Edit</button>
           <button class="btn btn-danger btn-sm" onclick="removeShipment(${realIdx})">Remove</button>
         </div>
       </div>
-      <div class="ship-meta">
-        <span class="type-pill">${shipment.type}</span>
-        ${cpPills}
+
+      <!-- Key metrics strip -->
+      <div class="ship-metrics">
+        <div class="ship-metric">
+          <div class="ship-metric-lbl">Stages</div>
+          <div class="ship-metric-val accent">${planned} / ${total}</div>
+        </div>
+        <div class="ship-metric">
+          <div class="ship-metric-lbl">Span</div>
+          <div class="ship-metric-val">${span?fmtSpan(span):'-'}</div>
+        </div>
+        <div class="ship-metric">
+          <div class="ship-metric-lbl">Promised Date</div>
+          <div class="ship-metric-val${isLate?' accent':''}">${promisedFmt}</div>
+        </div>
+        <div class="ship-metric">
+          <div class="ship-metric-lbl">Checkpoints</div>
+          <div class="ship-metric-val">${auto.length}</div>
+        </div>
+        <div class="ship-metric">
+          <div class="ship-metric-lbl">CP Coverage</div>
+          <div class="ship-metric-val">${new Set(auto.flatMap(c=>c.verificationStages)).size} / ${total}</div>
+        </div>
       </div>
-      <div class="overview-grid">
-        <div class="ov-item"><div class="ov-lbl">Planned Stages</div><div class="ov-val">${planned}/${total}</div></div>
-        <div class="ov-item"><div class="ov-lbl">First Stage</div><div class="ov-val" style="font-size:11px">${shipment.timeline[0]?.name||'-'}</div></div>
-        <div class="ov-item"><div class="ov-lbl">Last Stage</div><div class="ov-val" style="font-size:11px">${shipment.timeline[shipment.timeline.length-1]?.name||'-'}</div></div>
-        <div class="ov-item"><div class="ov-lbl">Planned Span</div><div class="ov-val">${span?fmtSpan(span):'-'}</div></div>
-        <div class="ov-item"><div class="ov-lbl">Auto Checkpoints</div><div class="ov-val">${auto.length}</div></div>
-        <div class="ov-item"><div class="ov-lbl">CP Coverage</div><div class="ov-val">${new Set(auto.flatMap(c=>c.verificationStages)).size}/${total}</div></div>
-      </div>
-      ${(shipment.srcName||shipment.srcPort||shipment.finalDeliveryLocation||shipment.promisedDate) ? `
-      <div class="divider" style="margin:10px 0"></div>
-      <div class="overview-grid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">
-        ${shipment.srcName?`<div class="ov-item"><div class="ov-lbl">Source</div><div class="ov-val" style="font-size:11px">${shipment.srcName}</div></div>`:''}
-        ${shipment.srcLocation?`<div class="ov-item"><div class="ov-lbl">Source Location</div><div class="ov-val" style="font-size:11px">${shipment.srcLocation}</div></div>`:''}
-        ${shipment.srcPort?`<div class="ov-item"><div class="ov-lbl">Source Port</div><div class="ov-val" style="font-size:11px">${shipment.srcPort}${shipment.srcPortCountry?', '+shipment.srcPortCountry:''}</div></div>`:''}
-        ${shipment.srcDeliveryTerm?`<div class="ov-item"><div class="ov-lbl">Supplier Delivery Term</div><div class="ov-val" style="font-size:11px">${shipment.srcDeliveryTerm}</div></div>`:''}
-        ${shipment.supplierInsuranceScope?`<div class="ov-item"><div class="ov-lbl">Insurance Scope</div><div class="ov-val" style="font-size:11px">${shipment.supplierInsuranceScope}</div></div>`:''}
-        ${shipment.srcDeliveryPort?`<div class="ov-item"><div class="ov-lbl">Src. Delivery Port</div><div class="ov-val" style="font-size:11px">${shipment.srcDeliveryPort}${shipment.srcDeliveryCountry?', '+shipment.srcDeliveryCountry:''}</div></div>`:''}
-        ${shipment.isStopover==='Yes'?`<div class="ov-item"><div class="ov-lbl">Stopover</div><div class="ov-val" style="font-size:11px">${shipment.stopoverPort||'-'}${shipment.stopoverCountry?', '+shipment.stopoverCountry:''}${shipment.stopoverWaitDays?' ('+shipment.stopoverWaitDays+'d)':''}</div></div>`:''}
-        ${shipment.finalFromPort?`<div class="ov-item"><div class="ov-lbl">Sailing From</div><div class="ov-val" style="font-size:11px">${shipment.finalFromPort}${shipment.finalFromCountry?', '+shipment.finalFromCountry:''}</div></div>`:''}
-        ${shipment.finalToPort?`<div class="ov-item"><div class="ov-lbl">Sailing To</div><div class="ov-val" style="font-size:11px">${shipment.finalToPort}${shipment.finalToCountry?', '+shipment.finalToCountry:''}</div></div>`:''}
-        ${shipment.finalDeliveryLocation?`<div class="ov-item"><div class="ov-lbl">Final Delivery</div><div class="ov-val" style="font-size:11px">${shipment.finalDeliveryLocation}</div></div>`:''}
-        ${shipment.clientDeliveryTerm?`<div class="ov-item"><div class="ov-lbl">Client Delivery Term</div><div class="ov-val" style="font-size:11px">${shipment.clientDeliveryTerm}</div></div>`:''}
-        ${shipment.finalInsuranceScope?`<div class="ov-item"><div class="ov-lbl">Final Insurance Scope</div><div class="ov-val" style="font-size:11px">${shipment.finalInsuranceScope}</div></div>`:''}
-        ${shipment.promisedDate?`<div class="ov-item"><div class="ov-lbl">Promised to Client</div><div class="ov-val" style="font-size:11px">${promisedFmt}</div></div>`:''}
+
+      <!-- Details grid -->
+      ${(shipment.srcName||shipment.srcPort||shipment.srcDeliveryTerm||shipment.finalDeliveryLocation||shipment.isStopover==='Yes'||shipment.finalToPort) ? `
+      <div class="ship-details">
+        ${shipment.srcName?`<div class="ov-item"><div class="ov-lbl">Source</div><div class="ov-val">${shipment.srcName}</div></div>`:''}
+        ${shipment.srcLocation?`<div class="ov-item"><div class="ov-lbl">Source Location</div><div class="ov-val">${shipment.srcLocation}</div></div>`:''}
+        ${shipment.srcPort?`<div class="ov-item"><div class="ov-lbl">Source Port</div><div class="ov-val">${shipment.srcPort}${shipment.srcPortCountry?', '+shipment.srcPortCountry:''}</div></div>`:''}
+        ${shipment.srcDeliveryTerm?`<div class="ov-item"><div class="ov-lbl">Supplier Term</div><div class="ov-val">${shipment.srcDeliveryTerm}</div></div>`:''}
+        ${shipment.supplierInsuranceScope?`<div class="ov-item"><div class="ov-lbl">Supplier Insurance</div><div class="ov-val">${shipment.supplierInsuranceScope}</div></div>`:''}
+        ${shipment.srcDeliveryPort?`<div class="ov-item"><div class="ov-lbl">Src. Delivery Port</div><div class="ov-val">${shipment.srcDeliveryPort}${shipment.srcDeliveryCountry?', '+shipment.srcDeliveryCountry:''}</div></div>`:''}
+        ${shipment.isStopover==='Yes'?`<div class="ov-item"><div class="ov-lbl">Stopover</div><div class="ov-val">${shipment.stopoverPort||'-'}${shipment.stopoverCountry?', '+shipment.stopoverCountry:''}${shipment.stopoverWaitDays?' ('+shipment.stopoverWaitDays+'d)':''}</div></div>`:''}
+        ${shipment.finalFromPort?`<div class="ov-item"><div class="ov-lbl">Sailing From</div><div class="ov-val">${shipment.finalFromPort}${shipment.finalFromCountry?', '+shipment.finalFromCountry:''}</div></div>`:''}
+        ${shipment.finalToPort?`<div class="ov-item"><div class="ov-lbl">Sailing To</div><div class="ov-val">${shipment.finalToPort}${shipment.finalToCountry?', '+shipment.finalToCountry:''}</div></div>`:''}
+        ${shipment.finalDeliveryLocation?`<div class="ov-item"><div class="ov-lbl">Final Delivery</div><div class="ov-val">${shipment.finalDeliveryLocation}</div></div>`:''}
+        ${shipment.clientDeliveryTerm?`<div class="ov-item"><div class="ov-lbl">Client Term</div><div class="ov-val">${shipment.clientDeliveryTerm}</div></div>`:''}
+        ${shipment.finalInsuranceScope?`<div class="ov-item"><div class="ov-lbl">Final Insurance</div><div class="ov-val">${shipment.finalInsuranceScope}</div></div>`:''}
       </div>` : ''}
-      <div class="prog-wrap">
-        <div class="prog-labels"><span>Stage Progress</span><strong>${pct}%</strong></div>
+
+      <!-- Checkpoint pills -->
+      <div class="ship-cp-strip">${cpPills}</div>
+
+      <!-- Progress -->
+      <div class="ship-progress">
+        <div class="prog-header">
+          <span class="prog-lbl">Stage Progress</span>
+          <span class="prog-pct">${pct}%</span>
+        </div>
         <div class="stage-pips">${pipsHTML}</div>
         <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
       </div>
-      <div class="sec-label">Milestones</div>
-      <div class="milestones-row">${milestonesHTML}</div>
+
+      <!-- Milestones -->
+      <div style="padding:0 20px 4px"><span class="sec-label" style="margin:0">Milestones</span></div>
+      <div class="milestones-row" style="padding:6px 20px 16px">${milestonesHTML}</div>
     </div>`;
   }).join('');
 }
