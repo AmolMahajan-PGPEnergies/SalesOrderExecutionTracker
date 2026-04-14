@@ -163,6 +163,9 @@ input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:defau
 .gantt-month{position:absolute;top:0;bottom:0;border-left:1px solid var(--border2);display:flex;align-items:center;padding:0 6px}
 .gantt-month-lbl{font-family:'DM Mono',monospace;font-size:10px;font-weight:600;color:var(--accent);letter-spacing:.04em;white-space:nowrap}
 .gantt-ruler-today{position:absolute;top:0;bottom:0;width:2px;background:var(--danger);opacity:.6;pointer-events:none}
+.gantt-ruler-cutoff{position:absolute;top:0;bottom:0;width:2px;background:#ef4444;pointer-events:none;overflow:visible;z-index:5}
+.gantt-cutoff-tag{position:absolute;top:5px;left:4px;background:#ef4444;color:#fff;font-family:'DM Mono',monospace;font-size:8px;font-weight:700;padding:2px 5px;border-radius:3px;white-space:nowrap;letter-spacing:.06em;line-height:1.4}
+.gantt-track-cutoff{position:absolute;top:0;bottom:0;width:2px;background:#ef4444;z-index:2;pointer-events:none}
 
 /* Stage rows */
 .gantt-row{display:flex;align-items:stretch;border-bottom:1px solid var(--border);background:var(--panel);transition:opacity .2s}
@@ -661,14 +664,12 @@ input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:defau
 const shipmentTimelines = {
   'Stock Shipment': [
     { name: 'Stock Picked', mandatory: true },
-    { name: 'Stock Quality Inspection', mandatory: true },
-    { name: 'Delivery To Client', mandatory: true }
+    { name: 'Stock Quality Inspection', mandatory: true }
   ],
   'Stock Machining Shipment': [
     { name: 'Stock Picked', mandatory: true },
     { name: 'Stock Quality Inspection', mandatory: true },
-    { name: 'Machining Receipt', mandatory: true },
-    { name: 'Delivery To Client', mandatory: true }
+    { name: 'Machining Receipt', mandatory: true }
   ],
   'Stock Incoming Shipment': [
     { name: 'Production Start', mandatory: false },
@@ -680,8 +681,7 @@ const shipmentTimelines = {
     { name: 'Supplier Delivery Scope', mandatory: false },
     { name: 'GRN Allocation', mandatory: true },
     { name: 'Stock Picked', mandatory: true },
-    { name: 'Stock Quality Inspection', mandatory: true },
-    { name: 'Delivery To Client', mandatory: true }
+    { name: 'Stock Quality Inspection', mandatory: true }
   ],
   'Supplier Shipment': [
     { name: 'PO Placement', mandatory: true },
@@ -693,8 +693,7 @@ const shipmentTimelines = {
     { name: 'Material Readiness Document Approval', mandatory: true },
     { name: 'Material Readiness', mandatory: true },
     { name: 'Material Readiness Inspection', mandatory: false },
-    { name: 'Supplier Delivery Scope', mandatory: true },
-    { name: 'Delivery To Client', mandatory: true }
+    { name: 'Supplier Delivery Scope', mandatory: true }
   ]
 };
 
@@ -779,6 +778,10 @@ let ganttHdrEl = null; // reference for sticky-header scroll sync
 
 function dateToX(d) { return daysBetween(ganttRange.start, d) * DAY_PX; }
 function xToDate(x) { return addDays(ganttRange.start, Math.round(x / DAY_PX)); }
+function _ganttCutoff() {
+  const v = document.getElementById('promisedDate')?.value || '';
+  return v ? parseLocalDate(v) : null;
+}
 
 // ═══════════════════════════════════════
 // SIDEBAR & NAVIGATION
@@ -1081,7 +1084,9 @@ function renderStageConfigRows() {
   });
 
   // Calc gantt time range (month-aligned + 1 month padding each side)
+  // Include promised date so the cutoff line is always within range
   const allD = Object.values(ganttData).flatMap(d=>[d.startDate,d.endDate]);
+  const _co = _ganttCutoff(); if (_co) allD.push(_co);
   let gS = new Date(Math.min(...allD)); gS = new Date(gS.getFullYear(),gS.getMonth()-1,1);
   let gE = new Date(Math.max(...allD)); gE = new Date(gE.getFullYear(),gE.getMonth()+2,0);
   ganttRange = { start:gS, end:gE };
@@ -1164,6 +1169,14 @@ function _buildRuler(gS,gE,tlW){
     const tm=document.createElement('div'); tm.className='gantt-ruler-today';
     tm.style.left=dateToX(td)+'px'; ruler.appendChild(tm);
   }
+  // Promised-date cutoff marker in ruler
+  const co=_ganttCutoff();
+  if(co&&co>=gS&&co<=gE){
+    const cm=document.createElement('div'); cm.className='gantt-ruler-cutoff';
+    cm.style.left=dateToX(co)+'px';
+    cm.innerHTML=`<span class="gantt-cutoff-tag">CUTOFF ${co.getDate()} ${MONTHS[co.getMonth()]}</span>`;
+    ruler.appendChild(cm);
+  }
   clip.appendChild(ruler); hdr.appendChild(clip); return hdr;
 }
 
@@ -1215,6 +1228,12 @@ function _buildGanttRow(stage,gS,tlW){
   if(td>=gS&&td<=ganttRange.end){
     const tl=document.createElement('div'); tl.className='gantt-track-today';
     tl.style.left=dateToX(td)+'px'; track.appendChild(tl);
+  }
+  // Promised-date cutoff line
+  const co=_ganttCutoff();
+  if(co&&co>=gS&&co<=ganttRange.end){
+    const cl=document.createElement('div'); cl.className='gantt-track-cutoff';
+    cl.style.left=dateToX(co)+'px'; track.appendChild(cl);
   }
 
   // Bar
@@ -1299,6 +1318,13 @@ function _maybeExpandGantt(){
       const tm=document.createElement('div'); tm.className='gantt-ruler-today';
       tm.style.left=dateToX(td)+'px'; ruler.appendChild(tm);
     }
+    const co=_ganttCutoff();
+    if(co&&co>=ganttRange.start&&co<=ganttRange.end){
+      const cm=document.createElement('div'); cm.className='gantt-ruler-cutoff';
+      cm.style.left=dateToX(co)+'px';
+      cm.innerHTML=`<span class="gantt-cutoff-tag">CUTOFF ${co.getDate()} ${MONTHS[co.getMonth()]}</span>`;
+      ruler.appendChild(cm);
+    }
   }
   // Rebuild grid lines in every track
   inner.querySelectorAll('.gantt-track').forEach(track=>{
@@ -1315,6 +1341,12 @@ function _maybeExpandGantt(){
     if(td>=ganttRange.start&&td<=ganttRange.end){
       const tl=document.createElement('div'); tl.className='gantt-track-today';
       tl.style.left=dateToX(td)+'px'; track.appendChild(tl);
+    }
+    track.querySelectorAll('.gantt-track-cutoff').forEach(v=>v.remove());
+    const co=_ganttCutoff();
+    if(co&&co>=ganttRange.start&&co<=ganttRange.end){
+      const cl=document.createElement('div'); cl.className='gantt-track-cutoff';
+      cl.style.left=dateToX(co)+'px'; track.appendChild(cl);
     }
   });
 }
