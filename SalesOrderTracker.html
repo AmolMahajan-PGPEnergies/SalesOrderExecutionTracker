@@ -1210,7 +1210,7 @@ function _buildGanttRow(stage,gS,tlW){
     <div class="${stage.mandatory?'gantt-mand-pill':'gantt-opt-pill'}">${stage.mandatory?'Mandatory':'Optional'}</div>
     <div class="grd-days-row">
       <input class="grd-days" type="number" min="1" data-sn="${stage.name}"
-             value="${data.days||''}" placeholder="—">
+             value="${data.days || daysBetween(data.startDate, data.endDate) || ''}" placeholder="—">
       <span class="grd-days-lbl">days</span>
     </div>
     <div class="grd-range">
@@ -1308,6 +1308,11 @@ function _syncRowDates(stageName){
   const ei=document.querySelector(`.grd-inp[data-sn="${_esc(stageName)}"][data-role="end"]`);
   if(si) si.value=fmtDisp(data.startDate);
   if(ei) ei.value=fmtDisp(data.endDate);
+  // Keep the days input in sync with the actual date span
+  const dur=daysBetween(data.startDate, data.endDate);
+  data.days = dur > 0 ? dur : null;
+  const di=document.querySelector(`.grd-days[data-sn="${_esc(stageName)}"]`);
+  if(di) di.value = dur > 0 ? dur : '';
 }
 
 // Returns the endDate of the last ACTIVE (applicable) stage before index i.
