@@ -98,9 +98,6 @@ select.sel option{background:var(--panel2)}
 .prog-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
 .prog-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
 .prog-pct{font-size:12px;font-weight:700;color:var(--accent)}
-/* Stage flow infographic */
-.stage-flow{display:flex;align-items:flex-start;overflow-x:auto;padding:10px 0 6px;scrollbar-width:thin}
-
 /* Shipment route strip */
 .ship-route{padding:8px 20px 14px;border-top:1px solid var(--border)}
 .route-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
@@ -125,18 +122,6 @@ select.sel option{background:var(--panel2)}
 .route-conn-dash{width:8px;height:2px;background:var(--border2);border-radius:1px}
 .route-conn-arrow{color:var(--muted2);font-size:10px}
 .route-conn-lbl{font-family:'DM Mono',monospace;font-size:7px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
-.sf-step{display:flex;flex-direction:column;align-items:center;flex:0 0 auto}
-.sf-head{display:flex;align-items:center;height:22px}
-.sf-dot{width:13px;height:13px;border-radius:50%;flex-shrink:0;position:relative;z-index:1;transition:box-shadow .2s}
-.sf-dot--done{background:var(--accent);box-shadow:0 0 0 3px rgba(0,212,216,.2)}
-.sf-dot--active{background:var(--warning);box-shadow:0 0 0 3px rgba(245,158,11,.2)}
-.sf-dot--pending{background:var(--bg2);border:2px solid var(--border2)}
-.sf-line{height:2px;width:44px;flex-shrink:0;background:var(--border2);transition:background .3s}
-.sf-line--filled{background:var(--accent)}
-.sf-label{margin-top:7px;text-align:center;width:70px;padding:0 3px}
-.sf-name{font-size:9px;font-weight:600;color:var(--text2);line-height:1.35;word-break:break-word}
-.sf-date{font-size:8px;font-family:'DM Mono',monospace;color:var(--muted);margin-top:2px}
-/* legacy pip/bar — kept for other uses */
 .stage-pips{display:flex;gap:2px;margin-bottom:5px}
 .stage-pip{height:5px;flex:1;border-radius:3px;background:var(--border2)}
 .stage-pip.done{background:var(--accent)}
@@ -152,10 +137,22 @@ select.sel option{background:var(--panel2)}
 .milestone-chip{
   display:inline-flex;flex-direction:column;align-items:flex-start;
   padding:10px 12px;border-radius:var(--r);border:1px solid var(--border);
-  background:var(--bg3);min-width:170px;flex:0 0 auto;cursor:pointer;
+  border-left-width:3px;background:var(--bg3);min-width:170px;flex:0 0 auto;cursor:pointer;
   transition:border-color .15s,background .15s;
 }
-.milestone-chip:hover{border-color:var(--border3);background:var(--panel2)}
+.milestone-chip:hover{background:var(--panel2)}
+/* Status colour coding */
+.milestone-chip.mc--done{border-left-color:var(--accent);background:rgba(0,212,216,.04)}
+.milestone-chip.mc--done .mc-dot{background:var(--accent)}
+.milestone-chip.mc--done .mc-name{color:var(--accent)}
+.milestone-chip.mc--done .mc-date{color:var(--accent);opacity:.7}
+.milestone-chip.mc--active{border-left-color:var(--warning);background:rgba(245,158,11,.04)}
+.milestone-chip.mc--active .mc-dot{background:var(--warning)}
+.milestone-chip.mc--active .mc-name{color:var(--warning)}
+.milestone-chip.mc--active .mc-date{color:var(--warning);opacity:.8}
+.milestone-chip.mc--pending{border-left-color:var(--border2);opacity:.65}
+.milestone-chip.mc--pending .mc-dot{background:var(--muted)}
+.milestone-chip.mc--pending .mc-name{color:var(--muted2)}
 .mc-header{display:flex;align-items:center;gap:7px;margin-bottom:6px}
 .mc-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0}
 .mc-name{font-size:12px;font-weight:700;color:var(--accent)}
@@ -2281,7 +2278,8 @@ function renderShipments() {
       },{});
       const summaryPills = Object.keys(catGrouped).sort().map(k=>`<span class="mc-count">${k} (${catGrouped[k]})</span>`).join('');
       const detailItems = checks.map(c=>`<div class="mc-entry"><div class="mc-entry-title">${c.type} | ${c.category||'Uncategorized'}</div><div class="mc-entry-detail">${c.checklistDetails||'-'}</div></div>`).join('');
-      return `<div class="milestone-chip" onclick="toggleMilestoneDetail(this)">
+      const mcStatus = pipColor(stage) || 'pending';
+      return `<div class="milestone-chip mc--${mcStatus}" onclick="toggleMilestoneDetail(this)">
         <div class="mc-header"><span class="mc-dot"></span><span class="mc-name">${stage.name}</span></div>
         <div class="mc-date">${d?fmtDisp(d):'Date pending'}</div>
         ${summaryPills ? `<div class="mc-summary">${summaryPills}</div><div class="mc-detail-list">${detailItems}</div>` : ''}
@@ -2295,25 +2293,6 @@ function renderShipments() {
       if (d<now) return 'done';
       return 'active';
     };
-
-    // Stage flow infographic
-    const stageFlowHTML = shipment.timeline.map((stage, i) => {
-      const rawStatus = pipColor(stage);
-      const status = rawStatus || 'pending';
-      const d = parseLocalDate(stage.date);
-      const dateFmt = d ? fmtDisp(d) : '—';
-      const isLast = i === shipment.timeline.length - 1;
-      return `<div class="sf-step">
-        <div class="sf-head">
-          <div class="sf-dot sf-dot--${status}"></div>
-          ${!isLast ? `<div class="sf-line${rawStatus==='done'?' sf-line--filled':''}"></div>` : ''}
-        </div>
-        <div class="sf-label">
-          <div class="sf-name">${stage.name}</div>
-          <div class="sf-date">${dateFmt}</div>
-        </div>
-      </div>`;
-    }).join('');
 
     const isDelayed = (shipment.isDelay||'On Time') === 'Delayed';
     const statusBadge = isDelayed
@@ -2387,20 +2366,14 @@ function renderShipments() {
       <!-- Checkpoint pills -->
       <div class="ship-cp-strip">${cpPills}</div>
 
-      <!-- Stage flow infographic -->
-      <div class="ship-progress">
-        <div class="prog-header">
-          <span class="prog-lbl">Stage Progress</span>
-          <span class="prog-pct">${pct}%</span>
-        </div>
-        <div class="stage-flow">${stageFlowHTML}</div>
-      </div>
-
       <!-- Shipment route strip -->
       ${buildRouteStrip(shipment)}
 
       <!-- Milestones -->
-      <div style="padding:0 20px 4px"><span class="sec-label" style="margin:0">Milestones</span></div>
+      <div style="padding:8px 20px 4px;display:flex;align-items:center;justify-content:space-between">
+        <span class="sec-label" style="margin:0">Milestones</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:var(--accent)">${pct}% complete</span>
+      </div>
       <div class="milestones-row" style="padding:6px 20px 16px">${milestonesHTML}</div>
     </div>`;
   }).join('');
