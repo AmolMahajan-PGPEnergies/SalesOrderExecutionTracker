@@ -100,6 +100,31 @@ select.sel option{background:var(--panel2)}
 .prog-pct{font-size:12px;font-weight:700;color:var(--accent)}
 /* Stage flow infographic */
 .stage-flow{display:flex;align-items:flex-start;overflow-x:auto;padding:10px 0 6px;scrollbar-width:thin}
+
+/* Shipment route strip */
+.ship-route{padding:8px 20px 14px;border-top:1px solid var(--border)}
+.route-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.route-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+.route-strip{display:flex;align-items:center;overflow-x:auto;scrollbar-width:thin;padding:2px 0 4px;gap:0}
+.route-node{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:9px 12px;flex-shrink:0;min-width:96px;max-width:140px}
+.route-node--src{border-left:3px solid var(--info)}
+.route-node--port{border-left:3px solid var(--accent)}
+.route-node--stop{border-left:3px solid var(--warning)}
+.route-node--dest{border-left:3px solid var(--accent)}
+.route-node--del{border-left:3px solid var(--success)}
+.route-node-top{display:flex;align-items:center;gap:5px;margin-bottom:4px}
+.route-node-icon{font-size:16px;line-height:1;flex-shrink:0}
+.route-node-name{font-size:10px;font-weight:700;color:var(--text2);line-height:1.3;word-break:break-word}
+.route-node-sub{font-size:8px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:4px}
+.route-node-country{display:flex;align-items:center;gap:5px;margin-top:5px;padding-top:5px;border-top:1px solid var(--border)}
+.route-node-flag{font-size:15px;line-height:1;flex-shrink:0}
+.route-node-ctry{font-size:9px;color:var(--muted2);font-family:'DM Mono',monospace;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:80px}
+.route-conn{display:flex;flex-direction:column;align-items:center;flex-shrink:0;padding:0 5px;gap:3px;padding-bottom:18px}
+.route-conn-mode{font-size:14px;line-height:1}
+.route-conn-track{display:flex;align-items:center;gap:2px}
+.route-conn-dash{width:8px;height:2px;background:var(--border2);border-radius:1px}
+.route-conn-arrow{color:var(--muted2);font-size:10px}
+.route-conn-lbl{font-family:'DM Mono',monospace;font-size:7px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
 .sf-step{display:flex;flex-direction:column;align-items:center;flex:0 0 auto}
 .sf-head{display:flex;align-items:center;height:22px}
 .sf-dot{width:13px;height:13px;border-radius:50%;flex-shrink:0;position:relative;z-index:1;transition:box-shadow .2s}
@@ -2084,6 +2109,105 @@ function renderAlerts() {
 }
 
 // ═══════════════════════════════════════
+// ROUTE STRIP HELPERS
+// ═══════════════════════════════════════
+const _COUNTRY_FLAGS = {
+  'india':'🇮🇳','china':'🇨🇳','uae':'🇦🇪','united arab emirates':'🇦🇪','dubai':'🇦🇪',
+  'germany':'🇩🇪','france':'🇫🇷','uk':'🇬🇧','united kingdom':'🇬🇧','great britain':'🇬🇧',
+  'usa':'🇺🇸','united states':'🇺🇸','us':'🇺🇸','canada':'🇨🇦','mexico':'🇲🇽',
+  'netherlands':'🇳🇱','holland':'🇳🇱','belgium':'🇧🇪','switzerland':'🇨🇭',
+  'spain':'🇪🇸','italy':'🇮🇹','portugal':'🇵🇹','sweden':'🇸🇪','norway':'🇳🇴',
+  'denmark':'🇩🇰','finland':'🇫🇮','poland':'🇵🇱','austria':'🇦🇹','greece':'🇬🇷',
+  'turkey':'🇹🇷','russia':'🇷🇺','ukraine':'🇺🇦','israel':'🇮🇱','saudi arabia':'🇸🇦',
+  'qatar':'🇶🇦','kuwait':'🇰🇼','bahrain':'🇧🇭','oman':'🇴🇲','iran':'🇮🇷',
+  'iraq':'🇮🇶','jordan':'🇯🇴','egypt':'🇪🇬','kenya':'🇰🇪','nigeria':'🇳🇬',
+  'south africa':'🇿🇦','ethiopia':'🇪🇹','ghana':'🇬🇭','tanzania':'🇹🇿',
+  'pakistan':'🇵🇰','bangladesh':'🇧🇩','sri lanka':'🇱🇰','nepal':'🇳🇵',
+  'singapore':'🇸🇬','malaysia':'🇲🇾','indonesia':'🇮🇩','thailand':'🇹🇭',
+  'vietnam':'🇻🇳','philippines':'🇵🇭','myanmar':'🇲🇲','cambodia':'🇰🇭',
+  'japan':'🇯🇵','south korea':'🇰🇷','korea':'🇰🇷','taiwan':'🇹🇼','hong kong':'🇭🇰',
+  'australia':'🇦🇺','new zealand':'🇳🇿','brazil':'🇧🇷','argentina':'🇦🇷',
+  'colombia':'🇨🇴','peru':'🇵🇪','chile':'🇨🇱','czechia':'🇨🇿','czech republic':'🇨🇿',
+  'hungary':'🇭🇺','romania':'🇷🇴','bulgaria':'🇧🇬','croatia':'🇭🇷'
+};
+function _cflag(name){ return name ? (_COUNTRY_FLAGS[(name||'').toLowerCase().trim()]||'') : ''; }
+
+function buildRouteStrip(sh) {
+  const nodes = [];
+
+  if (sh.srcName || sh.srcLocation || sh.srcDeliveryCountry) {
+    nodes.push({ kind:'node', cls:'src', icon:'🏭',
+      name: sh.srcName || sh.srcLocation || 'Supplier',
+      sub:  sh.srcName && sh.srcLocation ? sh.srcLocation : '',
+      country: sh.srcDeliveryCountry || '' });
+  }
+  if (sh.srcPort || sh.srcPortCountry) {
+    if (nodes.length) nodes.push({ kind:'conn', mode:'🚛', label:'Road' });
+    nodes.push({ kind:'node', cls:'port', icon:'⚓',
+      name: sh.srcPort || 'Source Port',
+      sub:  '',
+      country: sh.srcPortCountry || '' });
+  }
+  if (sh.isStopover === 'Yes' && (sh.stopoverPort || sh.stopoverCountry)) {
+    if (nodes.length) nodes.push({ kind:'conn', mode:'🚢', label:'Sea' });
+    nodes.push({ kind:'node', cls:'stop', icon:'🔗',
+      name: sh.stopoverPort || 'Stopover',
+      sub:  sh.stopoverWaitDays ? sh.stopoverWaitDays+'d wait' : '',
+      country: sh.stopoverCountry || '' });
+  }
+  if (sh.finalToPort || sh.finalToCountry) {
+    if (nodes.length) nodes.push({ kind:'conn', mode:'🚢', label:'Sea' });
+    nodes.push({ kind:'node', cls:'dest', icon:'🛳',
+      name: sh.finalToPort || 'Dest. Port',
+      sub:  '',
+      country: sh.finalToCountry || '' });
+  }
+  if (sh.finalDeliveryLocation) {
+    if (nodes.length) nodes.push({ kind:'conn', mode:'🚛', label:'Road' });
+    nodes.push({ kind:'node', cls:'del', icon:'📍',
+      name: sh.finalDeliveryLocation,
+      sub:  '',
+      country: sh.finalToCountry || '' });
+  }
+
+  const nodeCount = nodes.filter(n=>n.kind==='node').length;
+  if (nodeCount < 2) return '';
+
+  const innerHTML = nodes.map(n => {
+    if (n.kind === 'node') {
+      const flag = _cflag(n.country);
+      return `<div class="route-node route-node--${n.cls}">
+        <div class="route-node-top">
+          <span class="route-node-icon">${n.icon}</span>
+          <span class="route-node-name">${n.name}</span>
+        </div>
+        ${n.sub ? `<div class="route-node-sub">${n.sub}</div>` : ''}
+        ${(flag||n.country) ? `<div class="route-node-country">
+          ${flag ? `<span class="route-node-flag">${flag}</span>` : ''}
+          <span class="route-node-ctry">${n.country}</span>
+        </div>` : ''}
+      </div>`;
+    } else {
+      return `<div class="route-conn">
+        <span class="route-conn-mode">${n.mode}</span>
+        <div class="route-conn-track">
+          <div class="route-conn-dash"></div>
+          <div class="route-conn-dash"></div>
+          <div class="route-conn-dash"></div>
+          <span class="route-conn-arrow">›</span>
+        </div>
+        <span class="route-conn-lbl">${n.label}</span>
+      </div>`;
+    }
+  }).join('');
+
+  return `<div class="ship-route">
+    <div class="route-hdr"><span class="route-lbl">Shipment Route</span></div>
+    <div class="route-strip">${innerHTML}</div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════
 // RENDER SHIPMENTS
 // ═══════════════════════════════════════
 function renderShipments() {
@@ -2271,6 +2395,9 @@ function renderShipments() {
         </div>
         <div class="stage-flow">${stageFlowHTML}</div>
       </div>
+
+      <!-- Shipment route strip -->
+      ${buildRouteStrip(shipment)}
 
       <!-- Milestones -->
       <div style="padding:0 20px 4px"><span class="sec-label" style="margin:0">Milestones</span></div>
