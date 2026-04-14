@@ -185,6 +185,11 @@ input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:defau
 .grd-sep{color:var(--muted);font-size:11px;flex-shrink:0}
 .grd-pick{width:22px;height:22px;border-radius:5px;background:transparent;border:1px solid var(--border2);color:var(--accent);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;transition:all .15s;padding:0;line-height:1;margin-left:1px}
 .grd-pick:hover{background:var(--accent-g);border-color:rgba(0,212,216,.4)}
+.grd-days-row{display:flex;align-items:center;gap:5px;margin-top:5px}
+.grd-days{width:52px;padding:3px 6px;background:var(--bg2);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;font-weight:600;outline:none;transition:border-color .2s;text-align:center;-moz-appearance:textfield}
+.grd-days::-webkit-outer-spin-button,.grd-days::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.grd-days:focus{border-color:var(--accent)}
+.grd-days-lbl{font-family:'DM Mono',monospace;font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
 
 /* Track */
 .gantt-track{flex:1;position:relative;min-height:80px;overflow:visible}
@@ -390,8 +395,8 @@ input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:defau
       <button class="modal-close" onclick="closeModal('addShipmentModal')">✕</button>
     </div>
     <div class="modal-body">
-      <!-- Row 1: Shipment ID + Type -->
-      <div class="form-grid" style="margin-bottom:14px">
+      <!-- Row 1: Shipment ID + Type + SO Booked Date -->
+      <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:14px">
         <div class="fg">
           <label>Shipment ID<span class="req">*</span></label>
           <input type="text" id="shipmentId" placeholder="e.g. SHP-001">
@@ -405,6 +410,10 @@ input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:defau
             <option>Stock Incoming Shipment</option>
             <option>Supplier Shipment</option>
           </select>
+        </div>
+        <div class="fg">
+          <label>SO Booked Date<span class="req">*</span></label>
+          <input type="date" id="soBookedDate" onchange="if(Object.keys(ganttData).length) _recalcFromSODate()">
         </div>
       </div>
 
@@ -816,7 +825,8 @@ function openAddShipmentModal(idx) {
   ['srcName','srcLocation','srcPort','srcDeliveryLocation','srcDeliveryPort',
    'stopoverLocation','stopoverPort','stopoverWaitDays',
    'finalFromLocation','finalFromPort','finalFromCountry','finalToLocation','finalToPort',
-   'finalDeliveryLocation','promisedDate','supplierInsuranceScope','finalInsuranceScope'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+   'finalDeliveryLocation','promisedDate','supplierInsuranceScope','finalInsuranceScope',
+   'soBookedDate'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   ['srcPortCountry','srcDeliveryCountry','stopoverCountry','finalToCountry','srcDeliveryTerm','clientDeliveryTerm'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('isStopover').checked = false;
   document.getElementById('isDelay').value = 'On Time';
@@ -830,13 +840,13 @@ function openAddShipmentModal(idx) {
   if (editingShipIdx!==null) {
     const sh = shipments[editingShipIdx];
     if (!sh) return;
-    activeShipDraft = { id:sh.id, type:sh.type, timeline:sh.timeline.map(s=>({name:s.name, startDate:s.startDate||'', date:s.date||''})) };
+    activeShipDraft = { id:sh.id, type:sh.type, timeline:sh.timeline.map(s=>({name:s.name, startDate:s.startDate||'', date:s.date||'', days:s.days||''})) };
     document.getElementById('shipmentId').value = sh.id;
     document.getElementById('shipmentType').value = sh.type;
     // Populate logistics fields
     ['srcName','srcLocation','srcPort','srcDeliveryLocation','srcDeliveryPort',
      'stopoverLocation','stopoverPort','stopoverWaitDays',
-     'finalToLocation','finalToPort','finalDeliveryLocation','promisedDate'
+     'finalToLocation','finalToPort','finalDeliveryLocation','promisedDate','soBookedDate'
     ].forEach(id=>{ const el=document.getElementById(id); if(el && sh[id]!==undefined) el.value=sh[id]; });
     ['srcPortCountry','srcDeliveryCountry','stopoverCountry','finalToCountry','srcDeliveryTerm','clientDeliveryTerm'
     ].forEach(id=>{ const el=document.getElementById(id); if(el && sh[id]) el.value=sh[id]; });
@@ -860,6 +870,7 @@ function saveShipment() {
   const g = id => document.getElementById(id)?.value.trim()||'';
   const ship = {
     id, type, timeline,
+    soBookedDate: g('soBookedDate'),
     srcName: g('srcName'), srcLocation: g('srcLocation'), srcPort: g('srcPort'), srcPortCountry: g('srcPortCountry'),
     srcDeliveryTerm: g('srcDeliveryTerm'), srcDeliveryLocation: g('srcDeliveryLocation'),
     srcDeliveryPort: g('srcDeliveryPort'), srcDeliveryCountry: g('srcDeliveryCountry'),
@@ -893,6 +904,7 @@ function getSelectedTimeline(type) {
       name: stage.name,
       startDate: data.startDate ? fmtInput(data.startDate) : '',
       date: data.endDate ? fmtInput(data.endDate) : '',
+      days: data.days || '',
     });
   });
   return result;
@@ -1069,17 +1081,20 @@ function renderStageConfigRows() {
   const today = new Date(); today.setHours(0,0,0,0);
   const existMap = new Map(
     activeShipDraft && activeShipDraft.type===type
-      ? activeShipDraft.timeline.map(s=>[s.name,{sd:s.startDate,ed:s.date}])
+      ? activeShipDraft.timeline.map(s=>[s.name,{sd:s.startDate,ed:s.date,days:s.days||null}])
       : []
   );
-  let cursor = new Date(today);
+  const soDateVal = document.getElementById('soBookedDate')?.value || '';
+  const soDate = soDateVal ? parseLocalDate(soDateVal) : null;
+  let cursor = soDate ? new Date(soDate) : new Date(today);
   stages.forEach(stage => {
     const ex = existMap.get(stage.name);
+    const exDays = ex && ex.days ? parseInt(ex.days) : null;
     let sd = ex && ex.sd ? (parseLocalDate(ex.sd)||new Date(cursor)) : new Date(cursor);
-    let ed = ex && ex.ed ? (parseLocalDate(ex.ed)||addDays(sd,14))   : addDays(sd,14);
+    let ed = ex && ex.ed ? (parseLocalDate(ex.ed)||addDays(sd,exDays||14)) : addDays(sd,exDays||14);
     if (ed <= sd) ed = addDays(sd,1);
     const applicable = stage.mandatory || !activeShipDraft || existMap.has(stage.name);
-    ganttData[stage.name] = { startDate:sd, endDate:ed, applicable:!!applicable };
+    ganttData[stage.name] = { startDate:sd, endDate:ed, applicable:!!applicable, days:exDays };
     cursor = new Date(ed);
   });
 
@@ -1191,6 +1206,11 @@ function _buildGanttRow(stage,gS,tlW){
   lbl.innerHTML=`
     <div class="gantt-row-name">${stage.name}</div>
     <div class="${stage.mandatory?'gantt-mand-pill':'gantt-opt-pill'}">${stage.mandatory?'Mandatory':'Optional'}</div>
+    <div class="grd-days-row">
+      <input class="grd-days" type="number" min="1" data-sn="${stage.name}"
+             value="${data.days||''}" placeholder="—">
+      <span class="grd-days-lbl">days</span>
+    </div>
     <div class="grd-range">
       <input class="grd-inp" type="text" data-sn="${stage.name}" data-role="start"
              value="${fmtDisp(data.startDate)}" placeholder="Start" readonly>
@@ -1199,6 +1219,9 @@ function _buildGanttRow(stage,gS,tlW){
              value="${fmtDisp(data.endDate)}" placeholder="End" readonly>
       <button type="button" class="grd-pick" title="Pick date range">&#x1F4C5;</button>
     </div>`;
+  lbl.querySelector('.grd-days').addEventListener('input', e => {
+    _applyDays(stage.name, e.target.value);
+  });
   lbl.querySelector('.grd-pick').addEventListener('click', e => {
     e.stopPropagation();
     openDatePicker(stage.name, e.currentTarget);
@@ -1283,6 +1306,58 @@ function _syncRowDates(stageName){
   const ei=document.querySelector(`.grd-inp[data-sn="${_esc(stageName)}"][data-role="end"]`);
   if(si) si.value=fmtDisp(data.startDate);
   if(ei) ei.value=fmtDisp(data.endDate);
+}
+
+// Apply a days value to a stage and cascade all downstream stages
+function _applyDays(stageName, daysVal){
+  const days = parseInt(daysVal, 10);
+  const type = document.getElementById('shipmentType').value;
+  const stages = shipmentTimelines[type]||[];
+  const idx = stages.findIndex(s=>s.name===stageName);
+  if(idx===-1) return;
+
+  if(!isNaN(days) && days>0){
+    ganttData[stageName].days = days;
+    ganttData[stageName].endDate = addDays(ganttData[stageName].startDate, days);
+  } else {
+    ganttData[stageName].days = null;
+  }
+  _refreshBar(stageName);
+  _syncRowDates(stageName);
+
+  // Cascade: every stage after the changed one shifts forward
+  for(let i=idx+1; i<stages.length; i++){
+    const prev = ganttData[stages[i-1].name];
+    const cur  = ganttData[stages[i].name];
+    if(!prev||!cur) continue;
+    const dur = cur.days || Math.max(1, daysBetween(cur.startDate, cur.endDate));
+    cur.startDate = new Date(prev.endDate);
+    cur.endDate   = addDays(cur.startDate, dur);
+    _refreshBar(stages[i].name);
+    _syncRowDates(stages[i].name);
+  }
+  _maybeExpandGantt();
+}
+
+// Recalculate all stage dates from the SO Booked Date (preserves days / duration)
+function _recalcFromSODate(){
+  const v = document.getElementById('soBookedDate')?.value||'';
+  const soDate = v ? parseLocalDate(v) : null;
+  if(!soDate || !Object.keys(ganttData).length) return;
+  const type = document.getElementById('shipmentType').value;
+  const stages = shipmentTimelines[type]||[];
+  let cursor = new Date(soDate);
+  stages.forEach(stage=>{
+    const data = ganttData[stage.name];
+    if(!data) return;
+    const dur = data.days || Math.max(1, daysBetween(data.startDate, data.endDate));
+    data.startDate = new Date(cursor);
+    data.endDate   = addDays(cursor, dur);
+    cursor = new Date(data.endDate);
+    _refreshBar(stage.name);
+    _syncRowDates(stage.name);
+  });
+  _maybeExpandGantt();
 }
 
 function _maybeExpandGantt(){
@@ -1830,12 +1905,14 @@ function renderShipments() {
     const statusBadge = isDelayed
       ? '<span style="font-size:11px;color:var(--danger);font-weight:700;background:var(--danger-bg);padding:2px 9px;border-radius:99px">Delayed</span>'
       : '<span style="font-size:11px;color:var(--success);font-weight:700;background:rgba(16,217,138,.12);padding:2px 9px;border-radius:99px">On Time</span>';
-    const promisedFmt = shipment.promisedDate ? fmtDisp(parseLocalDate(shipment.promisedDate)) : '-';
+    const promisedFmt  = shipment.promisedDate  ? fmtDisp(parseLocalDate(shipment.promisedDate))  : '-';
+    const soBookedFmt  = shipment.soBookedDate  ? fmtDisp(parseLocalDate(shipment.soBookedDate))  : null;
 
     return `<div class="shipment-card${isLate?' shipment-card--late':''}">
       <div class="ship-head">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <span class="ship-id">Shipment #${shipment.id}</span>
+          ${soBookedFmt?`<span style="font-size:11px;color:var(--muted2);font-weight:600">SO: ${soBookedFmt}</span>`:''}
           ${isLate?'<span style="font-size:11px;color:var(--danger);font-weight:700;background:var(--danger-bg);padding:2px 9px;border-radius:99px">Past Delivery</span>':''}
           ${statusBadge}
         </div>
@@ -1950,7 +2027,7 @@ window.openCpList = openCpList;
 // ═══════════════════════════════════════
 function exportCSV() {
   if (!shipments.length) { showToast('No shipments to export.','danger'); return; }
-  const rows = [['Shipment ID','Type',
+  const rows = [['Shipment ID','Type','SO Booked Date',
     'Source Name','Source Location','Source Port','Source Port Country',
     'Source Delivery Term','Source Delivery Location','Source Delivery Port','Source Delivery Country','Supplier Insurance Scope',
     'Is Stopover Applicable','Stopover Delivery Location','Stopover Delivery Port','Stopover Delivery Country','Stopover Waiting Days',
@@ -1966,7 +2043,7 @@ function exportCSV() {
       stageCheckMap[st]++;
     }));
     const logisticsCols = [
-      s.srcName||'', s.srcLocation||'', s.srcPort||'', s.srcPortCountry||'',
+      s.soBookedDate||'', s.srcName||'', s.srcLocation||'', s.srcPort||'', s.srcPortCountry||'',
       s.srcDeliveryTerm||'', s.srcDeliveryLocation||'', s.srcDeliveryPort||'', s.srcDeliveryCountry||'', s.supplierInsuranceScope||'',
       s.isStopover||'No', s.stopoverLocation||'', s.stopoverPort||'', s.stopoverCountry||'', s.stopoverWaitDays||'',
       s.finalFromLocation||'', s.finalFromPort||'', s.finalFromCountry||'',
