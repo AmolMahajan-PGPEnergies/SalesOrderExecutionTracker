@@ -394,8 +394,8 @@ input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:defau
       <button class="modal-close" onclick="closeModal('addShipmentModal')">✕</button>
     </div>
     <div class="modal-body">
-      <!-- Row 1: Shipment ID + Type + SO Booked Date -->
-      <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:14px">
+      <!-- Row 1: Shipment ID + Type + SO Booked Date + Supplier Inventory -->
+      <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr 1fr;margin-bottom:14px">
         <div class="fg">
           <label>Shipment ID<span class="req">*</span></label>
           <input type="text" id="shipmentId" placeholder="e.g. SHP-001">
@@ -413,6 +413,14 @@ input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:defau
         <div class="fg">
           <label>SO Booked Date<span class="req">*</span></label>
           <input type="date" id="soBookedDate" onchange="if(Object.keys(ganttData).length) _recalcFromSODate()">
+        </div>
+        <div class="fg">
+          <label>Supplier Inventory</label>
+          <select id="supplierInventory" onchange="if(Object.keys(ganttData).length) _applyInventoryFilter()">
+            <option value="">— Select —</option>
+            <option value="Production">Production</option>
+            <option value="Stock">Stock</option>
+          </select>
         </div>
       </div>
 
@@ -834,7 +842,7 @@ function openAddShipmentModal(idx) {
    'finalFromLocation','finalFromPort','finalFromCountry','finalToLocation','finalToPort',
    'finalDeliveryLocation','promisedDate','supplierInsuranceScope','finalInsuranceScope',
    'soBookedDate'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  ['srcPortCountry','srcDeliveryCountry','stopoverCountry','finalToCountry','srcDeliveryTerm','clientDeliveryTerm'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['srcPortCountry','srcDeliveryCountry','stopoverCountry','finalToCountry','srcDeliveryTerm','clientDeliveryTerm','supplierInventory'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('isStopover').checked = false;
   document.getElementById('isDelay').value = 'On Time';
   toggleStopoverFields();
@@ -855,7 +863,7 @@ function openAddShipmentModal(idx) {
      'stopoverLocation','stopoverPort','stopoverWaitDays',
      'finalToLocation','finalToPort','finalDeliveryLocation','promisedDate','soBookedDate'
     ].forEach(id=>{ const el=document.getElementById(id); if(el && sh[id]!==undefined) el.value=sh[id]; });
-    ['srcPortCountry','srcDeliveryCountry','stopoverCountry','finalToCountry','srcDeliveryTerm','clientDeliveryTerm'
+    ['srcPortCountry','srcDeliveryCountry','stopoverCountry','finalToCountry','srcDeliveryTerm','clientDeliveryTerm','supplierInventory'
     ].forEach(id=>{ const el=document.getElementById(id); if(el && sh[id]) el.value=sh[id]; });
     document.getElementById('isStopover').checked = (sh.isStopover==='Yes');
     document.getElementById('isDelay').value = sh.isDelay||'On Time';
@@ -878,6 +886,7 @@ function saveShipment() {
   const ship = {
     id, type, timeline,
     soBookedDate: g('soBookedDate'),
+    supplierInventory: g('supplierInventory'),
     srcName: g('srcName'), srcLocation: g('srcLocation'), srcPort: g('srcPort'), srcPortCountry: g('srcPortCountry'),
     srcDeliveryTerm: g('srcDeliveryTerm'), srcDeliveryLocation: g('srcDeliveryLocation'),
     srcDeliveryPort: g('srcDeliveryPort'), srcDeliveryCountry: g('srcDeliveryCountry'),
@@ -1168,6 +1177,55 @@ function renderStageConfigRows() {
     });
     updateTriggerLabel();
   }
+  // Apply inventory filter after chips are built
+  _applyInventoryFilter();
+}
+
+// Production stages managed by the Supplier Inventory field
+const PROD_STAGES_FORCED  = ['Pre Production Document Approval','Production Start','Production Completion'];
+const PROD_STAGES_TOGGLE  = ['Production Inspection'];
+const PROD_STAGES_ALL     = [...PROD_STAGES_FORCED, ...PROD_STAGES_TOGGLE];
+
+function _applyInventoryFilter(){
+  const inv   = document.getElementById('supplierInventory')?.value || '';
+  const type  = document.getElementById('shipmentType').value;
+  const stages= shipmentTimelines[type]||[];
+  if(!Object.keys(ganttData).length) return;
+
+  const inner   = document.querySelector('.gantt-inner');
+  const toolbar = document.getElementById('stgToggleToolbar');
+  const isStock = inv==='Stock';
+  const isProd  = inv==='Production';
+
+  PROD_STAGES_ALL.forEach(stageName=>{
+    const data=ganttData[stageName];
+    if(!data) return;                          // stage not in this shipment type — skip
+
+    if(isStock){
+      // Stock: disable all production stages
+      data.applicable=false;
+    } else if(isProd){
+      // Production: force-enable the core stages; leave Production Inspection as-is
+      if(PROD_STAGES_FORCED.includes(stageName)) data.applicable=true;
+    }
+    // Update row visibility
+    inner?.querySelector(`.gantt-row[data-sn="${_esc(stageName)}"]`)?.classList.toggle('g-off',!data.applicable);
+
+    // Chip visibility:
+    //  Stock          → hide all 4 chips (stages forced off)
+    //  Production     → hide the 3 forced-on chips; keep Production Inspection chip
+    //  blank/default  → show all chips normally
+    const chip=toolbar?.querySelector(`.stg-chip[data-stage-name="${stageName}"]`);
+    if(chip){
+      const hideChip = isStock || (isProd && PROD_STAGES_FORCED.includes(stageName));
+      chip.style.display = hideChip ? 'none' : '';
+    }
+  });
+
+  // Re-cascade from the first affected stage so positions stay correct
+  const affectedIdxs = PROD_STAGES_ALL
+    .map(n=>stages.findIndex(s=>s.name===n)).filter(i=>i>=0);
+  if(affectedIdxs.length) _cascadeFrom(stages, Math.min(...affectedIdxs));
 }
 
 function _esc(s){ return s.replace(/["\\]/g,'\\$&'); }
@@ -1994,6 +2052,7 @@ function renderShipments() {
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <span class="ship-id">Shipment #${shipment.id}</span>
           ${soBookedFmt?`<span style="font-size:11px;color:var(--muted2);font-weight:600">SO: ${soBookedFmt}</span>`:''}
+          ${shipment.supplierInventory?`<span style="font-size:11px;color:var(--info);font-weight:700;background:var(--info-bg);padding:2px 9px;border-radius:99px">${shipment.supplierInventory}</span>`:''}
           ${isLate?'<span style="font-size:11px;color:var(--danger);font-weight:700;background:var(--danger-bg);padding:2px 9px;border-radius:99px">Past Delivery</span>':''}
           ${statusBadge}
         </div>
@@ -2108,7 +2167,7 @@ window.openCpList = openCpList;
 // ═══════════════════════════════════════
 function exportCSV() {
   if (!shipments.length) { showToast('No shipments to export.','danger'); return; }
-  const rows = [['Shipment ID','Type','SO Booked Date',
+  const rows = [['Shipment ID','Type','SO Booked Date','Supplier Inventory',
     'Source Name','Source Location','Source Port','Source Port Country',
     'Source Delivery Term','Source Delivery Location','Source Delivery Port','Source Delivery Country','Supplier Insurance Scope',
     'Is Stopover Applicable','Stopover Delivery Location','Stopover Delivery Port','Stopover Delivery Country','Stopover Waiting Days',
@@ -2124,7 +2183,7 @@ function exportCSV() {
       stageCheckMap[st]++;
     }));
     const logisticsCols = [
-      s.soBookedDate||'', s.srcName||'', s.srcLocation||'', s.srcPort||'', s.srcPortCountry||'',
+      s.soBookedDate||'', s.supplierInventory||'', s.srcName||'', s.srcLocation||'', s.srcPort||'', s.srcPortCountry||'',
       s.srcDeliveryTerm||'', s.srcDeliveryLocation||'', s.srcDeliveryPort||'', s.srcDeliveryCountry||'', s.supplierInsuranceScope||'',
       s.isStopover||'No', s.stopoverLocation||'', s.stopoverPort||'', s.stopoverCountry||'', s.stopoverWaitDays||'',
       s.finalFromLocation||'', s.finalFromPort||'', s.finalFromCountry||'',
