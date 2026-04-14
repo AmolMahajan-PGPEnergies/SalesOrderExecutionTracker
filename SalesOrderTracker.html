@@ -239,6 +239,7 @@ input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:defau
 .stg-toggle-list{display:flex;flex-direction:column;gap:6px;margin-top:14px}
 .stg-chip{display:inline-flex;align-items:center;justify-content:space-between;gap:10px;width:100%;border:1px solid var(--border2);border-radius:99px;background:var(--panel);color:var(--muted2);padding:8px 14px;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .15s}
 .stg-chip.is-active{background:var(--accent);border-color:var(--accent);color:#000}
+.stg-chip.filter-off{display:none!important}
 .stg-chip-status{width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:11px}
 .stg-trigger{display:inline-flex;align-items:center;gap:7px;margin-bottom:12px;border:1px solid var(--border2);border-radius:99px;background:var(--panel2);color:var(--text2);padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
 .stg-trigger:hover{border-color:var(--accent);color:var(--accent)}
@@ -1220,7 +1221,7 @@ function _applyInventoryFilter(){
     const chip=toolbar?.querySelector(`.stg-chip[data-stage-name="${stageName}"]`);
     if(chip){
       const hideChip = isStock || (isProd && PROD_STAGES_FORCED.includes(stageName));
-      chip.style.display = hideChip ? 'none' : '';
+      chip.classList.toggle('filter-off', hideChip);
     }
   });
 
@@ -1253,26 +1254,24 @@ function _applyStopoverFilter(){
     const data=ganttData[stageName];
     if(!data) return;
 
+    const chip=toolbar?.querySelector(`.stg-chip[data-stage-name="${stageName}"]`);
     if(!hasStop){
       // No stopover — force-disable and hide
       data.applicable=false;
-      // Sync chip off state too
-      const chip=toolbar?.querySelector(`.stg-chip[data-stage-name="${stageName}"]`);
       if(chip){
         chip.classList.remove('is-active');
         chip.setAttribute('aria-pressed','false');
         chip.querySelector('.stg-chip-status').textContent='✕';
-        chip.style.display='none';
+        chip.classList.add('filter-off');
       }
     } else {
       // Stopover applicable — restore and show chip so user can toggle each stage
       data.applicable=true;
-      const chip=toolbar?.querySelector(`.stg-chip[data-stage-name="${stageName}"]`);
       if(chip){
         chip.classList.add('is-active');
         chip.setAttribute('aria-pressed','true');
         chip.querySelector('.stg-chip-status').textContent='✓';
-        chip.style.display='';
+        chip.classList.remove('filter-off');
       }
     }
     inner?.querySelector(`.gantt-row[data-sn="${_esc(stageName)}"]`)?.classList.toggle('g-off',!data.applicable);
@@ -1846,7 +1845,7 @@ function _updRangeCls(){
 
 function updateTriggerLabel() {
   const allChips = [...document.querySelectorAll('#stgToggleToolbar .stg-chip')];
-  const chips    = allChips.filter(c=>c.style.display!=='none');
+  const chips    = allChips.filter(c=>!c.classList.contains('filter-off'));
   if (!chips.length) { document.getElementById('stgToggleTrigger').style.display='none'; return; }
   const active = chips.filter(c=>c.classList.contains('is-active')).length;
   document.getElementById('stgToggleTrigger').style.display='inline-flex';
