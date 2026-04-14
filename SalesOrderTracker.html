@@ -711,12 +711,12 @@ const shipmentTimelines = {
     { name: 'Material Readiness', mandatory: true },
     { name: 'Material Readiness Inspection', mandatory: false },
     { name: 'Transit from Supplier to Port', mandatory: false },
-    { name: 'Sailing Time to Stopover Location', mandatory: false },
+    { name: 'Sailing Time to Stopover Location Port', mandatory: false },
     { name: 'Stopover Port Clearance', mandatory: false },
     { name: 'Transit From Stopover Port to Stopover Location', mandatory: false },
     { name: 'Stopover Wait', mandatory: false },
     { name: 'Transit From Stopover Location to Stopover Port', mandatory: false },
-    { name: 'Sailing Time To Final Destination', mandatory: false },
+    { name: 'Sailing Time To Final Destination Port', mandatory: false },
     { name: 'Final Destination Port Clearance', mandatory: false },
     { name: 'Delivery To Client', mandatory: true }
   ]
@@ -1234,7 +1234,7 @@ function _applyInventoryFilter(){
 
 // Stopover stages managed by the Is Stopover Applicable checkbox
 const STOPOVER_STAGES = [
-  'Sailing Time to Stopover Location',
+  'Sailing Time to Stopover Location Port',
   'Stopover Port Clearance',
   'Transit From Stopover Port to Stopover Location',
   'Stopover Wait',
