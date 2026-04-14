@@ -962,6 +962,7 @@ function toggleStopoverFields() {
   if (panel) panel.style.display = on ? 'grid' : 'none';
   updateFinalSailingFrom();
   updateInsuranceScope();
+  if(Object.keys(ganttData).length) _applyStopoverFilter();
 }
 
 function updateInsuranceScope() {
@@ -1177,8 +1178,9 @@ function renderStageConfigRows() {
     });
     updateTriggerLabel();
   }
-  // Apply inventory filter after chips are built
+  // Apply inventory and stopover filters after chips are built
   _applyInventoryFilter();
+  _applyStopoverFilter();
 }
 
 // Production stages managed by the Supplier Inventory field
@@ -1224,6 +1226,59 @@ function _applyInventoryFilter(){
 
   // Re-cascade from the first affected stage so positions stay correct
   const affectedIdxs = PROD_STAGES_ALL
+    .map(n=>stages.findIndex(s=>s.name===n)).filter(i=>i>=0);
+  if(affectedIdxs.length) _cascadeFrom(stages, Math.min(...affectedIdxs));
+}
+
+// Stopover stages managed by the Is Stopover Applicable checkbox
+const STOPOVER_STAGES = [
+  'Sailing Time to Stopover Location',
+  'Stopover Port Clearance',
+  'Transit From Stopover Port to Stopover Location',
+  'Stopover Wait',
+  'Transit From Stopover Location to Stopover Port'
+];
+
+function _applyStopoverFilter(){
+  const hasStop = document.getElementById('isStopover')?.checked;
+  const type    = document.getElementById('shipmentType').value;
+  const stages  = shipmentTimelines[type]||[];
+  if(!Object.keys(ganttData).length) return;
+
+  const inner   = document.querySelector('.gantt-inner');
+  const toolbar = document.getElementById('stgToggleToolbar');
+
+  STOPOVER_STAGES.forEach(stageName=>{
+    const data=ganttData[stageName];
+    if(!data) return;
+
+    if(!hasStop){
+      // No stopover — force-disable and hide
+      data.applicable=false;
+      // Sync chip off state too
+      const chip=toolbar?.querySelector(`.stg-chip[data-stage-name="${stageName}"]`);
+      if(chip){
+        chip.classList.remove('is-active');
+        chip.setAttribute('aria-pressed','false');
+        chip.querySelector('.stg-chip-status').textContent='✕';
+        chip.style.display='none';
+      }
+    } else {
+      // Stopover applicable — restore and show chip so user can toggle each stage
+      data.applicable=true;
+      const chip=toolbar?.querySelector(`.stg-chip[data-stage-name="${stageName}"]`);
+      if(chip){
+        chip.classList.add('is-active');
+        chip.setAttribute('aria-pressed','true');
+        chip.querySelector('.stg-chip-status').textContent='✓';
+        chip.style.display='';
+      }
+    }
+    inner?.querySelector(`.gantt-row[data-sn="${_esc(stageName)}"]`)?.classList.toggle('g-off',!data.applicable);
+  });
+
+  // Cascade from first affected stage
+  const affectedIdxs=STOPOVER_STAGES
     .map(n=>stages.findIndex(s=>s.name===n)).filter(i=>i>=0);
   if(affectedIdxs.length) _cascadeFrom(stages, Math.min(...affectedIdxs));
 }
