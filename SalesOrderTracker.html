@@ -2133,26 +2133,40 @@ function renderAlerts() {
 // ═══════════════════════════════════════
 // ROUTE STRIP HELPERS
 // ═══════════════════════════════════════
-const _COUNTRY_FLAGS = {
-  'india':'🇮🇳','china':'🇨🇳','uae':'🇦🇪','united arab emirates':'🇦🇪','dubai':'🇦🇪',
-  'germany':'🇩🇪','france':'🇫🇷','uk':'🇬🇧','united kingdom':'🇬🇧','great britain':'🇬🇧',
-  'usa':'🇺🇸','united states':'🇺🇸','us':'🇺🇸','canada':'🇨🇦','mexico':'🇲🇽',
-  'netherlands':'🇳🇱','holland':'🇳🇱','belgium':'🇧🇪','switzerland':'🇨🇭',
-  'spain':'🇪🇸','italy':'🇮🇹','portugal':'🇵🇹','sweden':'🇸🇪','norway':'🇳🇴',
-  'denmark':'🇩🇰','finland':'🇫🇮','poland':'🇵🇱','austria':'🇦🇹','greece':'🇬🇷',
-  'turkey':'🇹🇷','russia':'🇷🇺','ukraine':'🇺🇦','israel':'🇮🇱','saudi arabia':'🇸🇦',
-  'qatar':'🇶🇦','kuwait':'🇰🇼','bahrain':'🇧🇭','oman':'🇴🇲','iran':'🇮🇷',
-  'iraq':'🇮🇶','jordan':'🇯🇴','egypt':'🇪🇬','kenya':'🇰🇪','nigeria':'🇳🇬',
-  'south africa':'🇿🇦','ethiopia':'🇪🇹','ghana':'🇬🇭','tanzania':'🇹🇿',
-  'pakistan':'🇵🇰','bangladesh':'🇧🇩','sri lanka':'🇱🇰','nepal':'🇳🇵',
-  'singapore':'🇸🇬','malaysia':'🇲🇾','indonesia':'🇮🇩','thailand':'🇹🇭',
-  'vietnam':'🇻🇳','philippines':'🇵🇭','myanmar':'🇲🇲','cambodia':'🇰🇭',
-  'japan':'🇯🇵','south korea':'🇰🇷','korea':'🇰🇷','taiwan':'🇹🇼','hong kong':'🇭🇰',
-  'australia':'🇦🇺','new zealand':'🇳🇿','brazil':'🇧🇷','argentina':'🇦🇷',
-  'colombia':'🇨🇴','peru':'🇵🇪','chile':'🇨🇱','czechia':'🇨🇿','czech republic':'🇨🇿',
-  'hungary':'🇭🇺','romania':'🇷🇴','bulgaria':'🇧🇬','croatia':'🇭🇷'
+const _COUNTRY_ISO = {
+  'india':'in','china':'cn','uae':'ae','united arab emirates':'ae','dubai':'ae','abu dhabi':'ae','sharjah':'ae',
+  'germany':'de','france':'fr','uk':'gb','united kingdom':'gb','great britain':'gb','england':'gb','scotland':'gb','wales':'gb',
+  'usa':'us','united states':'us','us':'us','america':'us','canada':'ca','mexico':'mx',
+  'netherlands':'nl','holland':'nl','belgium':'be','switzerland':'ch','luxembourg':'lu',
+  'spain':'es','italy':'it','portugal':'pt','sweden':'se','norway':'no','denmark':'dk','finland':'fi',
+  'poland':'pl','austria':'at','greece':'gr','czechia':'cz','czech republic':'cz',
+  'hungary':'hu','romania':'ro','bulgaria':'bg','croatia':'hr','serbia':'rs','slovakia':'sk','slovenia':'si',
+  'latvia':'lv','lithuania':'lt','estonia':'ee','ireland':'ie','iceland':'is','cyprus':'cy','malta':'mt',
+  'turkey':'tr','russia':'ru','ukraine':'ua','belarus':'by','moldova':'md','georgia':'ge','armenia':'am','azerbaijan':'az',
+  'israel':'il','saudi arabia':'sa','qatar':'qa','kuwait':'kw','bahrain':'bh','oman':'om','iran':'ir',
+  'iraq':'iq','jordan':'jo','lebanon':'lb','syria':'sy','yemen':'ye',
+  'egypt':'eg','kenya':'ke','nigeria':'ng','south africa':'za','ethiopia':'et','ghana':'gh',
+  'tanzania':'tz','morocco':'ma','algeria':'dz','tunisia':'tn','libya':'ly',
+  'cameroon':'cm','senegal':'sn','ivory coast':'ci','angola':'ao','mozambique':'mz',
+  'zimbabwe':'zw','zambia':'zm','uganda':'ug','rwanda':'rw','somalia':'so','sudan':'sd',
+  'pakistan':'pk','bangladesh':'bd','sri lanka':'lk','nepal':'np','afghanistan':'af',
+  'singapore':'sg','malaysia':'my','indonesia':'id','thailand':'th',
+  'vietnam':'vn','philippines':'ph','myanmar':'mm','cambodia':'kh','laos':'la','brunei':'bn',
+  'japan':'jp','south korea':'kr','korea':'kr','taiwan':'tw','hong kong':'hk','mongolia':'mn',
+  'australia':'au','new zealand':'nz',
+  'brazil':'br','argentina':'ar','colombia':'co','peru':'pe','chile':'cl',
+  'venezuela':'ve','ecuador':'ec','bolivia':'bo','paraguay':'py','uruguay':'uy',
+  'cuba':'cu','jamaica':'jm','panama':'pa','costa rica':'cr','guatemala':'gt',
+  'honduras':'hn','el salvador':'sv','nicaragua':'ni',
+  'kazakhstan':'kz','uzbekistan':'uz','kyrgyzstan':'kg','tajikistan':'tj','turkmenistan':'tm',
+  'north korea':'kp','papua new guinea':'pg','fiji':'fj',
 };
-function _cflag(name){ return name ? (_COUNTRY_FLAGS[(name||'').toLowerCase().trim()]||'') : ''; }
+function _cflag(name) {
+  if (!name) return '';
+  const iso = _COUNTRY_ISO[(name||'').toLowerCase().trim()];
+  if (!iso) return '';
+  return `<img src="https://flagcdn.com/20x15/${iso}.png" srcset="https://flagcdn.com/40x30/${iso}.png 2x" width="20" height="15" alt="${name}" style="border-radius:2px;vertical-align:middle;display:inline-block">`;
+}
 
 function buildRouteStrip(sh) {
   const nodes = [];
