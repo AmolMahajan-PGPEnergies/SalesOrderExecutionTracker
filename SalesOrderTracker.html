@@ -82,8 +82,33 @@ select.sel option{background:var(--panel2)}
 .ship-metric-val{font-size:12px;font-weight:700;color:var(--text2)}
 .ship-metric-val.accent{color:var(--accent)}
 
-/* Details grid */
-.ship-details{padding:12px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+/* Details — grouped 3-section layout */
+.ship-details{padding:10px 20px 4px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:700px){.ship-details{grid-template-columns:1fr}}
+.sdt-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.sdt-head{display:flex;align-items:center;gap:7px;padding:9px 12px 8px;border-bottom:1px solid var(--border)}
+.sdt-head-src{background:rgba(99,102,241,.07);border-bottom-color:rgba(99,102,241,.2)}
+.sdt-head-transit{background:rgba(0,212,216,.06);border-bottom-color:rgba(0,212,216,.2)}
+.sdt-head-delivery{background:rgba(16,217,138,.06);border-bottom-color:rgba(16,217,138,.2)}
+.sdt-icon{font-size:14px;line-height:1}
+.sdt-title{font-family:'DM Mono',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em}
+.sdt-title-src{color:var(--info)}
+.sdt-title-transit{color:var(--accent)}
+.sdt-title-delivery{color:var(--success)}
+.sdt-body{padding:10px 12px;display:flex;flex-direction:column;gap:7px}
+.sdt-row{display:flex;align-items:flex-start;gap:8px}
+.sdt-lbl{font-family:'DM Mono',monospace;font-size:8.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;width:62px;flex-shrink:0;padding-top:2px}
+.sdt-val{font-size:11px;font-weight:600;color:var(--text2);line-height:1.4;flex:1}
+.sdt-flag{font-size:12px;line-height:1;flex-shrink:0}
+.sdt-inco{display:inline-flex;padding:1px 8px;border-radius:99px;font-size:10px;font-weight:700;font-family:'DM Mono',monospace;letter-spacing:.05em}
+.sdt-inco-sup{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);color:var(--warning)}
+.sdt-inco-cli{background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.3);color:var(--info)}
+.sdt-ins{font-size:10.5px;font-weight:600;color:var(--muted2);line-height:1.35}
+.sdt-stopover{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.18);border-radius:8px;padding:7px 10px;margin-top:2px}
+.sdt-stopover-hdr{display:flex;align-items:center;gap:5px;margin-bottom:4px}
+.sdt-stopover-lbl{font-family:'DM Mono',monospace;font-size:8px;font-weight:700;color:var(--warning);text-transform:uppercase;letter-spacing:.08em}
+.sdt-divider{height:1px;background:var(--border);margin:2px 0}
+/* keep ov-item/overview-grid for other usages */
 .ov-item{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:9px 12px}
 .ov-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
 .ov-val{font-size:12px;color:var(--text2);font-weight:600}
@@ -2346,21 +2371,59 @@ function renderShipments() {
         </div>
       </div>
 
-      <!-- Details grid -->
-      ${(shipment.srcName||shipment.srcPort||shipment.srcDeliveryTerm||shipment.finalDeliveryLocation||shipment.isStopover==='Yes'||shipment.finalToPort) ? `
+      <!-- Details — 3-section grouped layout -->
+      ${(shipment.srcName||shipment.srcPort||shipment.srcDeliveryTerm||shipment.supplierInsuranceScope||shipment.finalDeliveryLocation||shipment.clientDeliveryTerm||shipment.finalInsuranceScope||shipment.finalFromPort||shipment.finalToPort||shipment.isStopover==='Yes') ? `
       <div class="ship-details">
-        ${shipment.srcName?`<div class="ov-item"><div class="ov-lbl">Source</div><div class="ov-val">${shipment.srcName}</div></div>`:''}
-        ${shipment.srcLocation?`<div class="ov-item"><div class="ov-lbl">Source Location</div><div class="ov-val">${shipment.srcLocation}</div></div>`:''}
-        ${shipment.srcPort?`<div class="ov-item"><div class="ov-lbl">Source Port</div><div class="ov-val">${shipment.srcPort}${shipment.srcPortCountry?', '+shipment.srcPortCountry:''}</div></div>`:''}
-        ${shipment.srcDeliveryTerm?`<div class="ov-item"><div class="ov-lbl">Supplier Term</div><div class="ov-val">${shipment.srcDeliveryTerm}</div></div>`:''}
-        ${shipment.supplierInsuranceScope?`<div class="ov-item"><div class="ov-lbl">Supplier Insurance</div><div class="ov-val">${shipment.supplierInsuranceScope}</div></div>`:''}
-        ${shipment.srcDeliveryPort?`<div class="ov-item"><div class="ov-lbl">Src. Delivery Port</div><div class="ov-val">${shipment.srcDeliveryPort}${shipment.srcDeliveryCountry?', '+shipment.srcDeliveryCountry:''}</div></div>`:''}
-        ${shipment.isStopover==='Yes'?`<div class="ov-item"><div class="ov-lbl">Stopover</div><div class="ov-val">${shipment.stopoverPort||'-'}${shipment.stopoverCountry?', '+shipment.stopoverCountry:''}${shipment.stopoverWaitDays?' ('+shipment.stopoverWaitDays+'d)':''}</div></div>`:''}
-        ${shipment.finalFromPort?`<div class="ov-item"><div class="ov-lbl">Sailing From</div><div class="ov-val">${shipment.finalFromPort}${shipment.finalFromCountry?', '+shipment.finalFromCountry:''}</div></div>`:''}
-        ${shipment.finalToPort?`<div class="ov-item"><div class="ov-lbl">Sailing To</div><div class="ov-val">${shipment.finalToPort}${shipment.finalToCountry?', '+shipment.finalToCountry:''}</div></div>`:''}
-        ${shipment.finalDeliveryLocation?`<div class="ov-item"><div class="ov-lbl">Final Delivery</div><div class="ov-val">${shipment.finalDeliveryLocation}</div></div>`:''}
-        ${shipment.clientDeliveryTerm?`<div class="ov-item"><div class="ov-lbl">Client Term</div><div class="ov-val">${shipment.clientDeliveryTerm}</div></div>`:''}
-        ${shipment.finalInsuranceScope?`<div class="ov-item"><div class="ov-lbl">Final Insurance</div><div class="ov-val">${shipment.finalInsuranceScope}</div></div>`:''}
+
+        <!-- SOURCE section -->
+        <div class="sdt-card">
+          <div class="sdt-head sdt-head-src">
+            <span class="sdt-icon">🏭</span>
+            <span class="sdt-title sdt-title-src">Source</span>
+          </div>
+          <div class="sdt-body">
+            ${shipment.srcName?`<div class="sdt-row"><span class="sdt-lbl">Supplier</span><span class="sdt-val">${shipment.srcName}</span></div>`:''}
+            ${shipment.srcLocation?`<div class="sdt-row"><span class="sdt-lbl">Location</span><span class="sdt-val">${shipment.srcLocation}</span></div>`:''}
+            ${shipment.srcPort?`<div class="sdt-row"><span class="sdt-lbl">Loading Port</span><span class="sdt-val">${_cflag(shipment.srcPortCountry)?`<span class="sdt-flag">${_cflag(shipment.srcPortCountry)}</span> `:''}${shipment.srcPort}${shipment.srcPortCountry?', <span style="color:var(--muted)">'+shipment.srcPortCountry+'</span>':''}</span></div>`:''}
+            ${shipment.srcDeliveryPort?`<div class="sdt-row"><span class="sdt-lbl">Dlv. Port</span><span class="sdt-val">${_cflag(shipment.srcDeliveryCountry)?`<span class="sdt-flag">${_cflag(shipment.srcDeliveryCountry)}</span> `:''}${shipment.srcDeliveryPort}${shipment.srcDeliveryCountry?', <span style="color:var(--muted)">'+shipment.srcDeliveryCountry+'</span>':''}</span></div>`:''}
+            ${shipment.srcDeliveryTerm?`<div class="sdt-row"><span class="sdt-lbl">Inco Term</span><span class="sdt-val"><span class="sdt-inco sdt-inco-sup">${shipment.srcDeliveryTerm}</span></span></div>`:''}
+            ${shipment.supplierInsuranceScope?`<div class="sdt-row"><span class="sdt-lbl">Insurance</span><span class="sdt-val sdt-ins">🛡 ${shipment.supplierInsuranceScope}</span></div>`:''}
+          </div>
+        </div>
+
+        <!-- TRANSIT section -->
+        <div class="sdt-card">
+          <div class="sdt-head sdt-head-transit">
+            <span class="sdt-icon">🚢</span>
+            <span class="sdt-title sdt-title-transit">Transit</span>
+          </div>
+          <div class="sdt-body">
+            ${shipment.finalFromPort?`<div class="sdt-row"><span class="sdt-lbl">Sailing From</span><span class="sdt-val">${_cflag(shipment.finalFromCountry)?`<span class="sdt-flag">${_cflag(shipment.finalFromCountry)}</span> `:''}${shipment.finalFromPort}${shipment.finalFromCountry?', <span style="color:var(--muted)">'+shipment.finalFromCountry+'</span>':''}</span></div>`:''}
+            ${shipment.finalToPort?`<div class="sdt-row"><span class="sdt-lbl">Sailing To</span><span class="sdt-val">${_cflag(shipment.finalToCountry)?`<span class="sdt-flag">${_cflag(shipment.finalToCountry)}</span> `:''}${shipment.finalToPort}${shipment.finalToCountry?', <span style="color:var(--muted)">'+shipment.finalToCountry+'</span>':''}</span></div>`:''}
+            ${(shipment.finalFromPort&&shipment.finalToPort)?'<div class="sdt-divider"></div>':''}
+            ${shipment.isStopover==='Yes'&&(shipment.stopoverPort||shipment.stopoverCountry)?`
+              <div class="sdt-stopover">
+                <div class="sdt-stopover-hdr"><span style="font-size:12px">⚓</span><span class="sdt-stopover-lbl">Stopover</span></div>
+                <div class="sdt-row" style="margin:0"><span class="sdt-lbl">Port</span><span class="sdt-val">${_cflag(shipment.stopoverCountry)?`<span class="sdt-flag">${_cflag(shipment.stopoverCountry)}</span> `:''}${shipment.stopoverPort||'—'}${shipment.stopoverCountry?', <span style="color:var(--muted)">'+shipment.stopoverCountry+'</span>':''}</span></div>
+                ${shipment.stopoverWaitDays?`<div class="sdt-row" style="margin-top:5px"><span class="sdt-lbl">Wait</span><span class="sdt-val" style="color:var(--warning)">${shipment.stopoverWaitDays} days</span></div>`:''}
+              </div>` : (shipment.isStopover!=='Yes'?`<div style="font-size:10px;color:var(--muted);font-style:italic;text-align:center;padding:8px 0">No stopover on this route</div>`:'')}
+          </div>
+        </div>
+
+        <!-- DELIVERY section -->
+        <div class="sdt-card">
+          <div class="sdt-head sdt-head-delivery">
+            <span class="sdt-icon">📍</span>
+            <span class="sdt-title sdt-title-delivery">Final Delivery</span>
+          </div>
+          <div class="sdt-body">
+            ${shipment.finalDeliveryLocation?`<div class="sdt-row"><span class="sdt-lbl">Location</span><span class="sdt-val">${_cflag(shipment.finalToCountry)?`<span class="sdt-flag">${_cflag(shipment.finalToCountry)}</span> `:''}${shipment.finalDeliveryLocation}</span></div>`:''}
+            ${shipment.clientDeliveryTerm?`<div class="sdt-row"><span class="sdt-lbl">Inco Term</span><span class="sdt-val"><span class="sdt-inco sdt-inco-cli">${shipment.clientDeliveryTerm}</span></span></div>`:''}
+            ${shipment.finalInsuranceScope?`<div class="sdt-row"><span class="sdt-lbl">Insurance</span><span class="sdt-val sdt-ins">🛡 ${shipment.finalInsuranceScope}</span></div>`:''}
+            ${shipment.promisedDate?`<div class="sdt-divider"></div><div class="sdt-row"><span class="sdt-lbl">Promised</span><span class="sdt-val" style="color:${isLate?'var(--danger)':'var(--accent)'}">${promisedFmt}</span></div>`:''}
+          </div>
+        </div>
+
       </div>` : ''}
 
       <!-- Checkpoint pills -->
