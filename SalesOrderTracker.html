@@ -210,6 +210,12 @@ select.sel option{background:var(--panel2)}
 /* Pill row on chip */
 .mc-pills{display:flex;gap:4px;margin-bottom:4px;flex-wrap:wrap}
 
+/* ── STAGE DURATION LINE CHART ── */
+.stc-legend{display:flex;align-items:center;gap:10px}
+.stc-leg-item{display:inline-flex;align-items:center;gap:5px;font-family:'DM Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.04em;white-space:nowrap}
+.stc-leg-plan{color:var(--accent)}
+.stc-leg-act{color:var(--success)}
+
 /* ── STAGE EXECUTION MODAL ── */
 .se-section{margin-bottom:18px}
 .se-section-title{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -2398,6 +2404,114 @@ function buildRouteStrip(sh) {
 }
 
 // ═══════════════════════════════════════
+// STAGE DURATION LINE CHART
+// ═══════════════════════════════════════
+function buildStageDurationChart(shipment) {
+  const stages = shipment.timeline;
+  if (!stages.length) return null;
+
+  const CHIP_W = 178;  // 170px min-width + 8px gap
+  const N      = stages.length;
+  const SVG_W  = N * CHIP_W - 8;   // exact width of the chip row
+  const SVG_H  = 96;
+  const PAD_T  = 22;                // room for planned-value labels above dots
+  const CHART_H = SVG_H - PAD_T - 6;
+  const BOTTOM  = PAD_T + CHART_H;
+
+  // ── Gather planned and actual days ──────────────────────
+  const data = stages.map(s => {
+    const p = s.days
+      ? Math.max(1, parseInt(s.days))
+      : (s.startDate && s.date
+          ? Math.max(1, daysBetween(parseLocalDate(s.startDate), parseLocalDate(s.date)))
+          : null);
+    const a = (s.actualStart && s.actualEnd)
+      ? Math.max(1, daysBetween(parseLocalDate(s.actualStart), parseLocalDate(s.actualEnd)))
+      : null;
+    return { p, a };
+  });
+
+  const allVals = data.flatMap(d => [d.p, d.a]).filter(v => v != null && v > 0);
+  if (!allVals.length) return null;   // nothing to draw yet
+
+  const maxVal  = Math.max(...allVals, 1);
+  const hasAct  = data.some(d => d.a != null);
+
+  // ── Coordinate helpers ───────────────────────────────────
+  const yOf = v => v > 0 ? (PAD_T + CHART_H * (1 - v / maxVal)) : BOTTOM;
+  const xOf = i => i * CHIP_W + 85; // horizontal center of chip i
+
+  const pPts = data.map((d, i) => d.p > 0 ? { x: xOf(i), y: yOf(d.p), v: d.p } : null);
+  const aPts = data.map((d, i) => d.a > 0 ? { x: xOf(i), y: yOf(d.a), v: d.a } : null);
+  const validP = pPts.filter(Boolean);
+  const validA = aPts.filter(Boolean);
+
+  // ── SVG ──────────────────────────────────────────────────
+  let s = `<svg width="${SVG_W}" height="${SVG_H}" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible">`;
+
+  // Subtle grid (3 levels)
+  [0.33, 0.66, 1.0].forEach(f => {
+    const gy = yOf(maxVal * f).toFixed(1);
+    s += `<line x1="0" y1="${gy}" x2="${SVG_W}" y2="${gy}" stroke="var(--border)" stroke-width="1" stroke-dasharray="2,5" opacity="0.5"/>`;
+  });
+
+  // Baseline
+  s += `<line x1="0" y1="${BOTTOM}" x2="${SVG_W}" y2="${BOTTOM}" stroke="var(--border2)" stroke-width="1"/>`;
+
+  // ── Planned: area + line ─────────────────────────────────
+  if (validP.length >= 2) {
+    const linePts = validP.map((p,i) => `${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    const area    = `${linePts} L${validP[validP.length-1].x},${BOTTOM} L${validP[0].x},${BOTTOM} Z`;
+    s += `<path d="${area}"    fill="rgba(0,212,216,0.08)" stroke="none"/>`;
+    s += `<path d="${linePts}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+  } else if (validP.length === 1) {
+    const p = validP[0];
+    s += `<line x1="${p.x}" y1="${p.y.toFixed(1)}" x2="${p.x}" y2="${BOTTOM}" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.5"/>`;
+  }
+
+  // ── Actual: area + dashed line ───────────────────────────
+  if (validA.length >= 2) {
+    const linePts = validA.map((p,i) => `${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    const area    = `${linePts} L${validA[validA.length-1].x},${BOTTOM} L${validA[0].x},${BOTTOM} Z`;
+    s += `<path d="${area}"    fill="rgba(16,217,138,0.08)" stroke="none"/>`;
+    s += `<path d="${linePts}" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6,3"/>`;
+  } else if (validA.length === 1) {
+    const p = validA[0];
+    s += `<line x1="${p.x}" y1="${p.y.toFixed(1)}" x2="${p.x}" y2="${BOTTOM}" stroke="var(--success)" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.5"/>`;
+  }
+
+  // ── Planned dots + labels (above dot) ────────────────────
+  pPts.forEach(p => {
+    if (!p) return;
+    const ly = Math.max(10, p.y - 6).toFixed(1);
+    s += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="var(--accent)" stroke="var(--panel)" stroke-width="2"/>`;
+    s += `<text x="${p.x.toFixed(1)}" y="${ly}" text-anchor="middle" font-size="9" fill="var(--accent)" font-family="DM Mono,monospace" font-weight="700">${p.v}d</text>`;
+  });
+
+  // ── Actual dots + labels (below dot, stays above baseline) ──
+  aPts.forEach(p => {
+    if (!p) return;
+    const ly = Math.min(BOTTOM - 2, p.y + 13).toFixed(1);
+    s += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="var(--success)" stroke="var(--panel)" stroke-width="2"/>`;
+    s += `<text x="${p.x.toFixed(1)}" y="${ly}" text-anchor="middle" font-size="9" fill="var(--success)" font-family="DM Mono,monospace" font-weight="700">${p.v}d</text>`;
+  });
+
+  s += '</svg>';
+
+  // ── Legend ───────────────────────────────────────────────
+  const legend = `<div class="stc-legend">
+    <span class="stc-leg-item stc-leg-plan">
+      <svg width="18" height="8" style="flex-shrink:0"><line x1="0" y1="4" x2="18" y2="4" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/></svg>Planned
+    </span>
+    ${hasAct ? `<span class="stc-leg-item stc-leg-act">
+      <svg width="18" height="8" style="flex-shrink:0"><line x1="0" y1="4" x2="18" y2="4" stroke="var(--success)" stroke-width="2" stroke-dasharray="5,2" stroke-linecap="round"/></svg>Actual
+    </span>` : ''}
+  </div>`;
+
+  return { svgHTML: s, legend };
+}
+
+// ═══════════════════════════════════════
 // RENDER SHIPMENTS
 // ═══════════════════════════════════════
 function renderShipments() {
@@ -2620,12 +2734,22 @@ function renderShipments() {
       <!-- Shipment route strip -->
       ${buildRouteStrip(shipment)}
 
-      <!-- Milestones -->
-      <div style="padding:8px 20px 4px;display:flex;align-items:center;justify-content:space-between">
+      <!-- Stage Duration Chart + Milestones (shared horizontal scroll) -->
+      ${(()=>{
+        const chart = buildStageDurationChart(shipment);
+        return `
+      <div style="padding:8px 20px 4px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
         <span class="sec-label" style="margin:0">Milestones</span>
-        <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:var(--accent)">${pct}% complete</span>
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          ${chart ? chart.legend : ''}
+          <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:var(--accent)">${pct}% complete</span>
+        </div>
       </div>
-      <div class="milestones-row" style="padding:6px 20px 16px">${milestonesHTML}</div>
+      <div style="overflow-x:auto;padding:4px 20px 16px;scrollbar-width:thin">
+        ${chart ? `<div style="margin-bottom:6px">${chart.svgHTML}</div>` : ''}
+        <div style="display:flex;gap:8px;padding-bottom:4px">${milestonesHTML}</div>
+      </div>`;
+      })()}
     </div>`;
   }).join('');
 }
