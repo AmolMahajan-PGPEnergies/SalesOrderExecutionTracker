@@ -71,9 +71,14 @@ html.light {
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 /* ── SCROLLBAR ───────────────────────────────────────── */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
-::-webkit-scrollbar-track { background: transparent; }
+/* Firefox */
+html { scrollbar-color: var(--border2) var(--bg2); scrollbar-width: thin; }
+/* Webkit (Chrome / Edge / Safari) */
+::-webkit-scrollbar              { width: 6px; height: 6px; }
+::-webkit-scrollbar-track        { background: var(--bg2); border-radius: 99px; }
+::-webkit-scrollbar-thumb        { background: var(--border2); border-radius: 99px; transition: background .2s; }
+::-webkit-scrollbar-thumb:hover  { background: var(--accent); }
+::-webkit-scrollbar-corner       { background: var(--bg2); }
 
 /* ── BODY ────────────────────────────────────────────── */
 body {
