@@ -2468,7 +2468,7 @@ function buildStageDurationChart(shipment) {
     const linePts = validP.map((p,i) => `${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
     const area    = `${linePts} L${validP[validP.length-1].x},${BOTTOM} L${validP[0].x},${BOTTOM} Z`;
     s += `<path d="${area}"    fill="rgba(167,139,250,0.1)" stroke="none"/>`;
-    s += `<path d="${linePts}" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+    s += `<path d="${linePts}" fill="none" stroke="#a78bfa" stroke-width="2" stroke-dasharray="6,3" stroke-linecap="round" stroke-linejoin="round"/>`;
   } else if (validP.length === 1) {
     const p = validP[0];
     s += `<line x1="${p.x}" y1="${p.y.toFixed(1)}" x2="${p.x}" y2="${BOTTOM}" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.5"/>`;
@@ -2510,7 +2510,7 @@ function buildStageDurationChart(shipment) {
   // ── Legend ───────────────────────────────────────────────
   const legend = `<div class="stc-legend">
     <span class="stc-leg-item stc-leg-plan">
-      <svg width="18" height="8" style="flex-shrink:0"><line x1="0" y1="4" x2="18" y2="4" stroke="#a78bfa" stroke-width="2" stroke-linecap="round"/></svg>Planned
+      <svg width="18" height="8" style="flex-shrink:0"><line x1="0" y1="4" x2="18" y2="4" stroke="#a78bfa" stroke-width="2" stroke-dasharray="5,3" stroke-linecap="round"/></svg>Planned
     </span>
     ${hasAct ? `<span class="stc-leg-item stc-leg-act">
       <svg width="18" height="8" style="flex-shrink:0"><line x1="0" y1="4" x2="18" y2="4" stroke="var(--success)" stroke-width="2" stroke-linecap="round"/></svg>Actual
@@ -2780,6 +2780,23 @@ function renderShipments() {
   }).join('');
 }
 
+function getOpenSections() {
+  const open = new Set();
+  document.querySelectorAll('.coll-body').forEach(el => {
+    if (el.id && el.style.display !== 'none') open.add(el.id);
+  });
+  return open;
+}
+function restoreOpenSections(openSet) {
+  document.querySelectorAll('.coll-body').forEach(el => {
+    if (el.id && openSet.has(el.id)) {
+      el.style.display = '';
+      const hdr = document.querySelector(`[data-target="${el.id}"]`);
+      if (hdr) { const ch = hdr.querySelector('.coll-chevron'); if (ch) ch.textContent = '▾'; }
+    }
+  });
+}
+
 function toggleSection(hdr) {
   const body = document.getElementById(hdr.dataset.target);
   if (!body) return;
@@ -3002,9 +3019,11 @@ function saveStageExecution() {
     stage.executionUpdates.push({ timestamp: getTimestamp(), text: newUpdate });
   }
 
+  const openSections = getOpenSections();
   closeModal('stageExecModal');
   showToast('Stage execution updated ✓', 'success');
   renderAll();
+  restoreOpenSections(openSections);
 }
 
 // ═══════════════════════════════════════
