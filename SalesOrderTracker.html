@@ -2289,314 +2289,299 @@ function getAutoAppliedControls(shipment) {
 // ADVANCED ANIMATED DASHBOARD
 // ═══════════════════════════════════════
 
-// Easing: ease-out cubic
 function _easeOut(t){ return 1 - Math.pow(1-t, 3); }
 
-// RAF counter animation
-function _animCount(el, target, dur, suffix, delay) {
-  suffix = suffix||''; dur = dur||900; delay = delay||0;
+function _animCount(el, target, dur, suffix, delay){
+  suffix=suffix||''; dur=dur||900; delay=delay||0;
   setTimeout(()=>{
-    let start = null;
-    function step(ts){
-      if(!start) start=ts;
-      const t = Math.min(1,(ts-start)/dur);
-      el.textContent = Math.round(target * _easeOut(t)) + suffix;
-      if(t<1) requestAnimationFrame(step);
-    }
+    let start=null;
+    function step(ts){ if(!start) start=ts; const t=Math.min(1,(ts-start)/dur); el.textContent=Math.round(target*_easeOut(t))+suffix; if(t<1) requestAnimationFrame(step); }
     requestAnimationFrame(step);
   }, delay);
 }
 
-// RAF arc animation (stroke-dasharray)
 function _animArc(el, finalDash, circ, dur, delay){
   dur=dur||1000; delay=delay||0;
   setTimeout(()=>{
     let start=null;
-    function step(ts){
-      if(!start) start=ts;
-      const t = Math.min(1,(ts-start)/dur);
-      const v = finalDash * _easeOut(t);
-      el.setAttribute('stroke-dasharray',`${v.toFixed(2)} ${(circ-v).toFixed(2)}`);
-      if(t<1) requestAnimationFrame(step);
-    }
+    function step(ts){ if(!start) start=ts; const t=Math.min(1,(ts-start)/dur); const v=finalDash*_easeOut(t); el.setAttribute('stroke-dasharray',`${v.toFixed(2)} ${(circ-v).toFixed(2)}`); if(t<1) requestAnimationFrame(step); }
     requestAnimationFrame(step);
   }, delay);
 }
 
-// ── Chart 1: Animated Ring Donut ───────
-function buildDonutSVG(slices, sz){
-  sz = sz||92;
+// ── Chart 1: Order Status Ring (shipment-level) ─────
+function buildOrderStatusDonut(counts, sz){
+  sz=sz||92;
   const cx=sz/2, cy=sz/2, r=sz*0.355, sw=sz*0.12;
-  const circ = 2*Math.PI*r;
-  const total = slices.reduce((a,s)=>a+s.val, 0);
-  let out = `<svg width="${sz}" height="${sz}" style="display:block;flex-shrink:0" class="donut-svg">`;
-  // Track ring
-  out += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--bg3)" stroke-width="${sw}"/>`;
+  const circ=2*Math.PI*r;
+  const slices=[
+    {val:counts.completed, color:'var(--success)'},
+    {val:counts.ontrack,   color:'var(--accent)'},
+    {val:counts.atrisk,    color:'var(--warning)'},
+    {val:counts.overdue,   color:'var(--danger)'},
+    {val:counts.notstarted,color:'rgba(90,122,153,.4)'},
+  ];
+  const total=slices.reduce((a,s)=>a+s.val,0);
+  let out=`<svg width="${sz}" height="${sz}" style="display:block;flex-shrink:0">`;
+  out+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--bg3)" stroke-width="${sw}"/>`;
   if(total){
     let off=0;
     slices.forEach((sl,i)=>{
       if(!sl.val) return;
-      const rot = (off/total)*360-90;
-      const finalDash = (sl.val/total)*circ;
-      // Start at 0, animate to final
-      out += `<circle class="dash-arc" cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${sl.color}" stroke-width="${sw}" stroke-dasharray="0 ${circ.toFixed(2)}" transform="rotate(${rot.toFixed(2)} ${cx} ${cy})" stroke-linecap="butt" data-final="${finalDash.toFixed(2)}" data-circ="${circ.toFixed(2)}" data-delay="${i*220}"/>`;
-      // Glow
-      out += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${sl.color}" stroke-width="${(sw*1.8).toFixed(1)}" stroke-dasharray="0 ${circ.toFixed(2)}" transform="rotate(${rot.toFixed(2)} ${cx} ${cy})" stroke-linecap="butt" opacity="0.07" data-final="${finalDash.toFixed(2)}" data-circ="${circ.toFixed(2)}" data-delay="${i*220}"/>`;
+      const rot=(off/total)*360-90;
+      const fd=(sl.val/total)*circ;
+      out+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${sl.color}" stroke-width="${sw}" stroke-dasharray="0 ${circ.toFixed(2)}" transform="rotate(${rot.toFixed(2)} ${cx} ${cy})" stroke-linecap="butt" data-final="${fd.toFixed(2)}" data-circ="${circ.toFixed(2)}" data-delay="${i*180}"/>`;
+      out+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${sl.color}" stroke-width="${(sw*1.9).toFixed(1)}" stroke-dasharray="0 ${circ.toFixed(2)}" transform="rotate(${rot.toFixed(2)} ${cx} ${cy})" stroke-linecap="butt" opacity="0.06" data-final="${fd.toFixed(2)}" data-circ="${circ.toFixed(2)}" data-delay="${i*180}"/>`;
       off+=sl.val;
     });
   }
-  // Center count-up
-  const donePct = total ? Math.round(slices[0].val/total*100) : 0;
-  out += `<text x="${cx}" y="${(cy+1).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="${(sz*0.17).toFixed(0)}" font-family="DM Mono,monospace" font-weight="800" fill="var(--text)" class="donut-center-lbl" data-target="${donePct}" data-suffix="%">${total?'0%':'—'}</text>`;
-  out += '</svg>';
-  return out;
-}
-
-// ── Chart 2: Animated Semicircle Gauge ─
-function buildGaugeSVG(pct, sz){
-  sz = sz||128;
-  const cx=sz*0.5, cy=sz*0.62, r=sz*0.37, sw=sz*0.1;
-  const fullC=2*Math.PI*r, halfC=Math.PI*r;
-  const valLen=(pct/100)*halfC;
-  const color = pct>=70?'var(--success)':pct>=40?'var(--warning)':'var(--danger)';
-
-  let out=`<svg width="${sz}" height="${(sz*0.58).toFixed(0)}" style="display:block;overflow:visible;flex-shrink:0">`;
-
-  // Zone bands (subtle background arcs)
-  const zones=[
-    {pct:33,color:'rgba(255,77,109,.2)'},
-    {pct:34,color:'rgba(245,158,11,.2)'},
-    {pct:33,color:'rgba(16,217,138,.2)'},
-  ];
-  let zOff=0;
-  zones.forEach(z=>{
-    const zLen=(z.pct/100)*halfC;
-    const zRot=180+(zOff/100)*180;
-    out+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${z.color}" stroke-width="${sw}" stroke-dasharray="${zLen.toFixed(1)} ${(fullC-zLen).toFixed(1)}" transform="rotate(${zRot.toFixed(1)} ${cx} ${cy})"/>`;
-    zOff+=z.pct;
-  });
-
-  // Track
-  out+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--bg3)" stroke-width="${(sw*0.35).toFixed(1)}" stroke-dasharray="${halfC.toFixed(1)} ${halfC.toFixed(1)}" transform="rotate(180 ${cx} ${cy})"/>`;
-
-  // Glow arc
-  out+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${(sw*2.2).toFixed(1)}" stroke-dasharray="0 ${fullC.toFixed(1)}" stroke-linecap="round" transform="rotate(180 ${cx} ${cy})" opacity="0.1" data-final="${valLen.toFixed(2)}" data-circ="${fullC.toFixed(2)}" data-delay="80"/>`;
-
-  // Value arc
-  out+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-dasharray="0 ${fullC.toFixed(1)}" stroke-linecap="round" transform="rotate(180 ${cx} ${cy})" data-final="${valLen.toFixed(2)}" data-circ="${fullC.toFixed(2)}" data-delay="0"/>`;
-
-  // Tick marks at 0/25/50/75/100%
-  [0,25,50,75,100].forEach(tp=>{
-    const ang=(180+tp*1.8)*Math.PI/180;
-    const r1=r-sw*0.55, r2=r+sw*0.55;
-    out+=`<line x1="${(cx+r1*Math.cos(ang)).toFixed(1)}" y1="${(cy+r1*Math.sin(ang)).toFixed(1)}" x2="${(cx+r2*Math.cos(ang)).toFixed(1)}" y2="${(cy+r2*Math.sin(ang)).toFixed(1)}" stroke="var(--border2)" stroke-width="1.5" stroke-linecap="round"/>`;
-    // Small tick label
-    const lr=r+sw*1.3;
-    const lbl=tp===0?'0':tp===50?'50':tp===100?'100':'';
-    if(lbl) out+=`<text x="${(cx+lr*Math.cos(ang)).toFixed(1)}" y="${(cy+lr*Math.sin(ang)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="${(sz*0.065).toFixed(0)}" font-family="DM Mono,monospace" fill="var(--muted)" opacity="0.6">${lbl}</text>`;
-  });
-
-  // Needle
-  const needleAng=(180+pct*1.8)*Math.PI/180;
-  const nx=cx+r*0.72*Math.cos(needleAng), ny=cy+r*0.72*Math.sin(needleAng);
-  out+=`<line x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="${color}" stroke-width="${(sz*0.022).toFixed(1)}" stroke-linecap="round" opacity="0" class="gauge-needle" data-target-x="${nx.toFixed(2)}" data-target-y="${ny.toFixed(2)}" data-cx="${cx}" data-cy="${cy}"/>`;
-  out+=`<circle cx="${cx}" cy="${cy}" r="${(sz*0.036).toFixed(1)}" fill="${color}" opacity="0.9"/>`;
-  out+=`<circle cx="${cx}" cy="${cy}" r="${(sz*0.018).toFixed(1)}" fill="var(--panel)"/>`;
-
-  // Center value
-  out+=`<text x="${cx}" y="${(cy-r*0.18).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="${(sz*0.195).toFixed(0)}" font-family="DM Mono,monospace" font-weight="800" fill="var(--text)" class="gauge-center-lbl" data-target="${pct}" data-suffix="%">${pct>0?'0%':'0%'}</text>`;
-  out+=`<text x="${cx}" y="${(cy+sz*0.05).toFixed(1)}" text-anchor="middle" font-size="${(sz*0.075).toFixed(0)}" font-family="DM Mono,monospace" fill="var(--muted)" letter-spacing=".06em">ON SCHEDULE</text>`;
+  out+=`<text x="${cx}" y="${(cy+1).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="${(sz*0.17).toFixed(0)}" font-family="DM Mono,monospace" font-weight="800" fill="var(--text)" class="donut-center-lbl" data-target="${total}" data-suffix="">${total?'0':'—'}</text>`;
   out+='</svg>';
   return out;
 }
 
-// ── Chart 3: Stacked Bars ──────────────
-function buildStackedBars(shipProg){
-  if(!shipProg.length) return `<div style="font-size:11px;color:var(--muted);padding:8px 0">No shipments yet</div>`;
-  return shipProg.map((p,i)=>{
+// ── Chart 2: Delivery Rate Gauge ────────────────────
+function buildGaugeSVG(pct, sz){
+  sz=sz||128;
+  const cx=sz*0.5, cy=sz*0.62, r=sz*0.37, sw=sz*0.1;
+  const fullC=2*Math.PI*r, halfC=Math.PI*r;
+  const valLen=(pct/100)*halfC;
+  const color=pct>=75?'var(--success)':pct>=50?'var(--warning)':'var(--danger)';
+  let out=`<svg width="${sz}" height="${(sz*0.58).toFixed(0)}" style="display:block;overflow:visible;flex-shrink:0">`;
+  // Zone bands
+  [{pct:33,c:'rgba(255,77,109,.2)'},{pct:34,c:'rgba(245,158,11,.2)'},{pct:33,c:'rgba(16,217,138,.2)'}].reduce((off,z)=>{
+    const zLen=(z.pct/100)*halfC, zRot=180+(off/100)*180;
+    out+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${z.c}" stroke-width="${sw}" stroke-dasharray="${zLen.toFixed(1)} ${(fullC-zLen).toFixed(1)}" transform="rotate(${zRot.toFixed(1)} ${cx} ${cy})"/>`;
+    return off+z.pct;
+  },0);
+  // Track
+  out+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--bg3)" stroke-width="${(sw*0.35).toFixed(1)}" stroke-dasharray="${halfC.toFixed(1)} ${halfC.toFixed(1)}" transform="rotate(180 ${cx} ${cy})"/>`;
+  // Glow + value arcs
+  out+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${(sw*2.2).toFixed(1)}" stroke-dasharray="0 ${fullC.toFixed(1)}" stroke-linecap="round" transform="rotate(180 ${cx} ${cy})" opacity="0.1" data-final="${valLen.toFixed(2)}" data-circ="${fullC.toFixed(2)}" data-delay="80"/>`;
+  out+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-dasharray="0 ${fullC.toFixed(1)}" stroke-linecap="round" transform="rotate(180 ${cx} ${cy})" data-final="${valLen.toFixed(2)}" data-circ="${fullC.toFixed(2)}" data-delay="0"/>`;
+  // Ticks
+  [0,25,50,75,100].forEach(tp=>{
+    const a=(180+tp*1.8)*Math.PI/180;
+    out+=`<line x1="${(cx+(r-sw*.55)*Math.cos(a)).toFixed(1)}" y1="${(cy+(r-sw*.55)*Math.sin(a)).toFixed(1)}" x2="${(cx+(r+sw*.55)*Math.cos(a)).toFixed(1)}" y2="${(cy+(r+sw*.55)*Math.sin(a)).toFixed(1)}" stroke="var(--border2)" stroke-width="1.5" stroke-linecap="round"/>`;
+    const lbl=tp===0?'0':tp===50?'50':tp===100?'100':'';
+    if(lbl){ const lr=r+sw*1.3; out+=`<text x="${(cx+lr*Math.cos(a)).toFixed(1)}" y="${(cy+lr*Math.sin(a)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="${(sz*0.065).toFixed(0)}" font-family="DM Mono,monospace" fill="var(--muted)" opacity="0.6">${lbl}%</text>`; }
+  });
+  // Needle
+  const na=(180+pct*1.8)*Math.PI/180;
+  const nx=cx+r*0.68*Math.cos(na), ny=cy+r*0.68*Math.sin(na);
+  out+=`<line x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="${color}" stroke-width="${(sz*0.022).toFixed(1)}" stroke-linecap="round" opacity="0" class="gauge-needle" data-target-x="${nx.toFixed(2)}" data-target-y="${ny.toFixed(2)}" data-cx="${cx}" data-cy="${cy}"/>`;
+  out+=`<circle cx="${cx}" cy="${cy}" r="${(sz*0.036).toFixed(1)}" fill="${color}" opacity="0.9"/><circle cx="${cx}" cy="${cy}" r="${(sz*0.018).toFixed(1)}" fill="var(--panel)"/>`;
+  // Value
+  out+=`<text x="${cx}" y="${(cy-r*0.18).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="${(sz*0.195).toFixed(0)}" font-family="DM Mono,monospace" font-weight="800" fill="var(--text)" class="gauge-center-lbl" data-target="${pct}" data-suffix="%">0%</text>`;
+  out+=`<text x="${cx}" y="${(cy+sz*0.05).toFixed(1)}" text-anchor="middle" font-size="${(sz*0.072).toFixed(0)}" font-family="DM Mono,monospace" fill="var(--muted)" letter-spacing=".06em">DELIVERY RATE</text>`;
+  out+='</svg>';
+  return out;
+}
+
+// ── Chart 3: Per-Order Progress with Delivery Date ──
+function buildOrderBars(rows){
+  if(!rows.length) return `<div style="font-size:11px;color:var(--muted);padding:8px 0">No shipments yet</div>`;
+  return rows.map((p,i)=>{
     const doneW=(p.done/p.t*100).toFixed(1);
     const actW =(p.act /p.t*100).toFixed(1);
     const remW =((p.t-p.done-p.act)/p.t*100).toFixed(1);
-    const cc=p.pct===100?'var(--success)':p.pct>60?'var(--accent)':p.pct>25?'var(--warning)':'var(--muted)';
+    const statusColor=p.health==='overdue'?'var(--danger)':p.health==='atrisk'?'var(--warning)':p.health==='completed'?'var(--success)':'var(--accent)';
+    const dateStr=p.delivDate ? fmtDisp(p.delivDate) : '—';
+    const daysStr=p.daysLeft!==null?(p.daysLeft<0?`${Math.abs(p.daysLeft)}d overdue`:`${p.daysLeft}d left`):null;
+    const daysColor=p.daysLeft!==null&&p.daysLeft<0?'var(--danger)':p.daysLeft!==null&&p.daysLeft<=7?'var(--warning)':'var(--muted)';
     return `<div class="sbar-item">
       <div class="sbar-lbl">
-        <span class="sbar-name" title="${p.id}">${p.id}</span>
-        <span class="sbar-pct" style="color:${cc}">${p.pct}%</span>
+        <span style="display:flex;align-items:center;gap:5px;min-width:0">
+          <span style="width:5px;height:5px;border-radius:50%;background:${statusColor};flex-shrink:0"></span>
+          <span class="sbar-name" title="${p.id}">${p.id}</span>
+        </span>
+        <span style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+          ${daysStr?`<span style="font-size:9px;font-family:'DM Mono',monospace;color:${daysColor};font-weight:700">${daysStr}</span>`:''}
+          <span style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace">${dateStr}</span>
+        </span>
       </div>
       <div class="sbar-track">
-        <div class="sbar-seg" style="width:0;background:var(--success);border-radius:99px 0 0 99px" data-w="${doneW}%" data-delay="${180+i*90}"></div>
-        <div class="sbar-seg" style="width:0;background:var(--warning)" data-w="${actW}%" data-delay="${260+i*90}"></div>
+        <div class="sbar-seg" style="width:0;background:var(--success);border-radius:99px 0 0 99px" data-w="${doneW}%" data-delay="${180+i*100}"></div>
+        <div class="sbar-seg" style="width:0;background:var(--warning)" data-w="${actW}%" data-delay="${270+i*100}"></div>
         <div class="sbar-seg" style="width:${remW}%;background:rgba(90,122,153,.15);border-radius:0 99px 99px 0;flex-shrink:0"></div>
       </div>
     </div>`;
   }).join('');
 }
 
-// ── Chart 4: Animated KPI tiles ────────
-function buildKpiGrid(items){
-  return items.map((k,i)=>`
-    <div class="kpi-item">
-      <span class="kpi-val" style="color:${k.color}" data-kpi-target="${k.val}" data-kpi-delay="${400+i*60}">0</span>
-      <span class="kpi-lbl">${k.lbl}</span>
-      <div class="kpi-bar" style="background:${k.color};width:0" data-bar-w="${Math.min(100,k.val===0?0:k.barPct||100)}%" data-bar-delay="${500+i*60}"></div>
-    </div>`).join('');
+// ── Chart 4: Action Required ────────────────────────
+function buildActionList(items){
+  if(!items.length) return `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:8px;padding:12px 0">
+      <svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="none" stroke="var(--success)" stroke-width="2"/><path d="M10 16l4 4 8-8" stroke="var(--success)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:var(--success)">All Clear</span>
+      <span style="font-size:10px;color:var(--muted);text-align:center">No overdue or upcoming critical stages</span>
+    </div>`;
+  return items.slice(0,7).map(a=>{
+    const ic  = a.overdue?'⚠':a.delayed?'◷':'◈';
+    const bc  = a.overdue?'var(--danger)':a.delayed?'var(--warning)':'var(--info)';
+    const bg  = a.overdue?'rgba(255,77,109,.07)':a.delayed?'rgba(245,158,11,.07)':'rgba(0,212,216,.05)';
+    const ds  = a.daysLeft<0?`${Math.abs(a.daysLeft)}d overdue`:a.daysLeft===0?'Due today':`Due in ${a.daysLeft}d`;
+    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:7px 8px;border-radius:var(--r);background:${bg};border:1px solid ${bc}33;margin-bottom:5px">
+      <span style="color:${bc};font-size:12px;flex-shrink:0;margin-top:1px">${ic}</span>
+      <div style="min-width:0;flex:1">
+        <div style="font-size:10px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.stageName}</div>
+        <div style="font-size:9px;color:var(--muted2);font-family:'DM Mono',monospace;margin-top:1px">${a.shipId}</div>
+      </div>
+      <span style="font-size:9px;font-family:'DM Mono',monospace;font-weight:700;color:${bc};flex-shrink:0;text-align:right">${ds}</span>
+    </div>`;
+  }).join('');
 }
 
-// ── Animation runner ───────────────────
+// ── Animation runner ────────────────────────────────
 function animateDashboard(){
-  // Arc segments (donuts + gauge)
   document.querySelectorAll('#dashRow [data-final]').forEach(el=>{
     _animArc(el, parseFloat(el.dataset.final), parseFloat(el.dataset.circ), 1100, parseInt(el.dataset.delay||0)+60);
   });
-  // Donut center labels
   document.querySelectorAll('#dashRow .donut-center-lbl[data-target]').forEach(el=>{
-    _animCount(el, parseInt(el.dataset.target), 1000, el.dataset.suffix||'%', 400);
+    _animCount(el, parseInt(el.dataset.target), 900, el.dataset.suffix||'', 450);
   });
-  // Gauge center labels
   document.querySelectorAll('#dashRow .gauge-center-lbl[data-target]').forEach(el=>{
     _animCount(el, parseInt(el.dataset.target), 1000, el.dataset.suffix||'%', 200);
   });
-  // Gauge needle
   document.querySelectorAll('#dashRow .gauge-needle').forEach(el=>{
     const tx=parseFloat(el.dataset.targetX), ty=parseFloat(el.dataset.targetY);
-    const cx=parseFloat(el.dataset.cx),       cy=parseFloat(el.dataset.cy);
-    const dur=1100;
+    const cx=parseFloat(el.dataset.cx), cy=parseFloat(el.dataset.cy), dur=1100;
     setTimeout(()=>{
       let start=null;
-      function step(ts){
-        if(!start) start=ts;
-        const t=Math.min(1,(ts-start)/dur);
-        const e=_easeOut(t);
-        el.setAttribute('x2',(cx+(tx-cx)*e).toFixed(2));
-        el.setAttribute('y2',(cy+(ty-cy)*e).toFixed(2));
-        el.setAttribute('opacity', (e*0.92).toFixed(3));
-        if(t<1) requestAnimationFrame(step);
-      }
+      function step(ts){ if(!start) start=ts; const t=Math.min(1,(ts-start)/dur); const e=_easeOut(t); el.setAttribute('x2',(cx+(tx-cx)*e).toFixed(2)); el.setAttribute('y2',(cy+(ty-cy)*e).toFixed(2)); el.setAttribute('opacity',(e*.92).toFixed(3)); if(t<1) requestAnimationFrame(step); }
       requestAnimationFrame(step);
-    }, 120);
+    },120);
   });
-  // Stacked bar segments
   document.querySelectorAll('#dashRow .sbar-seg[data-w]').forEach(el=>{
     const w=el.dataset.w, delay=parseInt(el.dataset.delay||200);
     el.style.transition='none';
-    setTimeout(()=>{
-      el.style.transition='width .85s cubic-bezier(.4,0,.2,1)';
-      el.style.width=w;
-    }, delay);
-  });
-  // KPI count-up
-  document.querySelectorAll('#dashRow [data-kpi-target]').forEach(el=>{
-    _animCount(el, parseInt(el.dataset.kpiTarget), 800, '', parseInt(el.dataset.kpiDelay||400));
-  });
-  // KPI bottom bars
-  document.querySelectorAll('#dashRow .kpi-bar[data-bar-w]').forEach(el=>{
-    const w=el.dataset.barW, delay=parseInt(el.dataset.barDelay||500);
-    setTimeout(()=>{
-      el.style.transition='width .7s cubic-bezier(.4,0,.2,1)';
-      el.style.width=w;
-    }, delay);
+    setTimeout(()=>{ el.style.transition='width .85s cubic-bezier(.4,0,.2,1)'; el.style.width=w; }, delay);
   });
 }
 
-function renderDashboard() {
-  const now = new Date(); now.setHours(0,0,0,0);
-  const total   = shipments.length;
-  const cpTotal = checkpointDefinitions.length;
+// ── Main render ─────────────────────────────────────
+function renderDashboard(){
+  const now=new Date(); now.setHours(0,0,0,0);
+  const total=shipments.length;
 
-  const allStages = shipments.flatMap(s=>s.timeline);
-  let stPlanned=0, stOngoing=0, stDone=0;
-  allStages.forEach(st=>{
-    const s=calcStageStatus(st);
-    if(s==='completed') stDone++;
-    else if(s==='ongoing') stOngoing++;
-    else stPlanned++;
+  // Classify each shipment at order level
+  const classified=shipments.map(s=>{
+    const t=s.timeline.length;
+    if(!t) return {s, health:'nodata'};
+    const allDone=s.timeline.every(st=>calcStageStatus(st)==='completed');
+    if(allDone) return {s, health:'completed'};
+    const hasDelayed=s.timeline.some(st=>calcTimelineStatus(st)==='delayed');
+    const promDate=parseLocalDate(s.promisedDate);
+    const lastPlanDate=(()=>{ const ds=s.timeline.map(st=>parseLocalDate(st.date)).filter(Boolean); return ds.length?new Date(Math.max(...ds)):null; })();
+    const delivDeadline=promDate||lastPlanDate;
+    if(delivDeadline&&delivDeadline<now) return {s, health:'overdue'};
+    if(hasDelayed) return {s, health:'atrisk'};
+    const hasOngoing=s.timeline.some(st=>calcStageStatus(st)==='ongoing');
+    return {s, health: hasOngoing?'ontrack':'notstarted'};
   });
 
-  let tlOntime=0, tlDelayed=0;
-  allStages.forEach(st=>{ calcTimelineStatus(st)==='delayed'?tlDelayed++:tlOntime++; });
+  const counts={
+    completed: classified.filter(x=>x.health==='completed').length,
+    ontrack:   classified.filter(x=>x.health==='ontrack').length,
+    atrisk:    classified.filter(x=>x.health==='atrisk').length,
+    overdue:   classified.filter(x=>x.health==='overdue').length,
+    notstarted:classified.filter(x=>x.health==='notstarted').length,
+  };
 
-  const shipProg = shipments.map(s=>{
-    const t   = s.timeline.length||1;
-    const done= s.timeline.filter(st=>calcStageStatus(st)==='completed').length;
-    const act = s.timeline.filter(st=>calcStageStatus(st)==='ongoing').length;
-    const id  = s.shipId||(s.clientName?s.clientName.slice(0,14):'')||'Shipment';
-    return { id, pct:Math.round(done/t*100), done, act, t };
+  // Delivery rate: completed + ontrack / total (excludes nodata)
+  const rateBase=counts.completed+counts.ontrack+counts.atrisk+counts.overdue;
+  const delivRate=rateBase?Math.round((counts.completed+counts.ontrack)/rateBase*100):0;
+
+  // Per-order bar data — sorted: overdue first, then atrisk, then ontrack, then by delivery date
+  const healthOrder={overdue:0,atrisk:1,ontrack:2,completed:3,notstarted:4,nodata:5};
+  const orderRows=classified.map(({s,health})=>{
+    const t=s.timeline.length||1;
+    const done=s.timeline.filter(st=>calcStageStatus(st)==='completed').length;
+    const act =s.timeline.filter(st=>calcStageStatus(st)==='ongoing').length;
+    const promDate=parseLocalDate(s.promisedDate);
+    const lastDate=(()=>{ const ds=s.timeline.map(st=>parseLocalDate(st.date)).filter(Boolean); return ds.length?new Date(Math.max(...ds)):null; })();
+    const delivDate=promDate||lastDate;
+    const daysLeft=delivDate?Math.round((delivDate-now)/(86400000)):null;
+    return { id:s.id, pct:Math.round(done/t*100), done, act, t, delivDate, daysLeft, health };
+  }).sort((a,b)=>(healthOrder[a.health]??9)-(healthOrder[b.health]??9)||(a.daysLeft??9999)-(b.daysLeft??9999));
+
+  // Action items: overdue stages + stages due within 14 days, not completed
+  const day14=new Date(now); day14.setDate(day14.getDate()+14);
+  const actionItems=[];
+  shipments.forEach(s=>{
+    s.timeline.forEach(st=>{
+      if(calcStageStatus(st)==='completed') return;
+      const endDate=parseLocalDate(st.date);
+      if(!endDate) return;
+      const tl=calcTimelineStatus(st);
+      const daysLeft=Math.round((endDate-now)/86400000);
+      if(tl==='delayed'||endDate<=day14){
+        actionItems.push({shipId:s.id, stageName:st.name, date:endDate, daysLeft, delayed:tl==='delayed', overdue:endDate<now});
+      }
+    });
   });
+  actionItems.sort((a,b)=>(b.overdue-a.overdue)||(b.delayed-a.delayed)|(a.daysLeft-b.daysLeft));
 
-  const overdueShips  = shipments.filter(s=>{
-    const dates=s.timeline.map(t=>parseLocalDate(t.date)).filter(Boolean);
-    const last=dates.length?new Date(Math.max(...dates)):null;
-    return last&&last<now;
-  });
-  const delayedShips  = shipments.filter(s=>s.timeline.some(st=>calcTimelineStatus(st)==='delayed'));
-  const noCpShips     = shipments.filter(s=>getAutoAppliedControls(s).length===0);
-  const completedShips= shipments.filter(s=>s.timeline.length&&s.timeline.every(st=>calcStageStatus(st)==='completed'));
-  const onTimePct     = allStages.length?Math.round(tlOntime/allStages.length*100):0;
-
+  // Nav badge
   const badge=document.getElementById('navBadgeOverdue');
-  if(overdueShips.length){badge.style.display='';badge.textContent=overdueShips.length;}
-  else badge.style.display='none';
+  const attn=counts.overdue+counts.atrisk;
+  if(attn){badge.style.display='';badge.textContent=attn;} else badge.style.display='none';
 
-  const donut1 = buildDonutSVG([
-    {val:stDone,    color:'var(--success)'},
-    {val:stOngoing, color:'var(--warning)'},
-    {val:stPlanned, color:'rgba(90,122,153,.45)'},
-  ]);
-  const gaugeSVG = buildGaugeSVG(onTimePct);
-  const stackedBars = buildStackedBars(shipProg);
-  const kpiHTML = buildKpiGrid([
-    {val:total,              lbl:'Total Shipments', color:'var(--accent)',  barPct:100},
-    {val:completedShips.length,lbl:'Completed',     color:'var(--success)', barPct:total?Math.round(completedShips.length/total*100):0},
-    {val:overdueShips.length,  lbl:'Overdue',       color:overdueShips.length?'var(--danger)':'var(--muted2)',   barPct:total?Math.round(overdueShips.length/total*100):0},
-    {val:delayedShips.length,  lbl:'Delayed',       color:delayedShips.length?'var(--warning)':'var(--muted2)',  barPct:total?Math.round(delayedShips.length/total*100):0},
-    {val:noCpShips.length,     lbl:'No Checkpoints',color:noCpShips.length&&cpTotal?'var(--warning)':'var(--muted2)', barPct:total?Math.round(noCpShips.length/total*100):0},
-    {val:cpTotal,              lbl:'CP Definitions', color:'var(--info)',   barPct:100},
-  ]);
+  const donutSVG  =buildOrderStatusDonut(counts);
+  const gaugeSVG  =buildGaugeSVG(delivRate);
+  const orderBars =buildOrderBars(orderRows);
+  const actionHTML=buildActionList(actionItems);
 
-  document.getElementById('dashRow').innerHTML = `<div class="dash-row">
+  document.getElementById('dashRow').innerHTML=`<div class="dash-row">
 
-    <!-- Chart 1: Stage Execution Ring -->
-    <div class="dash-card dc-a">
-      <span class="dash-card-title">Stage Execution</span>
-      <div class="dash-card-body">
-        ${donut1}
-        <div class="donut-legend">
-          <div class="donut-leg-item"><span class="donut-leg-dot" style="background:var(--success)"></span><span>Completed</span><span class="donut-leg-val">${stDone}</span></div>
-          <div class="donut-leg-item"><span class="donut-leg-dot" style="background:var(--warning)"></span><span>Ongoing</span><span class="donut-leg-val">${stOngoing}</span></div>
-          <div class="donut-leg-item"><span class="donut-leg-dot" style="background:rgba(90,122,153,.5)"></span><span>Planned</span><span class="donut-leg-val">${stPlanned}</span></div>
-        </div>
-      </div>
-      <div class="donut-foot">${allStages.length} stages · ${total} shipment${total!==1?'s':''}</div>
-    </div>
-
-    <!-- Chart 2: Timeline Health Gauge -->
-    <div class="dash-card dc-b">
-      <span class="dash-card-title">Timeline Health</span>
-      <div class="gauge-wrap">
-        ${gaugeSVG}
-        <div style="display:flex;gap:12px;margin-top:4px">
-          <span style="font-size:10px;color:var(--text2);display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:var(--success);display:inline-block"></span>On Time <b style="font-family:'DM Mono',monospace;color:var(--text);margin-left:3px">${tlOntime}</b></span>
-          <span style="font-size:10px;color:var(--text2);display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:var(--danger);display:inline-block"></span>Delayed <b style="font-family:'DM Mono',monospace;color:var(--text);margin-left:3px">${tlDelayed}</b></span>
-        </div>
+  <!-- Chart 1: Order Status Ring -->
+  <div class="dash-card dc-a">
+    <span class="dash-card-title">Order Status</span>
+    <div class="dash-card-body">
+      ${donutSVG}
+      <div class="donut-legend">
+        <div class="donut-leg-item"><span class="donut-leg-dot" style="background:var(--success)"></span><span>Completed</span><span class="donut-leg-val">${counts.completed}</span></div>
+        <div class="donut-leg-item"><span class="donut-leg-dot" style="background:var(--accent)"></span><span>On Track</span><span class="donut-leg-val">${counts.ontrack}</span></div>
+        <div class="donut-leg-item"><span class="donut-leg-dot" style="background:var(--warning)"></span><span>At Risk</span><span class="donut-leg-val">${counts.atrisk}</span></div>
+        <div class="donut-leg-item"><span class="donut-leg-dot" style="background:var(--danger)"></span><span>Overdue</span><span class="donut-leg-val">${counts.overdue}</span></div>
+        <div class="donut-leg-item"><span class="donut-leg-dot" style="background:rgba(90,122,153,.45)"></span><span>Not Started</span><span class="donut-leg-val">${counts.notstarted}</span></div>
       </div>
     </div>
+    <div class="donut-foot">${total} order${total!==1?'s':''} tracked</div>
+  </div>
 
-    <!-- Chart 3: Stacked Shipment Progress -->
-    <div class="dash-card dc-c">
-      <span class="dash-card-title">Shipment Progress</span>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
-        <span style="font-size:9px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:8px;height:4px;border-radius:99px;background:var(--success);display:inline-block"></span>Done</span>
-        <span style="font-size:9px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:8px;height:4px;border-radius:99px;background:var(--warning);display:inline-block"></span>Active</span>
-        <span style="font-size:9px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:8px;height:4px;border-radius:99px;background:rgba(90,122,153,.3);display:inline-block"></span>Remaining</span>
+  <!-- Chart 2: On-Time Delivery Rate Gauge -->
+  <div class="dash-card dc-b">
+    <span class="dash-card-title">On-Time Delivery Rate</span>
+    <div class="gauge-wrap">
+      ${gaugeSVG}
+      <div style="display:flex;gap:10px;margin-top:2px;flex-wrap:wrap;justify-content:center">
+        <span style="font-size:9px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:7px;height:7px;border-radius:50%;background:var(--success);display:inline-block"></span>On Track <b style="font-family:'DM Mono',monospace;color:var(--text)">${counts.completed+counts.ontrack}</b></span>
+        <span style="font-size:9px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:7px;height:7px;border-radius:50%;background:var(--danger);display:inline-block"></span>Off Track <b style="font-family:'DM Mono',monospace;color:var(--text)">${counts.overdue+counts.atrisk}</b></span>
       </div>
-      <div class="sbar-list">${stackedBars}</div>
     </div>
+  </div>
 
-    <!-- Chart 4: KPI Grid -->
-    <div class="dash-card dc-d">
-      <span class="dash-card-title">Overview</span>
-      <div class="kpi-grid">${kpiHTML}</div>
+  <!-- Chart 3: Per-Order Execution Progress -->
+  <div class="dash-card dc-c">
+    <span class="dash-card-title">Order Execution Progress</span>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+      <span style="font-size:9px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:9px;height:4px;border-radius:99px;background:var(--success);display:inline-block"></span>Completed Stages</span>
+      <span style="font-size:9px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:9px;height:4px;border-radius:99px;background:var(--warning);display:inline-block"></span>Active Stages</span>
+      <span style="font-size:9px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:9px;height:4px;border-radius:99px;background:rgba(90,122,153,.3);display:inline-block"></span>Remaining</span>
     </div>
+    <div class="sbar-list">${orderBars}</div>
+  </div>
+
+  <!-- Chart 4: Action Required -->
+  <div class="dash-card dc-d" style="display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span class="dash-card-title" style="margin:0">Action Required</span>
+      ${actionItems.length?`<span style="font-family:'DM Mono',monospace;font-size:9px;font-weight:700;color:var(--danger);background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.3);padding:2px 7px;border-radius:99px">${actionItems.length} item${actionItems.length!==1?'s':''}</span>`:''}
+    </div>
+    <div style="flex:1;overflow-y:auto;scrollbar-width:thin">${actionHTML}</div>
+  </div>
 
   </div>`;
 
