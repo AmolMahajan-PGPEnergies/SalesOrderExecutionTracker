@@ -584,7 +584,7 @@ input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:defau
           <label>Source Port Country</label>
           <select id="srcPortCountry" class="c-sel"></select>
         </div>
-        <div class="fg">
+        <div class="fg" id="fg-srcDelivTerm">
           <label>Supplier Delivery Term</label>
           <select id="srcDeliveryTerm" onchange="updateInsuranceScope()">
             <option value="">— Select Inco Term —</option>
@@ -601,46 +601,48 @@ input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:defau
             <option value="CIF">CIF – Cost, Insurance &amp; Freight</option>
           </select>
         </div>
-        <div class="fg">
+        <div class="fg" id="fg-srcDelivLoc">
           <label>Source Delivery Location</label>
           <input type="text" id="srcDeliveryLocation" placeholder="e.g. Warehouse A" oninput="updateFinalSailingFrom()">
         </div>
-        <div class="fg">
+        <div class="fg" id="fg-srcDelivPort">
           <label>Source Delivery Port</label>
           <input type="text" id="srcDeliveryPort" placeholder="e.g. Jebel Ali" oninput="updateFinalSailingFrom()">
         </div>
-        <div class="fg">
+        <div class="fg" id="fg-srcDelivCtry">
           <label>Source Delivery Country</label>
           <select id="srcDeliveryCountry" class="c-sel" onchange="updateFinalSailingFrom()"></select>
         </div>
-        <div class="fg" style="grid-column:span 4">
+        <div class="fg" id="fg-supInsurance" style="grid-column:span 4">
           <label style="color:var(--info)">Supplier Delivery Insurance Scope <span style="font-weight:400;text-transform:none;letter-spacing:0">(auto)</span></label>
           <input type="text" id="supplierInsuranceScope" readonly placeholder="Auto-filled from Inco Term &amp; Stopover" tabindex="-1">
         </div>
       </div>
 
-      <!-- Stopover — checkbox + panel hidden until checked -->
-      <div class="divider" style="margin:10px 0"></div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-        <input type="checkbox" id="isStopover" onchange="toggleStopoverFields()" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0">
-        <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;cursor:pointer" onclick="document.getElementById('isStopover').click()">Is Stopover Applicable</span>
-      </div>
-      <div id="stopoverPanel" style="display:none;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">
-        <div class="fg">
-          <label>Stopover Delivery Location</label>
-          <input type="text" id="stopoverLocation" placeholder="e.g. Colombo" oninput="updateFinalSailingFrom()">
+      <!-- Stopover — checkbox + panel (wrapped for stock-type hiding) -->
+      <div id="stopoverSection">
+        <div class="divider" style="margin:10px 0"></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <input type="checkbox" id="isStopover" onchange="toggleStopoverFields()" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0">
+          <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;cursor:pointer" onclick="document.getElementById('isStopover').click()">Is Stopover Applicable</span>
         </div>
-        <div class="fg">
-          <label>Stopover Delivery Port</label>
-          <input type="text" id="stopoverPort" placeholder="e.g. Port of Colombo" oninput="updateFinalSailingFrom()">
-        </div>
-        <div class="fg">
-          <label>Stopover Delivery Country</label>
-          <select id="stopoverCountry" class="c-sel" onchange="updateFinalSailingFrom()"></select>
-        </div>
-        <div class="fg">
-          <label>Stopover Waiting Days</label>
-          <input type="number" id="stopoverWaitDays" min="0" placeholder="0">
+        <div id="stopoverPanel" style="display:none;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">
+          <div class="fg">
+            <label>Stopover Delivery Location</label>
+            <input type="text" id="stopoverLocation" placeholder="e.g. Colombo" oninput="updateFinalSailingFrom()">
+          </div>
+          <div class="fg">
+            <label>Stopover Delivery Port</label>
+            <input type="text" id="stopoverPort" placeholder="e.g. Port of Colombo" oninput="updateFinalSailingFrom()">
+          </div>
+          <div class="fg">
+            <label>Stopover Delivery Country</label>
+            <select id="stopoverCountry" class="c-sel" onchange="updateFinalSailingFrom()"></select>
+          </div>
+          <div class="fg">
+            <label>Stopover Waiting Days</label>
+            <input type="number" id="stopoverWaitDays" min="0" placeholder="0">
+          </div>
         </div>
       </div>
 
@@ -1268,13 +1270,96 @@ function updateFinalSailingFrom() {
   updateInsuranceScope();
 }
 
-document.getElementById('shipmentType').addEventListener('change', renderStageConfigRows);
+document.getElementById('shipmentType').addEventListener('change', function() {
+  _applyShipmentTypeDefaults(this.value, true);
+  renderStageConfigRows();
+});
+
+// ═══════════════════════════════════════
+// STOCK-TYPE AUTO-FILL & HIDE
+// ═══════════════════════════════════════
+const STOCK_AUTO_TYPES = ['Stock Shipment', 'Stock Machining Shipment'];
+const STOCK_HIDE_FIELD_IDS = ['fg-srcDelivTerm','fg-srcDelivLoc','fg-srcDelivPort','fg-srcDelivCtry','fg-supInsurance','stopoverSection'];
+const PGP_SRC_DEFAULTS = {
+  srcName:     'PGP Energies',
+  srcLocation: 'PGP Energies Warehouse',
+  srcPort:     'Jebel Ali',
+  srcPortCountry: 'United Arab Emirates',
+};
+
+function _applyShipmentTypeDefaults(type, interactive) {
+  const isStock = STOCK_AUTO_TYPES.includes(type);
+
+  if (isStock) {
+    // ── Lock & fill the 4 source fields ──────────────────
+    Object.entries(PGP_SRC_DEFAULTS).forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.value = val;
+      if (el.tagName === 'INPUT') el.readOnly = true;
+      el.style.pointerEvents = 'none';
+      el.style.background    = 'var(--bg3)';
+      el.style.color         = 'var(--muted2)';
+      el.style.cursor        = 'default';
+      el.style.borderStyle   = 'dashed';
+    });
+
+    // ── Silently fill the hidden delivery fields so sailing calculations work ──
+    const delivMap = {
+      srcDeliveryLocation: 'PGP Energies Warehouse',
+      srcDeliveryPort:     'Jebel Ali',
+      srcDeliveryCountry:  'United Arab Emirates',
+    };
+    Object.entries(delivMap).forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (el) el.value = val;
+    });
+
+    // ── Hide delivery + stopover fields ──────────────────
+    STOCK_HIDE_FIELD_IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+
+    // ── Ensure stopover is off ────────────────────────────
+    const cbStop = document.getElementById('isStopover');
+    if (cbStop && cbStop.checked) cbStop.checked = false;
+    const stopPanel = document.getElementById('stopoverPanel');
+    if (stopPanel) stopPanel.style.display = 'none';
+
+    updateFinalSailingFrom();
+    updateInsuranceScope();
+
+  } else {
+    // ── Unlock the 4 source fields ────────────────────────
+    Object.keys(PGP_SRC_DEFAULTS).forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (el.tagName === 'INPUT') el.readOnly = false;
+      el.style.pointerEvents = '';
+      el.style.background    = '';
+      el.style.color         = '';
+      el.style.cursor        = '';
+      el.style.borderStyle   = '';
+      // When user actively switches away from a stock type, clear PGP defaults
+      if (interactive) el.value = '';
+    });
+
+    // ── Show delivery + stopover fields ──────────────────
+    STOCK_HIDE_FIELD_IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = '';
+    });
+  }
+}
 
 // ═══════════════════════════════════════
 // GANTT — BUILD & RENDER
 // ═══════════════════════════════════════
 function renderStageConfigRows() {
   const type = document.getElementById('shipmentType').value;
+  // Apply stock-type auto-fill/lock on every render (handles modal open + edit load)
+  _applyShipmentTypeDefaults(type, false);
   const container = document.getElementById('stageConfigContainer');
   const toolbar   = document.getElementById('stgToggleToolbar');
   const trigger   = document.getElementById('stgToggleTrigger');
