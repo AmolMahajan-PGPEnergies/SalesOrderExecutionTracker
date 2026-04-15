@@ -216,6 +216,12 @@ select.sel option{background:var(--panel2)}
 .stc-leg-plan{color:var(--accent)}
 .stc-leg-act{color:var(--success)}
 
+/* ── COLLAPSIBLE CARD SECTIONS ── */
+.coll-hdr{cursor:pointer;user-select:none;transition:background .15s}
+.coll-hdr:hover{background:var(--panel2)}
+.coll-chevron{font-size:11px;color:var(--muted2);flex-shrink:0;font-family:'DM Mono',monospace;line-height:1;transition:color .15s;margin-left:4px}
+.coll-hdr:hover .coll-chevron{color:var(--accent)}
+
 /* ── STAGE EXECUTION MODAL ── */
 .se-section{margin-bottom:18px}
 .se-section-title{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -504,6 +510,7 @@ input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:defau
       <select class="sel" id="filterType" onchange="renderShipments()">
         <option value="">All Types</option>
       </select>
+      <button class="btn btn-ghost btn-sm" id="expandCollapseAllBtn" onclick="toggleExpandAll()" style="margin-left:auto">▸ Expand All</button>
     </div>
 
     <!-- Shipments list -->
@@ -2367,7 +2374,7 @@ function buildRouteStrip(sh) {
   }
 
   const nodeCount = nodes.filter(n=>n.kind==='node').length;
-  if (nodeCount < 2) return '';
+  if (nodeCount < 2) return null;
 
   const innerHTML = nodes.map(n => {
     if (n.kind === 'node') {
@@ -2397,10 +2404,7 @@ function buildRouteStrip(sh) {
     }
   }).join('');
 
-  return `<div class="ship-route">
-    <div class="route-hdr"><span class="route-lbl">Shipment Route</span></div>
-    <div class="route-strip">${innerHTML}</div>
-  </div>`;
+  return innerHTML; // caller wraps in the collapsible section
 }
 
 // ═══════════════════════════════════════
@@ -2442,7 +2446,8 @@ function buildStageDurationChart(shipment) {
   const xOf = i => i * CHIP_W + 85; // horizontal center of chip i
 
   const pPts = data.map((d, i) => d.p > 0 ? { x: xOf(i), y: yOf(d.p), v: d.p } : null);
-  const aPts = data.map((d, i) => d.a > 0 ? { x: xOf(i), y: yOf(d.a), v: d.a } : null);
+  // delayed = actual overran planned duration
+  const aPts = data.map((d, i) => d.a > 0 ? { x: xOf(i), y: yOf(d.a), v: d.a, delayed: d.p != null && d.a > d.p } : null);
   const validP = pPts.filter(Boolean);
   const validA = aPts.filter(Boolean);
 
@@ -2469,15 +2474,18 @@ function buildStageDurationChart(shipment) {
     s += `<line x1="${p.x}" y1="${p.y.toFixed(1)}" x2="${p.x}" y2="${BOTTOM}" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.5"/>`;
   }
 
-  // ── Actual: area + dashed line ───────────────────────────
+  // ── Actual: solid line, per-segment colour (green = on-time, red = delayed) ──
   if (validA.length >= 2) {
-    const linePts = validA.map((p,i) => `${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-    const area    = `${linePts} L${validA[validA.length-1].x},${BOTTOM} L${validA[0].x},${BOTTOM} Z`;
-    s += `<path d="${area}"    fill="rgba(16,217,138,0.08)" stroke="none"/>`;
-    s += `<path d="${linePts}" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6,3"/>`;
+    for (let j = 0; j < validA.length - 1; j++) {
+      const from = validA[j];
+      const to   = validA[j + 1];
+      const c = to.delayed ? 'var(--danger)' : 'var(--success)';
+      s += `<line x1="${from.x.toFixed(1)}" y1="${from.y.toFixed(1)}" x2="${to.x.toFixed(1)}" y2="${to.y.toFixed(1)}" stroke="${c}" stroke-width="2" stroke-linecap="round"/>`;
+    }
   } else if (validA.length === 1) {
     const p = validA[0];
-    s += `<line x1="${p.x}" y1="${p.y.toFixed(1)}" x2="${p.x}" y2="${BOTTOM}" stroke="var(--success)" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.5"/>`;
+    const c = p.delayed ? 'var(--danger)' : 'var(--success)';
+    s += `<line x1="${p.x}" y1="${p.y.toFixed(1)}" x2="${p.x}" y2="${BOTTOM}" stroke="${c}" stroke-width="1.5" opacity="0.5"/>`;
   }
 
   // ── Planned dots + labels (above dot) ────────────────────
@@ -2488,12 +2496,13 @@ function buildStageDurationChart(shipment) {
     s += `<text x="${p.x.toFixed(1)}" y="${ly}" text-anchor="middle" font-size="9" fill="var(--accent)" font-family="DM Mono,monospace" font-weight="700">${p.v}d</text>`;
   });
 
-  // ── Actual dots + labels (below dot, stays above baseline) ──
+  // ── Actual dots + labels (below dot); colour matches segment ──
   aPts.forEach(p => {
     if (!p) return;
+    const c  = p.delayed ? 'var(--danger)' : 'var(--success)';
     const ly = Math.min(BOTTOM - 2, p.y + 13).toFixed(1);
-    s += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="var(--success)" stroke="var(--panel)" stroke-width="2"/>`;
-    s += `<text x="${p.x.toFixed(1)}" y="${ly}" text-anchor="middle" font-size="9" fill="var(--success)" font-family="DM Mono,monospace" font-weight="700">${p.v}d</text>`;
+    s += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="${c}" stroke="var(--panel)" stroke-width="2"/>`;
+    s += `<text x="${p.x.toFixed(1)}" y="${ly}" text-anchor="middle" font-size="9" fill="${c}" font-family="DM Mono,monospace" font-weight="700">${p.v}d</text>`;
   });
 
   s += '</svg>';
@@ -2504,7 +2513,7 @@ function buildStageDurationChart(shipment) {
       <svg width="18" height="8" style="flex-shrink:0"><line x1="0" y1="4" x2="18" y2="4" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/></svg>Planned
     </span>
     ${hasAct ? `<span class="stc-leg-item stc-leg-act">
-      <svg width="18" height="8" style="flex-shrink:0"><line x1="0" y1="4" x2="18" y2="4" stroke="var(--success)" stroke-width="2" stroke-dasharray="5,2" stroke-linecap="round"/></svg>Actual
+      <svg width="18" height="8" style="flex-shrink:0"><line x1="0" y1="4" x2="18" y2="4" stroke="var(--success)" stroke-width="2" stroke-linecap="round"/></svg>Actual
     </span>` : ''}
   </div>`;
 
@@ -2731,27 +2740,62 @@ function renderShipments() {
       <!-- Checkpoint pills -->
       <div class="ship-cp-strip">${cpPills}</div>
 
-      <!-- Shipment route strip -->
-      ${buildRouteStrip(shipment)}
-
-      <!-- Stage Duration Chart + Milestones (shared horizontal scroll) -->
+      <!-- Route + Milestones: collapsible sections -->
       ${(()=>{
         const chart = buildStageDurationChart(shipment);
+        const routeContent = buildRouteStrip(shipment);
         return `
-      <div style="padding:8px 20px 4px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
-        <span class="sec-label" style="margin:0">Milestones</span>
-        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-          ${chart ? chart.legend : ''}
-          <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:var(--accent)">${pct}% complete</span>
-        </div>
-      </div>
-      <div style="overflow-x:auto;padding:4px 20px 16px;scrollbar-width:thin">
-        ${chart ? `<div style="margin-bottom:6px">${chart.svgHTML}</div>` : ''}
-        <div style="display:flex;gap:8px;padding-bottom:4px">${milestonesHTML}</div>
-      </div>`;
+        ${routeContent ? `
+        <div class="ship-route" style="padding:0;border-top:1px solid var(--border)">
+          <div class="coll-hdr" data-target="coll-${realIdx}-route" onclick="toggleSection(this)">
+            <div style="padding:8px 20px;display:flex;align-items:center;justify-content:space-between">
+              <span class="sec-label" style="margin:0;font-size:10px">Shipment Route</span>
+              <span class="coll-chevron">▸</span>
+            </div>
+          </div>
+          <div class="coll-body" id="coll-${realIdx}-route" style="display:none">
+            <div style="padding:0 20px 14px;overflow-x:auto;scrollbar-width:thin">${routeContent}</div>
+          </div>
+        </div>` : ''}
+        <div style="border-top:1px solid var(--border)">
+          <div class="coll-hdr" data-target="coll-${realIdx}-ms" onclick="toggleSection(this)">
+            <div style="padding:8px 20px 4px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+              <span class="sec-label" style="margin:0">Milestones</span>
+              <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+                ${chart ? chart.legend : ''}
+                <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:var(--accent)">${pct}% complete</span>
+                <span class="coll-chevron">▸</span>
+              </div>
+            </div>
+          </div>
+          <div class="coll-body" id="coll-${realIdx}-ms" style="display:none">
+            <div style="overflow-x:auto;padding:4px 20px 16px;scrollbar-width:thin">
+              ${chart ? `<div style="margin-bottom:6px">${chart.svgHTML}</div>` : ''}
+              <div style="display:flex;gap:8px;padding-bottom:4px">${milestonesHTML}</div>
+            </div>
+          </div>
+        </div>`;
       })()}
     </div>`;
   }).join('');
+}
+
+function toggleSection(hdr) {
+  const body = document.getElementById(hdr.dataset.target);
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : '';
+  const chevron = hdr.querySelector('.coll-chevron');
+  if (chevron) chevron.textContent = isOpen ? '▸' : '▾';
+}
+
+function toggleExpandAll() {
+  const bodies = [...document.querySelectorAll('.coll-body')];
+  const anyHidden = bodies.some(el => el.style.display === 'none' || el.style.display === '');
+  bodies.forEach(el => el.style.display = anyHidden ? '' : 'none');
+  document.querySelectorAll('.coll-hdr .coll-chevron').forEach(ch => ch.textContent = anyHidden ? '▾' : '▸');
+  const btn = document.getElementById('expandCollapseAllBtn');
+  if (btn) btn.innerHTML = anyHidden ? '▾ Collapse All' : '▸ Expand All';
 }
 
 function toggleMilestoneDetail(chip) {
