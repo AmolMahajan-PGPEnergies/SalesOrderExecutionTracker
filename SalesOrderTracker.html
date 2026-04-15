@@ -21,10 +21,14 @@
 
 /* ── STAT ROW ── */
 /* ── DASHBOARD CHARTS ── */
+@keyframes dash-fade-up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes dash-pulse{0%,100%{opacity:.6}50%{opacity:1}}
 .dash-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
 @media(max-width:960px){.dash-row{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:540px){.dash-row{grid-template-columns:1fr}}
-.dash-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--rl);padding:14px 16px;position:relative;overflow:hidden}
+.dash-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--rl);padding:14px 16px;position:relative;overflow:hidden;animation:dash-fade-up .45s cubic-bezier(.4,0,.2,1) both}
+.dash-card:nth-child(1){animation-delay:.05s}.dash-card:nth-child(2){animation-delay:.12s}
+.dash-card:nth-child(3){animation-delay:.19s}.dash-card:nth-child(4){animation-delay:.26s}
 .dash-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
 .dc-a::before{background:linear-gradient(90deg,var(--accent),transparent)}
 .dc-b::before{background:linear-gradient(90deg,var(--success),transparent)}
@@ -33,24 +37,28 @@
 .dash-card-title{font-family:'DM Mono',monospace;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;display:block;margin-bottom:10px}
 .dash-card-body{display:flex;align-items:center;gap:12px}
 /* Donut */
-.donut-legend{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1}
-.donut-leg-item{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text2);white-space:nowrap}
-.donut-leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.donut-leg-val{font-family:'DM Mono',monospace;font-weight:700;font-size:11px;color:var(--text);margin-left:auto;padding-left:6px}
-.donut-foot{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-top:8px}
-/* Progress bars */
-.prog-bar-list{display:flex;flex-direction:column;gap:8px;width:100%}
-.prog-bar-item{display:flex;flex-direction:column;gap:3px}
-.prog-bar-lbl{display:flex;justify-content:space-between;align-items:center;gap:4px}
-.prog-bar-name{font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px}
-.prog-bar-pct{font-size:9px;font-weight:700;font-family:'DM Mono',monospace;flex-shrink:0}
-.prog-bar-track{height:5px;background:var(--bg3);border-radius:99px;overflow:hidden}
-.prog-bar-fill{height:100%;border-radius:99px;transition:width .4s}
-/* KPI alert items */
-.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;width:100%;margin-top:0}
-.kpi-item{padding:8px 10px;border-radius:var(--r);background:var(--bg3);border:1px solid var(--border);display:flex;flex-direction:column;gap:2px}
-.kpi-val{font-family:'DM Mono',monospace;font-weight:800;font-size:20px;line-height:1}
-.kpi-lbl{font-size:9px;color:var(--muted2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em}
+.donut-legend{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
+.donut-leg-item{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--text2);white-space:nowrap}
+.donut-leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.donut-leg-val{font-family:'DM Mono',monospace;font-weight:700;font-size:12px;color:var(--text);margin-left:auto;padding-left:6px}
+.donut-foot{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-top:8px;border-top:1px solid var(--border);padding-top:7px}
+/* Gauge */
+.gauge-wrap{display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+/* Stacked bars */
+.sbar-list{display:flex;flex-direction:column;gap:10px;width:100%}
+.sbar-item{display:flex;flex-direction:column;gap:4px}
+.sbar-lbl{display:flex;justify-content:space-between;align-items:center}
+.sbar-name{font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px}
+.sbar-pct{font-size:9px;font-weight:700;font-family:'DM Mono',monospace;flex-shrink:0}
+.sbar-track{height:7px;background:var(--bg3);border-radius:99px;overflow:hidden;display:flex}
+.sbar-seg{height:100%;transition:none;flex-shrink:0}
+/* KPI grid */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;width:100%}
+.kpi-item{padding:9px 10px;border-radius:var(--r);background:var(--bg3);border:1px solid var(--border);position:relative;overflow:hidden}
+.kpi-item::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px}
+.kpi-val{font-family:'DM Mono',monospace;font-weight:800;font-size:22px;line-height:1;display:block}
+.kpi-lbl{font-size:8px;color:var(--muted2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;margin-top:3px;display:block}
+.kpi-bar{position:absolute;bottom:0;left:0;height:2px;border-radius:0 99px 99px 0;transition:none}
 
 /* ── SECTION CARD ── */
 .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden}
@@ -2278,30 +2286,216 @@ function getAutoAppliedControls(shipment) {
 // ═══════════════════════════════════════
 // DASHBOARD CHARTS
 // ═══════════════════════════════════════
-function buildDonutSVG(slices, sz) {
-  sz = sz || 84;
-  const cx = sz/2, cy = sz/2;
-  const r  = sz * 0.36;
-  const sw = sz * 0.115;
-  const circ = 2 * Math.PI * r;
+// ADVANCED ANIMATED DASHBOARD
+// ═══════════════════════════════════════
+
+// Easing: ease-out cubic
+function _easeOut(t){ return 1 - Math.pow(1-t, 3); }
+
+// RAF counter animation
+function _animCount(el, target, dur, suffix, delay) {
+  suffix = suffix||''; dur = dur||900; delay = delay||0;
+  setTimeout(()=>{
+    let start = null;
+    function step(ts){
+      if(!start) start=ts;
+      const t = Math.min(1,(ts-start)/dur);
+      el.textContent = Math.round(target * _easeOut(t)) + suffix;
+      if(t<1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }, delay);
+}
+
+// RAF arc animation (stroke-dasharray)
+function _animArc(el, finalDash, circ, dur, delay){
+  dur=dur||1000; delay=delay||0;
+  setTimeout(()=>{
+    let start=null;
+    function step(ts){
+      if(!start) start=ts;
+      const t = Math.min(1,(ts-start)/dur);
+      const v = finalDash * _easeOut(t);
+      el.setAttribute('stroke-dasharray',`${v.toFixed(2)} ${(circ-v).toFixed(2)}`);
+      if(t<1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }, delay);
+}
+
+// ── Chart 1: Animated Ring Donut ───────
+function buildDonutSVG(slices, sz){
+  sz = sz||92;
+  const cx=sz/2, cy=sz/2, r=sz*0.355, sw=sz*0.12;
+  const circ = 2*Math.PI*r;
   const total = slices.reduce((a,s)=>a+s.val, 0);
-  let out = `<svg width="${sz}" height="${sz}" style="display:block;flex-shrink:0">`;
+  let out = `<svg width="${sz}" height="${sz}" style="display:block;flex-shrink:0" class="donut-svg">`;
+  // Track ring
   out += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--bg3)" stroke-width="${sw}"/>`;
-  if (!total) { out += '</svg>'; return out; }
-  let off = 0;
-  slices.forEach(sl => {
-    if (!sl.val) return;
-    const frac = sl.val/total;
-    const dash = frac*circ;
-    const gap  = circ - dash;
-    const rot  = (off/total)*360 - 90;
-    out += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${sl.color}" stroke-width="${sw}" stroke-dasharray="${dash.toFixed(1)} ${gap.toFixed(1)}" transform="rotate(${rot.toFixed(1)} ${cx} ${cy})" stroke-linecap="butt"/>`;
-    off += sl.val;
-  });
-  // Center label
-  out += `<text x="${cx}" y="${(cy+1).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="${(sz*0.18).toFixed(0)}" font-family="DM Mono,monospace" font-weight="800" fill="var(--text)">${total}</text>`;
+  if(total){
+    let off=0;
+    slices.forEach((sl,i)=>{
+      if(!sl.val) return;
+      const rot = (off/total)*360-90;
+      const finalDash = (sl.val/total)*circ;
+      // Start at 0, animate to final
+      out += `<circle class="dash-arc" cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${sl.color}" stroke-width="${sw}" stroke-dasharray="0 ${circ.toFixed(2)}" transform="rotate(${rot.toFixed(2)} ${cx} ${cy})" stroke-linecap="butt" data-final="${finalDash.toFixed(2)}" data-circ="${circ.toFixed(2)}" data-delay="${i*220}"/>`;
+      // Glow
+      out += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${sl.color}" stroke-width="${(sw*1.8).toFixed(1)}" stroke-dasharray="0 ${circ.toFixed(2)}" transform="rotate(${rot.toFixed(2)} ${cx} ${cy})" stroke-linecap="butt" opacity="0.07" data-final="${finalDash.toFixed(2)}" data-circ="${circ.toFixed(2)}" data-delay="${i*220}"/>`;
+      off+=sl.val;
+    });
+  }
+  // Center count-up
+  const donePct = total ? Math.round(slices[0].val/total*100) : 0;
+  out += `<text x="${cx}" y="${(cy+1).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="${(sz*0.17).toFixed(0)}" font-family="DM Mono,monospace" font-weight="800" fill="var(--text)" class="donut-center-lbl" data-target="${donePct}" data-suffix="%">${total?'0%':'—'}</text>`;
   out += '</svg>';
   return out;
+}
+
+// ── Chart 2: Animated Semicircle Gauge ─
+function buildGaugeSVG(pct, sz){
+  sz = sz||128;
+  const cx=sz*0.5, cy=sz*0.62, r=sz*0.37, sw=sz*0.1;
+  const fullC=2*Math.PI*r, halfC=Math.PI*r;
+  const valLen=(pct/100)*halfC;
+  const color = pct>=70?'var(--success)':pct>=40?'var(--warning)':'var(--danger)';
+
+  let out=`<svg width="${sz}" height="${(sz*0.58).toFixed(0)}" style="display:block;overflow:visible;flex-shrink:0">`;
+
+  // Zone bands (subtle background arcs)
+  const zones=[
+    {pct:33,color:'rgba(255,77,109,.2)'},
+    {pct:34,color:'rgba(245,158,11,.2)'},
+    {pct:33,color:'rgba(16,217,138,.2)'},
+  ];
+  let zOff=0;
+  zones.forEach(z=>{
+    const zLen=(z.pct/100)*halfC;
+    const zRot=180+(zOff/100)*180;
+    out+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${z.color}" stroke-width="${sw}" stroke-dasharray="${zLen.toFixed(1)} ${(fullC-zLen).toFixed(1)}" transform="rotate(${zRot.toFixed(1)} ${cx} ${cy})"/>`;
+    zOff+=z.pct;
+  });
+
+  // Track
+  out+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--bg3)" stroke-width="${(sw*0.35).toFixed(1)}" stroke-dasharray="${halfC.toFixed(1)} ${halfC.toFixed(1)}" transform="rotate(180 ${cx} ${cy})"/>`;
+
+  // Glow arc
+  out+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${(sw*2.2).toFixed(1)}" stroke-dasharray="0 ${fullC.toFixed(1)}" stroke-linecap="round" transform="rotate(180 ${cx} ${cy})" opacity="0.1" data-final="${valLen.toFixed(2)}" data-circ="${fullC.toFixed(2)}" data-delay="80"/>`;
+
+  // Value arc
+  out+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-dasharray="0 ${fullC.toFixed(1)}" stroke-linecap="round" transform="rotate(180 ${cx} ${cy})" data-final="${valLen.toFixed(2)}" data-circ="${fullC.toFixed(2)}" data-delay="0"/>`;
+
+  // Tick marks at 0/25/50/75/100%
+  [0,25,50,75,100].forEach(tp=>{
+    const ang=(180+tp*1.8)*Math.PI/180;
+    const r1=r-sw*0.55, r2=r+sw*0.55;
+    out+=`<line x1="${(cx+r1*Math.cos(ang)).toFixed(1)}" y1="${(cy+r1*Math.sin(ang)).toFixed(1)}" x2="${(cx+r2*Math.cos(ang)).toFixed(1)}" y2="${(cy+r2*Math.sin(ang)).toFixed(1)}" stroke="var(--border2)" stroke-width="1.5" stroke-linecap="round"/>`;
+    // Small tick label
+    const lr=r+sw*1.3;
+    const lbl=tp===0?'0':tp===50?'50':tp===100?'100':'';
+    if(lbl) out+=`<text x="${(cx+lr*Math.cos(ang)).toFixed(1)}" y="${(cy+lr*Math.sin(ang)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="${(sz*0.065).toFixed(0)}" font-family="DM Mono,monospace" fill="var(--muted)" opacity="0.6">${lbl}</text>`;
+  });
+
+  // Needle
+  const needleAng=(180+pct*1.8)*Math.PI/180;
+  const nx=cx+r*0.72*Math.cos(needleAng), ny=cy+r*0.72*Math.sin(needleAng);
+  out+=`<line x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="${color}" stroke-width="${(sz*0.022).toFixed(1)}" stroke-linecap="round" opacity="0" class="gauge-needle" data-target-x="${nx.toFixed(2)}" data-target-y="${ny.toFixed(2)}" data-cx="${cx}" data-cy="${cy}"/>`;
+  out+=`<circle cx="${cx}" cy="${cy}" r="${(sz*0.036).toFixed(1)}" fill="${color}" opacity="0.9"/>`;
+  out+=`<circle cx="${cx}" cy="${cy}" r="${(sz*0.018).toFixed(1)}" fill="var(--panel)"/>`;
+
+  // Center value
+  out+=`<text x="${cx}" y="${(cy-r*0.18).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="${(sz*0.195).toFixed(0)}" font-family="DM Mono,monospace" font-weight="800" fill="var(--text)" class="gauge-center-lbl" data-target="${pct}" data-suffix="%">${pct>0?'0%':'0%'}</text>`;
+  out+=`<text x="${cx}" y="${(cy+sz*0.05).toFixed(1)}" text-anchor="middle" font-size="${(sz*0.075).toFixed(0)}" font-family="DM Mono,monospace" fill="var(--muted)" letter-spacing=".06em">ON SCHEDULE</text>`;
+  out+='</svg>';
+  return out;
+}
+
+// ── Chart 3: Stacked Bars ──────────────
+function buildStackedBars(shipProg){
+  if(!shipProg.length) return `<div style="font-size:11px;color:var(--muted);padding:8px 0">No shipments yet</div>`;
+  return shipProg.map((p,i)=>{
+    const doneW=(p.done/p.t*100).toFixed(1);
+    const actW =(p.act /p.t*100).toFixed(1);
+    const remW =((p.t-p.done-p.act)/p.t*100).toFixed(1);
+    const cc=p.pct===100?'var(--success)':p.pct>60?'var(--accent)':p.pct>25?'var(--warning)':'var(--muted)';
+    return `<div class="sbar-item">
+      <div class="sbar-lbl">
+        <span class="sbar-name" title="${p.id}">${p.id}</span>
+        <span class="sbar-pct" style="color:${cc}">${p.pct}%</span>
+      </div>
+      <div class="sbar-track">
+        <div class="sbar-seg" style="width:0;background:var(--success);border-radius:99px 0 0 99px" data-w="${doneW}%" data-delay="${180+i*90}"></div>
+        <div class="sbar-seg" style="width:0;background:var(--warning)" data-w="${actW}%" data-delay="${260+i*90}"></div>
+        <div class="sbar-seg" style="width:${remW}%;background:rgba(90,122,153,.15);border-radius:0 99px 99px 0;flex-shrink:0"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Chart 4: Animated KPI tiles ────────
+function buildKpiGrid(items){
+  return items.map((k,i)=>`
+    <div class="kpi-item">
+      <span class="kpi-val" style="color:${k.color}" data-kpi-target="${k.val}" data-kpi-delay="${400+i*60}">0</span>
+      <span class="kpi-lbl">${k.lbl}</span>
+      <div class="kpi-bar" style="background:${k.color};width:0" data-bar-w="${Math.min(100,k.val===0?0:k.barPct||100)}%" data-bar-delay="${500+i*60}"></div>
+    </div>`).join('');
+}
+
+// ── Animation runner ───────────────────
+function animateDashboard(){
+  // Arc segments (donuts + gauge)
+  document.querySelectorAll('#dashRow [data-final]').forEach(el=>{
+    _animArc(el, parseFloat(el.dataset.final), parseFloat(el.dataset.circ), 1100, parseInt(el.dataset.delay||0)+60);
+  });
+  // Donut center labels
+  document.querySelectorAll('#dashRow .donut-center-lbl[data-target]').forEach(el=>{
+    _animCount(el, parseInt(el.dataset.target), 1000, el.dataset.suffix||'%', 400);
+  });
+  // Gauge center labels
+  document.querySelectorAll('#dashRow .gauge-center-lbl[data-target]').forEach(el=>{
+    _animCount(el, parseInt(el.dataset.target), 1000, el.dataset.suffix||'%', 200);
+  });
+  // Gauge needle
+  document.querySelectorAll('#dashRow .gauge-needle').forEach(el=>{
+    const tx=parseFloat(el.dataset.targetX), ty=parseFloat(el.dataset.targetY);
+    const cx=parseFloat(el.dataset.cx),       cy=parseFloat(el.dataset.cy);
+    const dur=1100;
+    setTimeout(()=>{
+      let start=null;
+      function step(ts){
+        if(!start) start=ts;
+        const t=Math.min(1,(ts-start)/dur);
+        const e=_easeOut(t);
+        el.setAttribute('x2',(cx+(tx-cx)*e).toFixed(2));
+        el.setAttribute('y2',(cy+(ty-cy)*e).toFixed(2));
+        el.setAttribute('opacity', (e*0.92).toFixed(3));
+        if(t<1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }, 120);
+  });
+  // Stacked bar segments
+  document.querySelectorAll('#dashRow .sbar-seg[data-w]').forEach(el=>{
+    const w=el.dataset.w, delay=parseInt(el.dataset.delay||200);
+    el.style.transition='none';
+    setTimeout(()=>{
+      el.style.transition='width .85s cubic-bezier(.4,0,.2,1)';
+      el.style.width=w;
+    }, delay);
+  });
+  // KPI count-up
+  document.querySelectorAll('#dashRow [data-kpi-target]').forEach(el=>{
+    _animCount(el, parseInt(el.dataset.kpiTarget), 800, '', parseInt(el.dataset.kpiDelay||400));
+  });
+  // KPI bottom bars
+  document.querySelectorAll('#dashRow .kpi-bar[data-bar-w]').forEach(el=>{
+    const w=el.dataset.barW, delay=parseInt(el.dataset.barDelay||500);
+    setTimeout(()=>{
+      el.style.transition='width .7s cubic-bezier(.4,0,.2,1)';
+      el.style.width=w;
+    }, delay);
+  });
 }
 
 function renderDashboard() {
@@ -2309,87 +2503,59 @@ function renderDashboard() {
   const total   = shipments.length;
   const cpTotal = checkpointDefinitions.length;
 
-  // Stage execution breakdown
   const allStages = shipments.flatMap(s=>s.timeline);
   let stPlanned=0, stOngoing=0, stDone=0;
   allStages.forEach(st=>{
-    const s = calcStageStatus(st);
-    if (s==='completed') stDone++;
-    else if (s==='ongoing') stOngoing++;
+    const s=calcStageStatus(st);
+    if(s==='completed') stDone++;
+    else if(s==='ongoing') stOngoing++;
     else stPlanned++;
   });
 
-  // Timeline health
   let tlOntime=0, tlDelayed=0;
-  allStages.forEach(st=>{
-    if (calcTimelineStatus(st)==='delayed') tlDelayed++;
-    else tlOntime++;
-  });
+  allStages.forEach(st=>{ calcTimelineStatus(st)==='delayed'?tlDelayed++:tlOntime++; });
 
-  // Per-shipment completion progress
   const shipProg = shipments.map(s=>{
-    const t    = s.timeline.length || 1;
-    const done = s.timeline.filter(st=>calcStageStatus(st)==='completed').length;
-    const act  = s.timeline.filter(st=>calcStageStatus(st)==='ongoing').length;
-    const pct  = Math.round(done/t*100);
-    const id   = s.shipId || (s.clientName ? s.clientName.slice(0,14) : '') || 'Shipment';
-    return { id, pct, done, act, t };
+    const t   = s.timeline.length||1;
+    const done= s.timeline.filter(st=>calcStageStatus(st)==='completed').length;
+    const act = s.timeline.filter(st=>calcStageStatus(st)==='ongoing').length;
+    const id  = s.shipId||(s.clientName?s.clientName.slice(0,14):'')||'Shipment';
+    return { id, pct:Math.round(done/t*100), done, act, t };
   });
 
-  // Alerts
   const overdueShips  = shipments.filter(s=>{
-    const dates = s.timeline.map(t=>parseLocalDate(t.date)).filter(Boolean);
-    const last  = dates.length ? new Date(Math.max(...dates)) : null;
-    return last && last < now;
+    const dates=s.timeline.map(t=>parseLocalDate(t.date)).filter(Boolean);
+    const last=dates.length?new Date(Math.max(...dates)):null;
+    return last&&last<now;
   });
   const delayedShips  = shipments.filter(s=>s.timeline.some(st=>calcTimelineStatus(st)==='delayed'));
   const noCpShips     = shipments.filter(s=>getAutoAppliedControls(s).length===0);
-  const completedShips= shipments.filter(s=>s.timeline.length && s.timeline.every(st=>calcStageStatus(st)==='completed'));
+  const completedShips= shipments.filter(s=>s.timeline.length&&s.timeline.every(st=>calcStageStatus(st)==='completed'));
+  const onTimePct     = allStages.length?Math.round(tlOntime/allStages.length*100):0;
 
-  // Nav badge
-  const badge = document.getElementById('navBadgeOverdue');
-  if (overdueShips.length) { badge.style.display=''; badge.textContent=overdueShips.length; }
+  const badge=document.getElementById('navBadgeOverdue');
+  if(overdueShips.length){badge.style.display='';badge.textContent=overdueShips.length;}
   else badge.style.display='none';
 
-  // Build SVGs
   const donut1 = buildDonutSVG([
-    { val: stDone,    color: 'var(--success)' },
-    { val: stOngoing, color: 'var(--warning)' },
-    { val: stPlanned, color: 'rgba(90,122,153,.4)' },
+    {val:stDone,    color:'var(--success)'},
+    {val:stOngoing, color:'var(--warning)'},
+    {val:stPlanned, color:'rgba(90,122,153,.45)'},
   ]);
-  const donut2 = buildDonutSVG([
-    { val: tlOntime,  color: 'var(--success)' },
-    { val: tlDelayed, color: 'var(--danger)'  },
+  const gaugeSVG = buildGaugeSVG(onTimePct);
+  const stackedBars = buildStackedBars(shipProg);
+  const kpiHTML = buildKpiGrid([
+    {val:total,              lbl:'Total Shipments', color:'var(--accent)',  barPct:100},
+    {val:completedShips.length,lbl:'Completed',     color:'var(--success)', barPct:total?Math.round(completedShips.length/total*100):0},
+    {val:overdueShips.length,  lbl:'Overdue',       color:overdueShips.length?'var(--danger)':'var(--muted2)',   barPct:total?Math.round(overdueShips.length/total*100):0},
+    {val:delayedShips.length,  lbl:'Delayed',       color:delayedShips.length?'var(--warning)':'var(--muted2)',  barPct:total?Math.round(delayedShips.length/total*100):0},
+    {val:noCpShips.length,     lbl:'No Checkpoints',color:noCpShips.length&&cpTotal?'var(--warning)':'var(--muted2)', barPct:total?Math.round(noCpShips.length/total*100):0},
+    {val:cpTotal,              lbl:'CP Definitions', color:'var(--info)',   barPct:100},
   ]);
-
-  // Progress bars
-  const progBarsHTML = shipProg.length ? shipProg.map(p=>{
-    const c = p.pct===100 ? 'var(--success)' : p.pct>60 ? 'var(--accent)' : p.pct>25 ? 'var(--warning)' : p.pct>0 ? 'var(--danger)' : 'var(--border2)';
-    const cc= p.pct===100 ? 'var(--success)' : p.pct>60 ? 'var(--accent)' : p.pct>25 ? 'var(--warning)' : 'var(--muted)';
-    return `<div class="prog-bar-item">
-      <div class="prog-bar-lbl">
-        <span class="prog-bar-name" title="${p.id}">${p.id}</span>
-        <span class="prog-bar-pct" style="color:${cc}">${p.pct}%</span>
-      </div>
-      <div class="prog-bar-track"><div class="prog-bar-fill" style="width:${p.pct}%;background:${c}"></div></div>
-    </div>`;
-  }).join('') : `<div style="font-size:11px;color:var(--muted);padding:6px 0">No shipments yet</div>`;
-
-  // KPI items
-  const kpiItems = [
-    { val: total,             lbl: 'Total',      color: 'var(--accent)'  },
-    { val: completedShips.length, lbl: 'Done',   color: 'var(--success)' },
-    { val: overdueShips.length,  lbl: 'Overdue', color: overdueShips.length  ? 'var(--danger)'  : 'var(--muted2)' },
-    { val: delayedShips.length,  lbl: 'Delayed', color: delayedShips.length  ? 'var(--warning)' : 'var(--muted2)' },
-    { val: noCpShips.length,     lbl: 'No CPs',  color: noCpShips.length && cpTotal ? 'var(--warning)' : 'var(--muted2)' },
-    { val: cpTotal,              lbl: 'CP Defs',  color: 'var(--info)'   },
-  ];
-
-  const onTimePct = allStages.length ? Math.round(tlOntime/allStages.length*100) : 0;
 
   document.getElementById('dashRow').innerHTML = `<div class="dash-row">
 
-    <!-- Chart 1: Stage Execution Donut -->
+    <!-- Chart 1: Stage Execution Ring -->
     <div class="dash-card dc-a">
       <span class="dash-card-title">Stage Execution</span>
       <div class="dash-card-body">
@@ -2400,40 +2566,41 @@ function renderDashboard() {
           <div class="donut-leg-item"><span class="donut-leg-dot" style="background:rgba(90,122,153,.5)"></span><span>Planned</span><span class="donut-leg-val">${stPlanned}</span></div>
         </div>
       </div>
-      <div class="donut-foot">${allStages.length} stages across ${total} shipment${total!==1?'s':''}</div>
+      <div class="donut-foot">${allStages.length} stages · ${total} shipment${total!==1?'s':''}</div>
     </div>
 
-    <!-- Chart 2: Timeline Health Donut -->
+    <!-- Chart 2: Timeline Health Gauge -->
     <div class="dash-card dc-b">
       <span class="dash-card-title">Timeline Health</span>
-      <div class="dash-card-body">
-        ${donut2}
-        <div class="donut-legend">
-          <div class="donut-leg-item"><span class="donut-leg-dot" style="background:var(--success)"></span><span>On Time</span><span class="donut-leg-val">${tlOntime}</span></div>
-          <div class="donut-leg-item"><span class="donut-leg-dot" style="background:var(--danger)"></span><span>Delayed</span><span class="donut-leg-val">${tlDelayed}</span></div>
+      <div class="gauge-wrap">
+        ${gaugeSVG}
+        <div style="display:flex;gap:12px;margin-top:4px">
+          <span style="font-size:10px;color:var(--text2);display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:var(--success);display:inline-block"></span>On Time <b style="font-family:'DM Mono',monospace;color:var(--text);margin-left:3px">${tlOntime}</b></span>
+          <span style="font-size:10px;color:var(--text2);display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:var(--danger);display:inline-block"></span>Delayed <b style="font-family:'DM Mono',monospace;color:var(--text);margin-left:3px">${tlDelayed}</b></span>
         </div>
       </div>
-      <div class="donut-foot">${onTimePct}% of all stages on schedule</div>
     </div>
 
-    <!-- Chart 3: Per-Shipment Progress -->
+    <!-- Chart 3: Stacked Shipment Progress -->
     <div class="dash-card dc-c">
       <span class="dash-card-title">Shipment Progress</span>
-      <div class="prog-bar-list" style="margin-top:2px">${progBarsHTML}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+        <span style="font-size:9px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:8px;height:4px;border-radius:99px;background:var(--success);display:inline-block"></span>Done</span>
+        <span style="font-size:9px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:8px;height:4px;border-radius:99px;background:var(--warning);display:inline-block"></span>Active</span>
+        <span style="font-size:9px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:8px;height:4px;border-radius:99px;background:rgba(90,122,153,.3);display:inline-block"></span>Remaining</span>
+      </div>
+      <div class="sbar-list">${stackedBars}</div>
     </div>
 
     <!-- Chart 4: KPI Grid -->
     <div class="dash-card dc-d">
       <span class="dash-card-title">Overview</span>
-      <div class="kpi-grid">
-        ${kpiItems.map(k=>`<div class="kpi-item">
-          <span class="kpi-val" style="color:${k.color}">${k.val}</span>
-          <span class="kpi-lbl">${k.lbl}</span>
-        </div>`).join('')}
-      </div>
+      <div class="kpi-grid">${kpiHTML}</div>
     </div>
 
   </div>`;
+
+  requestAnimationFrame(()=>requestAnimationFrame(animateDashboard));
 }
 
 // ═══════════════════════════════════════
