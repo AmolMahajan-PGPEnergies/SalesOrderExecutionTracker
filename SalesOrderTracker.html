@@ -190,6 +190,45 @@ select.sel option{background:var(--panel2)}
 .mc-entry-title{font-size:11px;font-weight:700;color:var(--text2);margin-bottom:2px}
 .mc-entry-detail{font-size:10px;color:var(--muted2);line-height:1.4;white-space:pre-line}
 
+/* ── STAGE EXECUTION STATUS PILLS ── */
+.mc-status-pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700;font-family:'DM Mono',monospace;letter-spacing:.06em;text-transform:uppercase;border:1px solid transparent;flex-shrink:0}
+.mc-sp--planned{background:rgba(90,122,153,.15);color:var(--muted2);border-color:rgba(90,122,153,.3)}
+.mc-sp--ongoing{background:rgba(245,158,11,.12);color:var(--warning);border-color:rgba(245,158,11,.35)}
+.mc-sp--completed{background:rgba(16,217,138,.1);color:var(--success);border-color:rgba(16,217,138,.3)}
+.mc-tl--ontime{background:rgba(16,217,138,.08);color:var(--success);border-color:rgba(16,217,138,.25)}
+.mc-tl--delayed{background:rgba(255,77,109,.1);color:var(--danger);border-color:rgba(255,77,109,.3)}
+
+/* Late planned stage (should have started) */
+.milestone-chip.mc--late{border-left-color:var(--danger);background:rgba(255,77,109,.04)}
+.milestone-chip.mc--late .mc-dot{background:var(--danger)}
+.milestone-chip.mc--late .mc-name{color:var(--danger)}
+.milestone-chip.mc--late .mc-date{color:var(--danger);opacity:.7}
+
+/* Actual date row on chip */
+.mc-actuals{font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:3px;padding-top:4px;border-top:1px dashed var(--border);width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Pill row on chip */
+.mc-pills{display:flex;gap:4px;margin-bottom:4px;flex-wrap:wrap}
+
+/* ── STAGE EXECUTION MODAL ── */
+.se-section{margin-bottom:18px}
+.se-section-title{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.se-status-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r)}
+.se-planned-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.se-planned-field{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px}
+.se-planned-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+.se-planned-val{font-size:12px;font-weight:700;color:var(--text2)}
+.se-checklist-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-left:3px solid var(--border2);border-radius:var(--r);margin-bottom:8px;cursor:pointer;transition:border-color .15s,background .15s}
+.se-checklist-item:hover{border-left-color:var(--accent);background:var(--panel2)}
+.se-checklist-item.checked{border-left-color:var(--accent);background:rgba(0,212,216,.04)}
+.se-checklist-item input[type="checkbox"]{margin-top:2px;accent-color:var(--accent);width:15px;height:15px;flex-shrink:0;cursor:pointer}
+.se-checklist-label{font-size:11.5px;color:var(--text2);line-height:1.5;white-space:pre-line;flex:1}
+.se-checklist-cat{font-family:'DM Mono',monospace;font-size:9px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.se-checklist-warn{display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--warn-bg);border:1px solid rgba(245,158,11,.35);border-radius:var(--r);margin-bottom:10px;font-size:11px;color:var(--warning);font-weight:600}
+.se-update-item{padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-left:3px solid var(--border2);border-radius:var(--r);margin-bottom:8px}
+.se-update-ts{font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);margin-bottom:4px;font-weight:600}
+.se-update-text{font-size:12px;color:var(--text2);line-height:1.5;white-space:pre-line}
+
 /* Stage progress pips */
 .stage-pips{display:flex;gap:3px;margin-bottom:4px}
 .stage-pip{height:4px;flex:1;border-radius:2px;background:var(--border2)}
@@ -771,6 +810,26 @@ input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:defau
   </div>
 </div>
 
+<!-- ═══ STAGE EXECUTION MODAL ═══ -->
+<div class="modal-overlay" id="stageExecModal" style="z-index:400">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-head">
+      <div>
+        <h3 id="seModalStageName">Stage Execution</h3>
+        <p id="seModalShipId" style="margin-top:2px"></p>
+      </div>
+      <button class="modal-close" onclick="closeModal('stageExecModal')">✕</button>
+    </div>
+    <div class="modal-body" id="seModalBody" style="padding:20px 22px">
+      <!-- Rendered dynamically by openStageExecModal() -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('stageExecModal')">Cancel</button>
+      <button class="btn btn-accent" id="seModalSaveBtn" onclick="saveStageExecution()">Save</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast-area" id="toastArea"></div>
 
 <script src="common.js"></script>
@@ -1036,14 +1095,24 @@ function saveShipment() {
 function getSelectedTimeline(type) {
   const stages = shipmentTimelines[type]||[];
   const result=[];
+  // Build a lookup for existing stage execution data so edits don't wipe it
+  const existingMap = editingShipIdx !== null
+    ? new Map((shipments[editingShipIdx]?.timeline||[]).map(s=>[s.name, s]))
+    : new Map();
   stages.forEach(stage=>{
     const data = ganttData[stage.name];
     if (!data || !data.applicable) return;
+    const ex = existingMap.get(stage.name);
     result.push({
-      name: stage.name,
+      name:      stage.name,
       startDate: data.startDate ? fmtInput(data.startDate) : '',
-      date: data.endDate ? fmtInput(data.endDate) : '',
-      days: data.days || '',
+      date:      data.endDate   ? fmtInput(data.endDate)   : '',
+      days:      data.days || '',
+      // Preserve execution tracking data across edits
+      actualStart:        ex?.actualStart        || '',
+      actualEnd:          ex?.actualEnd          || '',
+      executionUpdates:   ex?.executionUpdates   || [],
+      checklistConfirmed: ex?.checklistConfirmed || {},
     });
   });
   return result;
@@ -2308,28 +2377,48 @@ function renderShipments() {
       stageCheckMap[s].push(cp);
     }));
 
-    // Stage status helper — must be defined before milestonesHTML
-    const pipColor = s => {
-      const d=parseLocalDate(s.date);
-      if (!d) return '';
-      if (d<now) return 'done';
-      return 'active';
-    };
+    const milestonesHTML = shipment.timeline.map((stage, stageIdx)=>{
+      const d          = parseLocalDate(stage.date);
+      const stStatus   = calcStageStatus(stage);
+      const tlStatus   = calcTimelineStatus(stage);
+      const stLabel    = { planned:'Planned', ongoing:'Ongoing', completed:'Completed' }[stStatus];
+      const tlLabel    = { ontime:'On Time', delayed:'Delayed' }[tlStatus];
 
-    const milestonesHTML = shipment.timeline.map(stage=>{
-      const d = parseLocalDate(stage.date);
+      // Chip colour class driven by execution state
+      const mcClass = stStatus === 'completed' ? 'mc--done'
+                    : stStatus === 'ongoing'   ? 'mc--active'
+                    : tlStatus === 'delayed'   ? 'mc--late'
+                    : 'mc--pending';
+
+      // Checkpoint summary pills (count by category)
       const checks = stageCheckMap[stage.name]||[];
       const catGrouped = checks.reduce((a,c)=>{
         const k=`${c.type}: ${c.category||'Uncategorized'}`;
         a[k]=(a[k]||0)+1; return a;
       },{});
-      const summaryPills = Object.keys(catGrouped).sort().map(k=>`<span class="mc-count">${k} (${catGrouped[k]})</span>`).join('');
-      const detailItems = checks.map(c=>`<div class="mc-entry"><div class="mc-entry-title">${c.type} | ${c.category||'Uncategorized'}</div><div class="mc-entry-detail">${c.checklistDetails||'-'}</div></div>`).join('');
-      const mcStatus = pipColor(stage) || 'pending';
-      return `<div class="milestone-chip mc--${mcStatus}" onclick="toggleMilestoneDetail(this)">
-        <div class="mc-header"><span class="mc-dot"></span><span class="mc-name">${stage.name}</span></div>
+      const summaryPills = Object.keys(catGrouped).sort().map(k=>
+        `<span class="mc-count">${k} (${catGrouped[k]})</span>`).join('');
+
+      // Actual dates row (shown when execution has started)
+      const asFmt = stage.actualStart ? fmtDisp(parseLocalDate(stage.actualStart)) : null;
+      const aeFmt = stage.actualEnd   ? fmtDisp(parseLocalDate(stage.actualEnd))   : null;
+      const actualsRow = (asFmt||aeFmt)
+        ? `<div class="mc-actuals">⊙ ${asFmt||'?'} → ${aeFmt||'in progress'}</div>` : '';
+
+      // Update count badge
+      const updCount = (stage.executionUpdates||[]).length;
+      const updBadge = updCount
+        ? `<span style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;margin-left:auto">${updCount} note${updCount>1?'s':''}</span>` : '';
+
+      return `<div class="milestone-chip ${mcClass}" onclick="openStageExecModal(${realIdx},${stageIdx})" title="Click to update execution">
+        <div class="mc-header"><span class="mc-dot"></span><span class="mc-name">${stage.name}</span>${updBadge}</div>
+        <div class="mc-pills">
+          <span class="mc-status-pill mc-sp--${stStatus}">${stLabel}</span>
+          <span class="mc-status-pill mc-tl--${tlStatus}">${tlLabel}</span>
+        </div>
         <div class="mc-date">${d?fmtDisp(d):'Date pending'}</div>
-        ${summaryPills ? `<div class="mc-summary">${summaryPills}</div><div class="mc-detail-list">${detailItems}</div>` : ''}
+        ${actualsRow}
+        ${summaryPills ? `<div class="mc-summary" style="margin-top:6px">${summaryPills}</div>` : ''}
       </div>`;
     }).join('');
 
@@ -2463,6 +2552,206 @@ function toggleMilestoneDetail(chip) {
   const hidden = list.style.display===''||list.style.display==='none';
   list.style.display = hidden?'block':'none';
   if (summary) summary.style.display = hidden?'none':'flex';
+}
+
+// ═══════════════════════════════════════
+// STAGE EXECUTION STATUS HELPERS
+// ═══════════════════════════════════════
+function calcStageStatus(stage) {
+  if (stage.actualEnd)   return 'completed';
+  if (stage.actualStart) return 'ongoing';
+  return 'planned';
+}
+
+function calcTimelineStatus(stage) {
+  const now = new Date(); now.setHours(0,0,0,0);
+  const plannedStart = parseLocalDate(stage.startDate||'');
+  const plannedEnd   = parseLocalDate(stage.date||'');
+  const actualStart  = parseLocalDate(stage.actualStart||'');
+  const actualEnd    = parseLocalDate(stage.actualEnd||'');
+  const s = calcStageStatus(stage);
+
+  if (s === 'completed') {
+    // Delayed if actual end came after the planned end date
+    if (plannedEnd && actualEnd && actualEnd > plannedEnd) return 'delayed';
+    return 'ontime';
+  }
+  if (s === 'ongoing') {
+    // Delayed if today has passed the planned end, or actual start was after planned start
+    if (plannedEnd && now > plannedEnd)                         return 'delayed';
+    if (plannedStart && actualStart && actualStart > plannedStart) return 'delayed';
+    return 'ontime';
+  }
+  // Planned — delayed if today has already passed the planned start date
+  if (plannedStart && now > plannedStart) return 'delayed';
+  return 'ontime';
+}
+
+// ═══════════════════════════════════════
+// STAGE EXECUTION MODAL
+// ═══════════════════════════════════════
+let _seShipIdx = null, _seStageIdx = null;
+
+function openStageExecModal(shipIdx, stageIdx) {
+  _seShipIdx  = shipIdx;
+  _seStageIdx = stageIdx;
+  const ship  = shipments[shipIdx];
+  if (!ship) return;
+  const stage = ship.timeline[stageIdx];
+  if (!stage) return;
+
+  document.getElementById('seModalStageName').textContent = stage.name;
+  document.getElementById('seModalShipId').textContent    = `Shipment #${ship.id}`;
+
+  const stStatus = calcStageStatus(stage);
+  const tlStatus = calcTimelineStatus(stage);
+  const stLabel  = { planned:'Planned', ongoing:'Ongoing', completed:'Completed' }[stStatus];
+  const tlLabel  = { ontime:'On Time', delayed:'Delayed' }[tlStatus];
+
+  const plannedStartFmt = stage.startDate ? fmtDisp(parseLocalDate(stage.startDate)) : '—';
+  const plannedEndFmt   = stage.date      ? fmtDisp(parseLocalDate(stage.date))      : '—';
+
+  // Checkpoints linked to this stage
+  const auto      = getAutoAppliedControls(ship);
+  const linkedCps = auto.filter(cp => (cp.verificationStages||[]).includes(stage.name));
+  const checklistConfirmed = stage.checklistConfirmed || {};
+  const hasChecklist = linkedCps.length > 0;
+
+  const checklistSection = hasChecklist ? `
+    <div class="se-section">
+      <div class="se-section-title">
+        Checklist (${linkedCps.length} item${linkedCps.length>1?'s':''})
+      </div>
+      <div class="se-checklist-warn">⚠ All items must be confirmed before marking as Completed</div>
+      ${linkedCps.map(cp => `
+        <label class="se-checklist-item${checklistConfirmed[cp.id]?' checked':''}" id="seci-${cp.id}">
+          <input type="checkbox" id="secc-${cp.id}"
+                 ${checklistConfirmed[cp.id]?'checked':''}
+                 onchange="document.getElementById('seci-${cp.id}').classList.toggle('checked',this.checked)">
+          <span class="se-checklist-label">
+            <span class="se-checklist-cat">${cp.type} · ${cp.category||'Uncategorized'}</span>
+            ${cp.checklistDetails||''}
+          </span>
+        </label>
+      `).join('')}
+    </div>
+  ` : '';
+
+  // Execution updates log
+  const updates    = stage.executionUpdates || [];
+  const updatesLog = updates.length
+    ? [...updates].reverse().map(u => `
+        <div class="se-update-item">
+          <div class="se-update-ts">${u.timestamp}</div>
+          <div class="se-update-text">${u.text}</div>
+        </div>`).join('')
+    : '<div style="color:var(--muted);font-size:12px;padding:6px 0;font-style:italic">No updates yet.</div>';
+
+  document.getElementById('seModalBody').innerHTML = `
+
+    <!-- ── Status ── -->
+    <div class="se-section">
+      <div class="se-section-title">Current Status</div>
+      <div class="se-status-row">
+        <span class="mc-status-pill mc-sp--${stStatus}">${stLabel}</span>
+        <span class="mc-status-pill mc-tl--${tlStatus}">${tlLabel}</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:4px">Auto-calculated · updates on save</span>
+      </div>
+    </div>
+
+    <!-- ── Planned Timeline ── -->
+    <div class="se-section">
+      <div class="se-section-title">Planned Timeline</div>
+      <div class="se-planned-row">
+        <div class="se-planned-field">
+          <div class="se-planned-lbl">Planned Start</div>
+          <div class="se-planned-val">${plannedStartFmt}</div>
+        </div>
+        <div class="se-planned-field">
+          <div class="se-planned-lbl">Planned End</div>
+          <div class="se-planned-val">${plannedEndFmt}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Actual Execution Dates ── -->
+    <div class="se-section">
+      <div class="se-section-title">Actual Execution Dates</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="fg">
+          <label>Actual Start Date</label>
+          <input type="date" id="seActualStart" value="${stage.actualStart||''}">
+        </div>
+        <div class="fg">
+          <label>Actual End Date <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(marks Completed)</span></label>
+          <input type="date" id="seActualEnd" value="${stage.actualEnd||''}">
+        </div>
+      </div>
+    </div>
+
+    ${checklistSection}
+
+    <!-- ── Execution Updates ── -->
+    <div class="se-section">
+      <div class="se-section-title">
+        Execution Updates
+        <span style="background:var(--accent-g);border:1px solid rgba(0,212,216,.3);color:var(--accent);border-radius:99px;padding:1px 8px;font-size:9px">${updates.length}</span>
+      </div>
+      <div id="seUpdatesList">${updatesLog}</div>
+      <div class="fg" style="margin-top:10px">
+        <label>Add Update / Note</label>
+        <textarea id="seNewUpdate" placeholder="Enter progress note, issue, or any update for this stage…" style="min-height:72px"></textarea>
+      </div>
+    </div>
+  `;
+
+  openModal('stageExecModal');
+}
+
+function saveStageExecution() {
+  if (_seShipIdx === null || _seStageIdx === null) return;
+  const ship  = shipments[_seShipIdx];
+  if (!ship) return;
+  const stage = ship.timeline[_seStageIdx];
+  if (!stage) return;
+
+  const actualStart = document.getElementById('seActualStart')?.value || '';
+  const actualEnd   = document.getElementById('seActualEnd')?.value   || '';
+  const newUpdate   = document.getElementById('seNewUpdate')?.value.trim() || '';
+
+  // Gather linked checkpoints
+  const auto      = getAutoAppliedControls(ship);
+  const linkedCps = auto.filter(cp => (cp.verificationStages||[]).includes(stage.name));
+
+  // Collect current checklist confirmation state
+  const checklistConfirmed = { ...(stage.checklistConfirmed||{}) };
+  linkedCps.forEach(cp => {
+    const cb = document.getElementById(`secc-${cp.id}`);
+    if (cb) checklistConfirmed[cp.id] = cb.checked;
+  });
+
+  // Validate: all checklist items must be confirmed before marking Completed
+  if (actualEnd && linkedCps.length) {
+    const allOk = linkedCps.every(cp => checklistConfirmed[cp.id]);
+    if (!allOk) {
+      showToast('Please confirm all checklist items before marking this stage as Completed.', 'danger');
+      return;
+    }
+  }
+
+  // Persist
+  stage.actualStart        = actualStart;
+  stage.actualEnd          = actualEnd;
+  stage.checklistConfirmed = checklistConfirmed;
+
+  if (newUpdate) {
+    if (!stage.executionUpdates) stage.executionUpdates = [];
+    stage.executionUpdates.push({ timestamp: getTimestamp(), text: newUpdate });
+  }
+
+  closeModal('stageExecModal');
+  showToast('Stage execution updated ✓', 'success');
+  renderAll();
 }
 
 // ═══════════════════════════════════════
