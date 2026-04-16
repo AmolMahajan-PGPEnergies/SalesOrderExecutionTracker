@@ -414,7 +414,7 @@ input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:defau
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">
         <div class="fg">
           <label>Source Name</label>
-          <input type="text" id="srcName" placeholder="e.g. Supplier Co.">
+          <select id="srcName" onchange="onSrcSupplierChange()"><option value="">— Select Supplier —</option></select>
         </div>
         <div class="fg">
           <label>Source Location</label>
@@ -422,11 +422,11 @@ input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:defau
         </div>
         <div class="fg">
           <label>Source Port</label>
-          <input type="text" id="srcPort" placeholder="e.g. Port of Shanghai">
+          <select id="srcPort" onchange="onSrcPortChange()"><option value="">— Select Port —</option></select>
         </div>
         <div class="fg">
           <label>Source Port Country</label>
-          <select id="srcPortCountry" class="c-sel"></select>
+          <input type="text" id="srcPortCountry" readonly placeholder="Auto-filled" style="background:var(--bg3);color:var(--muted2)">
         </div>
         <div class="fg">
           <label>Source Delivery Term</label>
@@ -438,11 +438,11 @@ input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:defau
         </div>
         <div class="fg">
           <label>Source Delivery Port</label>
-          <input type="text" id="srcDeliveryPort" placeholder="e.g. Jebel Ali" oninput="updateFinalSailingFrom()">
+          <select id="srcDeliveryPort" onchange="onSrcDelivPortChange()"><option value="">— Select Port —</option></select>
         </div>
         <div class="fg">
           <label>Source Delivery Country</label>
-          <select id="srcDeliveryCountry" class="c-sel" onchange="updateFinalSailingFrom()"></select>
+          <input type="text" id="srcDeliveryCountry" readonly placeholder="Auto-filled" style="background:var(--bg3);color:var(--muted2)">
         </div>
       </div>
 
@@ -459,11 +459,11 @@ input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:defau
         </div>
         <div class="fg">
           <label>Stopover Delivery Port</label>
-          <input type="text" id="stopoverPort" placeholder="e.g. Port of Colombo" oninput="updateFinalSailingFrom()">
+          <select id="stopoverPort" onchange="onStopoverPortChange()"><option value="">— Select Port —</option></select>
         </div>
         <div class="fg">
           <label>Stopover Delivery Country</label>
-          <select id="stopoverCountry" class="c-sel" onchange="updateFinalSailingFrom()"></select>
+          <input type="text" id="stopoverCountry" readonly placeholder="Auto-filled" style="background:var(--bg3);color:var(--muted2)">
         </div>
         <div class="fg">
           <label>Stopover Waiting Days</label>
@@ -493,11 +493,11 @@ input[readonly]{background:var(--bg3)!important;color:var(--muted2);cursor:defau
         </div>
         <div class="fg">
           <label>To Port</label>
-          <input type="text" id="finalToPort" placeholder="e.g. Khalifa Port">
+          <select id="finalToPort" onchange="onFinalToPortChange()"><option value="">— Select Port —</option></select>
         </div>
         <div class="fg">
           <label>To Country</label>
-          <select id="finalToCountry" class="c-sel"></select>
+          <input type="text" id="finalToCountry" readonly placeholder="Auto-filled" style="background:var(--bg3);color:var(--muted2)">
         </div>
       </div>
 
@@ -763,10 +763,91 @@ function filterView(type, el) {
 
 // openModal / closeModal / backdrop click handler defined in common.js
 
+// ── MASTER DATA INTEGRATION ─────────────────────────────
+function getMasterPorts()       { return JSON.parse(localStorage.getItem('pgp_portMaster')    ||'[]'); }
+function getMasterSuppliers()   { return JSON.parse(localStorage.getItem('pgp_supplierMaster')||'[]'); }
+function getMasterSrcTransits() { return JSON.parse(localStorage.getItem('pgp_srcPortTransit')||'[]'); }
+
+function populateMasterSelects() {
+  const escM = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const ports     = getMasterPorts();
+  const suppliers = getMasterSuppliers();
+  const portOpts = '<option value="">— Select Port —</option>' +
+    ports.map(p => `<option value="${escM(p.id)}" data-country="${escM(p.country)}">${escM(p.name)} — ${escM(p.country)}</option>`).join('');
+  ['srcPort','srcDeliveryPort','stopoverPort','finalToPort'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.tagName === 'SELECT') el.innerHTML = portOpts;
+  });
+  const suppOpts = '<option value="">— Select Supplier —</option>' +
+    suppliers.map(s => `<option value="${escM(s.id)}" data-default-port="${escM(s.defaultPortId||'')}">${escM(s.name)}</option>`).join('');
+  const srcNameEl = document.getElementById('srcName');
+  if (srcNameEl && srcNameEl.tagName === 'SELECT') srcNameEl.innerHTML = suppOpts;
+}
+
+function _setPortSelectByName(selId, portName) {
+  const sel = document.getElementById(selId);
+  if (!sel || !portName) return;
+  for (let i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].text.split(' — ')[0] === portName) { sel.value = sel.options[i].value; return; }
+  }
+}
+function _setSupplierSelectByName(selId, suppName) {
+  const sel = document.getElementById(selId);
+  if (!sel || !suppName) return;
+  for (let i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].text === suppName) { sel.value = sel.options[i].value; return; }
+  }
+}
+
+function onSrcSupplierChange() {
+  const sel = document.getElementById('srcName');
+  if (!sel) return;
+  const suppId = sel.value;
+  if (!suppId) return;
+  const transit = getMasterSrcTransits().find(t => t.supplierMasterId === suppId);
+  if (transit?.supplierLocation) {
+    const locEl = document.getElementById('srcLocation');
+    if (locEl) locEl.value = transit.supplierLocation;
+  }
+  const opt = sel.options[sel.selectedIndex];
+  const defaultPortId = opt ? opt.dataset.defaultPort : '';
+  if (defaultPortId) {
+    const portSel = document.getElementById('srcPort');
+    if (portSel) { portSel.value = defaultPortId; onSrcPortChange(); }
+  }
+}
+function onSrcPortChange() {
+  const sel = document.getElementById('srcPort');
+  const opt = sel ? sel.options[sel.selectedIndex] : null;
+  const el = document.getElementById('srcPortCountry');
+  if (el) el.value = (opt && opt.value) ? (opt.dataset.country||'') : '';
+}
+function onSrcDelivPortChange() {
+  const sel = document.getElementById('srcDeliveryPort');
+  const opt = sel ? sel.options[sel.selectedIndex] : null;
+  const el = document.getElementById('srcDeliveryCountry');
+  if (el) el.value = (opt && opt.value) ? (opt.dataset.country||'') : '';
+  updateFinalSailingFrom();
+}
+function onStopoverPortChange() {
+  const sel = document.getElementById('stopoverPort');
+  const opt = sel ? sel.options[sel.selectedIndex] : null;
+  const el = document.getElementById('stopoverCountry');
+  if (el) el.value = (opt && opt.value) ? (opt.dataset.country||'') : '';
+  updateFinalSailingFrom();
+}
+function onFinalToPortChange() {
+  const sel = document.getElementById('finalToPort');
+  const opt = sel ? sel.options[sel.selectedIndex] : null;
+  const el = document.getElementById('finalToCountry');
+  if (el) el.value = (opt && opt.value) ? (opt.dataset.country||'') : '';
+}
+
 // ═══════════════════════════════════════
 // ADD SHIPMENT MODAL
 // ═══════════════════════════════════════
 function openAddShipmentModal(idx) {
+  populateMasterSelects();
   populateCountrySelects();   // ensure dropdowns are filled before anything else
   editingShipIdx = typeof idx==='number' ? idx : null;
   document.getElementById('addShipTitle').textContent = editingShipIdx!==null ? 'Edit Shipment' : 'Add New Shipment';
@@ -796,13 +877,17 @@ function openAddShipmentModal(idx) {
     document.getElementById('shipmentId').value = sh.id;
     document.getElementById('shipmentType').value = sh.type;
     // Populate logistics fields
-    ['srcName','srcLocation','srcPort','srcDeliveryTerm','srcDeliveryLocation','srcDeliveryPort',
-     'stopoverLocation','stopoverPort','stopoverWaitDays',
-     'finalToLocation','finalToPort','finalDeliveryLocation','promisedDate'
+    // Plain text fields
+    ['srcLocation','srcDeliveryTerm','srcDeliveryLocation',
+     'stopoverLocation','stopoverWaitDays',
+     'finalToLocation','finalDeliveryLocation','promisedDate'
     ].forEach(id=>{ const el=document.getElementById(id); if(el && sh[id]!==undefined) el.value=sh[id]; });
-    // Country selects (must be populated first)
-    ['srcPortCountry','srcDeliveryCountry','stopoverCountry','finalFromCountry','finalToCountry'
-    ].forEach(id=>{ const el=document.getElementById(id); if(el && sh[id]) el.value=sh[id]; });
+    // Port selects — match by stored port name, then auto-fill country
+    _setPortSelectByName('srcPort', sh.srcPort);                 onSrcPortChange();
+    _setPortSelectByName('srcDeliveryPort', sh.srcDeliveryPort); onSrcDelivPortChange();
+    _setPortSelectByName('stopoverPort', sh.stopoverPort);       onStopoverPortChange();
+    _setPortSelectByName('finalToPort', sh.finalToPort);         onFinalToPortChange();
+    _setSupplierSelectByName('srcName', sh.srcName);
     document.getElementById('isStopover').checked = (sh.isStopover==='Yes');
     document.getElementById('isDelay').value = sh.isDelay||'On Time';
     toggleStopoverFields();
@@ -820,7 +905,20 @@ function saveShipment() {
   if (!timeline.length) { showToast('Please configure at least one stage date.','danger'); return; }
   const dup = shipments.findIndex(s=>s.id===id);
   if (dup!==-1 && dup!==editingShipIdx) { showToast('Shipment ID already exists.','danger'); return; }
-  const g = id => document.getElementById(id)?.value.trim()||'';
+  // g(): for port selects returns port name only; for supplier select returns supplier name; else trimmed value
+  const g = id => {
+    const el = document.getElementById(id);
+    if (!el) return '';
+    if (el.tagName === 'SELECT' && ['srcPort','srcDeliveryPort','stopoverPort','finalToPort'].includes(id)) {
+      const opt = el.options[el.selectedIndex];
+      return (opt && opt.value) ? opt.text.split(' — ')[0] : '';
+    }
+    if (el.tagName === 'SELECT' && id === 'srcName') {
+      const opt = el.options[el.selectedIndex];
+      return (opt && opt.value) ? opt.text : '';
+    }
+    return el.value.trim() || '';
+  };
   const ship = {
     id, type, timeline,
     srcName: g('srcName'), srcLocation: g('srcLocation'), srcPort: g('srcPort'), srcPortCountry: g('srcPortCountry'),
@@ -897,12 +995,15 @@ function toggleStopoverFields() {
 
 function updateFinalSailingFrom() {
   const stopoverOn = document.getElementById('isStopover')?.checked;
-  const loc  = stopoverOn ? document.getElementById('stopoverLocation')?.value  : document.getElementById('srcDeliveryLocation')?.value;
-  const port = stopoverOn ? document.getElementById('stopoverPort')?.value      : document.getElementById('srcDeliveryPort')?.value;
-  const ctry = stopoverOn ? document.getElementById('stopoverCountry')?.value   : document.getElementById('srcDeliveryCountry')?.value;
+  const loc     = stopoverOn ? document.getElementById('stopoverLocation')?.value : document.getElementById('srcDeliveryLocation')?.value;
+  const portSel = stopoverOn ? document.getElementById('stopoverPort') : document.getElementById('srcDeliveryPort');
+  const portOpt = portSel ? portSel.options[portSel.selectedIndex] : null;
+  const port    = (portOpt && portOpt.value) ? portOpt.text.split(' — ')[0] : '';
+  const ctry    = stopoverOn ? (document.getElementById('stopoverCountry')?.value||'')
+                             : (document.getElementById('srcDeliveryCountry')?.value||'');
   const ffl = document.getElementById('finalFromLocation'); if (ffl) ffl.value = loc||'';
-  const ffp = document.getElementById('finalFromPort');     if (ffp) ffp.value = port||'';
-  const ffc = document.getElementById('finalFromCountry');  if (ffc) ffc.value = ctry||'';
+  const ffp = document.getElementById('finalFromPort');     if (ffp) ffp.value = port;
+  const ffc = document.getElementById('finalFromCountry');  if (ffc) ffc.value = ctry;
 }
 
 document.getElementById('shipmentType').addEventListener('change', renderStageConfigRows);
