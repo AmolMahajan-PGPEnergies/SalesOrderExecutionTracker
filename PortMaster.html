@@ -293,7 +293,7 @@
         </div>
         <div class="fg">
           <label>Country <span class="req">*</span></label>
-          <input type="text" id="pmCountry" placeholder="e.g. United Arab Emirates">
+          <select id="pmCountry" class="c-sel"><option value="">— Select Country —</option></select>
         </div>
         <div class="fg">
           <label>Clearance Days <span class="req">*</span></label>
@@ -383,6 +383,34 @@
 
 <script src="common.js"></script>
 <script>
+// ── COUNTRY LIST ────────────────────────────────────
+const COUNTRIES = [
+  'Afghanistan','Albania','Algeria','Andorra','Angola','Argentina','Armenia','Australia','Austria','Azerbaijan',
+  'Bahrain','Bangladesh','Belarus','Belgium','Belize','Bolivia','Bosnia and Herzegovina','Botswana','Brazil','Brunei','Bulgaria',
+  'Cambodia','Cameroon','Canada','Chile','China','Colombia','Croatia','Cuba','Cyprus','Czech Republic',
+  'Denmark','Dominican Republic','Ecuador','Egypt','El Salvador','Estonia','Ethiopia',
+  'Finland','France','Georgia','Germany','Ghana','Greece','Guatemala','Honduras','Hong Kong','Hungary',
+  'India','Indonesia','Iran','Iraq','Ireland','Israel','Italy','Jamaica','Japan','Jordan',
+  'Kazakhstan','Kenya','Kuwait','Kyrgyzstan','Latvia','Lebanon','Libya','Lithuania','Luxembourg',
+  'Malaysia','Malta','Mexico','Moldova','Mongolia','Morocco','Mozambique','Myanmar',
+  'Nepal','Netherlands','New Zealand','Nicaragua','Nigeria','North Korea','Norway',
+  'Oman','Pakistan','Panama','Paraguay','Peru','Philippines','Poland','Portugal',
+  'Qatar','Romania','Russia','Saudi Arabia','Senegal','Serbia','Singapore','Slovakia','Slovenia',
+  'Somalia','South Africa','South Korea','Spain','Sri Lanka','Sudan','Sweden','Switzerland','Syria',
+  'Taiwan','Tanzania','Thailand','Tunisia','Turkey','Turkmenistan','Uganda','Ukraine',
+  'United Arab Emirates','United Kingdom','United States','Uruguay','Uzbekistan','Venezuela','Vietnam','Yemen','Zimbabwe'
+];
+
+function populateCountrySelects() {
+  const opts = '<option value="">— Select Country —</option>' +
+    COUNTRIES.map(c => `<option value="${c}">${c}</option>`).join('');
+  document.querySelectorAll('select.c-sel').forEach(sel => {
+    const prev = sel.value;
+    sel.innerHTML = opts;
+    if (prev) sel.value = prev;
+  });
+}
+
 // ── STORAGE KEYS ────────────────────────────────────
 const KEY_PORTS         = 'pgp_portMaster';
 const KEY_SRC_TRANSIT   = 'pgp_srcPortTransit';
@@ -444,8 +472,9 @@ function openPortModal(idx) {
   const p = editPortIdx !== null ? ports[editPortIdx] : null;
   document.getElementById('portModalTitle').textContent = p ? 'Edit Port' : 'Add Port';
   document.getElementById('pmPortName').value      = p?.name         || '';
-  document.getElementById('pmCountry').value       = p?.country      || '';
-  document.getElementById('pmClearanceDays').value = p?.clearanceDays!== undefined ? p.clearanceDays : '';
+  document.getElementById('pmClearanceDays').value = p?.clearanceDays !== undefined ? p.clearanceDays : '';
+  populateCountrySelects();
+  document.getElementById('pmCountry').value = p?.country || '';
   openModal('portModal');
   document.getElementById('pmPortName').focus();
 }
@@ -640,6 +669,7 @@ function renderAll() {
 }
 
 // ── INIT ─────────────────────────────────────────────
+populateCountrySelects();
 renderAll();
 </script>
 </body>
