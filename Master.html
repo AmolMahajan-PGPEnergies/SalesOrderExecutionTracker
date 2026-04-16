@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>COREPULSE — Port Master</title>
+<title>COREPULSE — Master Data</title>
 <script>(function(){if(localStorage.getItem('cpTheme')==='light')document.documentElement.classList.add('light');})()</script>
 <link rel="stylesheet" href="common.css">
 <style>
-/* ── PORT MASTER PAGE STYLES ── */
+/* ── MASTER PAGE STYLES ── */
 .page { padding: 24px; animation: fadeUp .22s ease; }
 
 /* Section cards */
@@ -140,7 +140,7 @@
     <img class="logo-img logo-img-light" src="PgpEnergies Light Teme Logo.png"     alt="PGP Energies">
   </a>
   <div class="hdr-right">
-    <span class="hdr-page">Port Master</span>
+    <span class="hdr-page">Master Data</span>
     <div class="hdr-acts">
       <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">&#x2600;&#xFE0F;</button>
     </div>
@@ -157,8 +157,8 @@
     <a class="nav-item" href="SalesOrderTrackerAndExecutionControls.html">
       <span class="nav-icon">◈</span><span class="nav-lbl">Execution Controls</span>
     </a>
-    <a class="nav-item active" href="PortMaster.html">
-      <span class="nav-icon">⚓</span><span class="nav-lbl">Port Master</span>
+    <a class="nav-item active" href="Master.html">
+      <span class="nav-icon">⚓</span><span class="nav-lbl">Master</span>
     </a>
     <a class="nav-item" href="ai-chat.html">
       <span class="nav-icon">&#x2726;</span><span class="nav-lbl">AI Assistant</span>
@@ -177,8 +177,8 @@
 
   <div class="pg-head">
     <div>
-      <h2>⚓ Port Master</h2>
-      <p>Manage port definitions, source transit times, and port-to-port transit data</p>
+      <h2>⚓ Master Data</h2>
+      <p>Manage ports, suppliers, source transit times, and port-to-port transit data</p>
     </div>
   </div>
 
@@ -212,7 +212,36 @@
     </div>
   </div>
 
-  <!-- ═══ SECTION 2: SOURCE → PORT TRANSIT ═══ -->
+  <!-- ═══ SECTION 2: SUPPLIER MASTER ═══ -->
+  <div class="master-section">
+    <div class="master-sec-head">
+      <div>
+        <h3>Supplier Master <span class="sec-badge" id="supplierCount">0</span></h3>
+        <p>Supplier names with their default dispatch port</p>
+      </div>
+      <div class="master-sec-actions">
+        <button class="btn btn-accent btn-sm" onclick="openSupplierModal()">+ Add Supplier</button>
+      </div>
+    </div>
+    <div class="master-search">
+      <input type="text" id="supplierSearch" placeholder="Search suppliers…" oninput="renderSupplierTable()">
+    </div>
+    <div class="master-table-wrap">
+      <table class="master-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Supplier Name</th>
+            <th>Default Port</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="supplierTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ SECTION 3: SOURCE → PORT TRANSIT ═══ -->
   <div class="master-section">
     <div class="master-sec-head">
       <div>
@@ -231,7 +260,7 @@
         <thead>
           <tr>
             <th>#</th>
-            <th>Supplier Name</th>
+            <th>Supplier</th>
             <th>Supplier Location</th>
             <th>To Port</th>
             <th>Transit Days</th>
@@ -243,7 +272,7 @@
     </div>
   </div>
 
-  <!-- ═══ SECTION 3: PORT → PORT TRANSIT ═══ -->
+  <!-- ═══ SECTION 4: PORT → PORT TRANSIT ═══ -->
   <div class="master-section">
     <div class="master-sec-head">
       <div>
@@ -309,6 +338,37 @@
   </div>
 </div>
 
+<!-- ═══ SUPPLIER MODAL ═══ -->
+<div class="modal-overlay" id="supplierModal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-head">
+      <div>
+        <h3 id="supplierModalTitle">Add Supplier</h3>
+        <p>Supplier name and default dispatch port</p>
+      </div>
+      <button class="modal-close" onclick="closeModal('supplierModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="fg span2">
+          <label>Supplier Name <span class="req">*</span></label>
+          <input type="text" id="smSupplierName" placeholder="e.g. Acme Steel Ltd">
+        </div>
+        <div class="fg span2">
+          <label>Default Port</label>
+          <select id="smDefaultPort">
+            <option value="">— None / Select Later —</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('supplierModal')">Cancel</button>
+      <button class="btn btn-accent" onclick="saveSupplier()">Save Supplier</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ SOURCE TRANSIT MODAL ═══ -->
 <div class="modal-overlay" id="srcTransitModal">
   <div class="modal" style="max-width:460px">
@@ -322,8 +382,10 @@
     <div class="modal-body">
       <div class="form-grid">
         <div class="fg span2">
-          <label>Supplier Name <span class="req">*</span></label>
-          <input type="text" id="stSupplierName" placeholder="e.g. Acme Steel Ltd">
+          <label>Supplier <span class="req">*</span></label>
+          <select id="stSupplierSel" onchange="onSupplierSelChange()">
+            <option value="">— Select Supplier —</option>
+          </select>
         </div>
         <div class="fg span2">
           <label>Supplier Location <span class="req">*</span></label>
@@ -417,21 +479,25 @@ function populateCountrySelects() {
 }
 
 // ── STORAGE KEYS ────────────────────────────────────
-const KEY_PORTS         = 'pgp_portMaster';
-const KEY_SRC_TRANSIT   = 'pgp_srcPortTransit';
-const KEY_PORT_TRANSIT  = 'pgp_portPortTransit';
+const KEY_PORTS          = 'pgp_portMaster';
+const KEY_SUPPLIERS      = 'pgp_supplierMaster';
+const KEY_SRC_TRANSIT    = 'pgp_srcPortTransit';
+const KEY_PORT_TRANSIT   = 'pgp_portPortTransit';
 
 // ── STATE ────────────────────────────────────────────
-let ports        = JSON.parse(localStorage.getItem(KEY_PORTS)        || '[]');
-let srcTransits  = JSON.parse(localStorage.getItem(KEY_SRC_TRANSIT)  || '[]');
-let portTransits = JSON.parse(localStorage.getItem(KEY_PORT_TRANSIT) || '[]');
+let ports        = JSON.parse(localStorage.getItem(KEY_PORTS)       || '[]');
+let suppliers    = JSON.parse(localStorage.getItem(KEY_SUPPLIERS)   || '[]');
+let srcTransits  = JSON.parse(localStorage.getItem(KEY_SRC_TRANSIT) || '[]');
+let portTransits = JSON.parse(localStorage.getItem(KEY_PORT_TRANSIT)|| '[]');
 
 let editPortIdx        = null;
+let editSupplierIdx    = null;
 let editSrcTransitIdx  = null;
 let editPortTransitIdx = null;
 
 // ── PERSIST ──────────────────────────────────────────
 function savePorts()        { localStorage.setItem(KEY_PORTS,        JSON.stringify(ports));        }
+function saveSuppliers()    { localStorage.setItem(KEY_SUPPLIERS,    JSON.stringify(suppliers));    }
 function saveSrcTransits()  { localStorage.setItem(KEY_SRC_TRANSIT,  JSON.stringify(srcTransits));  }
 function savePortTransits() { localStorage.setItem(KEY_PORT_TRANSIT, JSON.stringify(portTransits)); }
 
@@ -488,9 +554,13 @@ function editPort(idx)   { openPortModal(idx); }
 
 function deletePort(idx) {
   if (!confirm(`Delete port "${ports[idx].name}"?`)) return;
+  const portId = ports[idx].id;
   // Remove dependent port-transit records
-  portTransits = portTransits.filter(t => t.fromPortId !== ports[idx].id && t.toPortId !== ports[idx].id);
+  portTransits = portTransits.filter(t => t.fromPortId !== portId && t.toPortId !== portId);
   savePortTransits();
+  // Clear defaultPortId on suppliers that reference this port
+  suppliers = suppliers.map(s => s.defaultPortId === portId ? { ...s, defaultPortId: '' } : s);
+  saveSuppliers();
   ports.splice(idx, 1);
   savePorts();
   renderAll();
@@ -514,15 +584,99 @@ function savePort() {
   editPortIdx = null;
 }
 
-// ── SECTION 2: SOURCE TRANSIT ────────────────────────
+// ── SECTION 2: SUPPLIER MASTER ───────────────────────
+function renderSupplierTable() {
+  const q = (document.getElementById('supplierSearch')?.value || '').toLowerCase();
+  const portMap = new Map(ports.map(p => [p.id, p]));
+  const filtered = suppliers.filter(s =>
+    !q || s.name.toLowerCase().includes(q)
+  );
+  document.getElementById('supplierCount').textContent = suppliers.length;
+  const tbody = document.getElementById('supplierTableBody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="4" class="tbl-empty">${q ? 'No suppliers match your search' : 'No suppliers added yet — click + Add Supplier to get started'}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map((s, i) => {
+    const idx  = suppliers.indexOf(s);
+    const port = portMap.get(s.defaultPortId);
+    const portCell = port
+      ? `<span class="port-tag">${esc(port.name)}</span> <span style="font-size:10px;color:var(--muted)">${esc(port.country)}</span>`
+      : `<span style="color:var(--muted);font-size:11px">—</span>`;
+    return `<tr>
+      <td style="color:var(--muted);font-family:'DM Mono',monospace;font-size:11px">${i+1}</td>
+      <td><span class="supplier-tag">${esc(s.name)}</span></td>
+      <td>${portCell}</td>
+      <td>${actionBtns(`editSupplier(${idx})`, `deleteSupplier(${idx})`)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function openSupplierModal(idx) {
+  editSupplierIdx = idx !== undefined ? idx : null;
+  const s = editSupplierIdx !== null ? suppliers[editSupplierIdx] : null;
+  document.getElementById('supplierModalTitle').textContent = s ? 'Edit Supplier' : 'Add Supplier';
+  document.getElementById('smSupplierName').value = s?.name || '';
+  // Populate default port dropdown
+  const portSel = document.getElementById('smDefaultPort');
+  portSel.innerHTML = '<option value="">— None / Select Later —</option>' +
+    ports.map(p => `<option value="${p.id}">${esc(p.name)} — ${esc(p.country)}</option>`).join('');
+  portSel.value = s?.defaultPortId || '';
+  openModal('supplierModal');
+  document.getElementById('smSupplierName').focus();
+}
+
+function editSupplier(idx)   { openSupplierModal(idx); }
+
+function deleteSupplier(idx) {
+  if (!confirm(`Delete supplier "${suppliers[idx].name}"?`)) return;
+  suppliers.splice(idx, 1);
+  saveSuppliers();
+  renderSupplierTable();
+  showToast('Supplier deleted', 'success');
+}
+
+function saveSupplier() {
+  const name          = document.getElementById('smSupplierName').value.trim();
+  const defaultPortId = document.getElementById('smDefaultPort').value;
+  if (!name) { showToast('Supplier name is required', 'danger'); return; }
+
+  const record = {
+    id: editSupplierIdx !== null ? suppliers[editSupplierIdx].id : genId('SUP'),
+    name, defaultPortId
+  };
+  if (editSupplierIdx !== null) suppliers[editSupplierIdx] = record;
+  else suppliers.push(record);
+  saveSuppliers();
+  closeModal('supplierModal');
+  renderAll();
+  showToast(editSupplierIdx !== null ? 'Supplier updated ✓' : 'Supplier added ✓', 'success');
+  editSupplierIdx = null;
+}
+
+// ── SECTION 3: SOURCE TRANSIT ────────────────────────
+function onSupplierSelChange() {
+  const suppId = document.getElementById('stSupplierSel').value;
+  if (!suppId) return;
+  const supp = suppliers.find(s => s.id === suppId);
+  if (supp?.defaultPortId) {
+    document.getElementById('stToPort').value = supp.defaultPortId;
+  }
+}
+
 function renderSrcTransitTable() {
   const q = (document.getElementById('srcTransitSearch')?.value || '').toLowerCase();
-  const portMap = new Map(ports.map(p => [p.id, p]));
+  const portMap     = new Map(ports.map(p => [p.id, p]));
+  const supplierMap = new Map(suppliers.map(s => [s.id, s]));
   const filtered = srcTransits.filter(s => {
     if (!q) return true;
+    // Support both legacy supplierName string and new supplierMasterId
+    const suppName = s.supplierMasterId
+      ? (supplierMap.get(s.supplierMasterId)?.name || '')
+      : (s.supplierName || '');
     const portName = portMap.get(s.toPortId)?.name || '';
-    return s.supplierName.toLowerCase().includes(q) ||
-           s.supplierLocation.toLowerCase().includes(q) ||
+    return suppName.toLowerCase().includes(q) ||
+           (s.supplierLocation||'').toLowerCase().includes(q) ||
            portName.toLowerCase().includes(q);
   });
   document.getElementById('srcTransitCount').textContent = srcTransits.length;
@@ -534,12 +688,16 @@ function renderSrcTransitTable() {
   tbody.innerHTML = filtered.map((s, i) => {
     const idx  = srcTransits.indexOf(s);
     const port = portMap.get(s.toPortId);
+    // Resolve supplier name: new records use supplierMasterId, legacy use supplierName
+    const suppName = s.supplierMasterId
+      ? (supplierMap.get(s.supplierMasterId)?.name || `<span style="color:var(--muted);font-size:11px">Unknown Supplier</span>`)
+      : esc(s.supplierName || '—');
     const portCell = port
       ? `<span class="port-tag">${esc(port.name)}</span> <span style="font-size:10px;color:var(--muted)">${esc(port.country)}</span>`
       : `<span style="color:var(--muted);font-size:11px">—</span>`;
     return `<tr>
       <td style="color:var(--muted);font-family:'DM Mono',monospace;font-size:11px">${i+1}</td>
-      <td><span class="supplier-tag">${esc(s.supplierName)}</span></td>
+      <td><span class="supplier-tag">${s.supplierMasterId ? esc(supplierMap.get(s.supplierMasterId)?.name || '?') : esc(s.supplierName || '—')}</span></td>
       <td>${esc(s.supplierLocation)}</td>
       <td>${portCell}</td>
       <td><span class="days-badge">${esc(s.transitDays)}</span></td>
@@ -552,22 +710,33 @@ function openSrcTransitModal(idx) {
   editSrcTransitIdx = idx !== undefined ? idx : null;
   const s = editSrcTransitIdx !== null ? srcTransits[editSrcTransitIdx] : null;
   document.getElementById('srcTransitModalTitle').textContent = s ? 'Edit Source Transit' : 'Add Source Transit';
-  document.getElementById('stSupplierName').value     = s?.supplierName     || '';
   document.getElementById('stSupplierLocation').value = s?.supplierLocation || '';
   document.getElementById('stTransitDays').value      = s?.transitDays !== undefined ? s.transitDays : '';
+
+  // Populate supplier dropdown
+  const suppSel = document.getElementById('stSupplierSel');
+  suppSel.innerHTML = '<option value="">— Select Supplier —</option>' +
+    suppliers.map(sup => `<option value="${sup.id}">${esc(sup.name)}</option>`).join('');
+  suppSel.value = s?.supplierMasterId || '';
+
   // Populate port dropdown
   const portSel = document.getElementById('stToPort');
   portSel.innerHTML = '<option value="">— Select Port —</option>' +
     ports.map(p => `<option value="${p.id}">${esc(p.name)} — ${esc(p.country)}</option>`).join('');
   portSel.value = s?.toPortId || '';
+
   openModal('srcTransitModal');
-  document.getElementById('stSupplierName').focus();
 }
 
 function editSrcTransit(idx)   { openSrcTransitModal(idx); }
 
 function deleteSrcTransit(idx) {
-  if (!confirm(`Delete transit entry for "${srcTransits[idx].supplierName}"?`)) return;
+  const entry = srcTransits[idx];
+  const supplierMap = new Map(suppliers.map(s => [s.id, s]));
+  const label = entry.supplierMasterId
+    ? (supplierMap.get(entry.supplierMasterId)?.name || 'entry')
+    : (entry.supplierName || 'entry');
+  if (!confirm(`Delete transit entry for "${label}"?`)) return;
   srcTransits.splice(idx, 1);
   saveSrcTransits();
   renderSrcTransitTable();
@@ -575,17 +744,17 @@ function deleteSrcTransit(idx) {
 }
 
 function saveSrcTransit() {
-  const supplierName     = document.getElementById('stSupplierName').value.trim();
+  const supplierMasterId = document.getElementById('stSupplierSel').value;
   const supplierLocation = document.getElementById('stSupplierLocation').value.trim();
   const toPortId         = document.getElementById('stToPort').value;
   const transitDays      = parseInt(document.getElementById('stTransitDays').value) || 0;
-  if (!supplierName)     { showToast('Supplier name is required', 'danger'); return; }
+  if (!supplierMasterId) { showToast('Please select a supplier', 'danger'); return; }
   if (!supplierLocation) { showToast('Supplier location is required', 'danger'); return; }
   if (!toPortId)         { showToast('Please select a destination port', 'danger'); return; }
 
   const record = {
     id: editSrcTransitIdx !== null ? srcTransits[editSrcTransitIdx].id : genId('SRC'),
-    supplierName, supplierLocation, toPortId, transitDays
+    supplierMasterId, supplierLocation, toPortId, transitDays
   };
   if (editSrcTransitIdx !== null) srcTransits[editSrcTransitIdx] = record;
   else srcTransits.push(record);
@@ -596,7 +765,7 @@ function saveSrcTransit() {
   editSrcTransitIdx = null;
 }
 
-// ── SECTION 3: PORT → PORT TRANSIT ──────────────────
+// ── SECTION 4: PORT → PORT TRANSIT ──────────────────
 function populatePortSelects(fromVal, toVal) {
   const opts = `<option value="">Select port…</option>` +
     ports.map(p => `<option value="${p.id}">${esc(p.name)} — ${esc(p.country)}</option>`).join('');
@@ -627,8 +796,6 @@ function renderPortTransitTable() {
     const idx  = portTransits.indexOf(t);
     const from = portMap.get(t.fromPortId);
     const to   = portMap.get(t.toPortId);
-    const fromLabel = from ? `${from.name}<span style="color:var(--muted);font-size:10px;margin-left:4px">${from.country}</span>` : `<span style="color:var(--muted)">Unknown</span>`;
-    const toLabel   = to   ? `${to.name}<span style="color:var(--muted);font-size:10px;margin-left:4px">${to.country}</span>`   : `<span style="color:var(--muted)">Unknown</span>`;
     return `<tr>
       <td style="color:var(--muted);font-family:'DM Mono',monospace;font-size:11px">${i+1}</td>
       <td><span class="port-tag">${esc(from?.name || '—')}</span> <span style="font-size:10px;color:var(--muted)">${esc(from?.country||'')}</span></td>
@@ -686,6 +853,7 @@ function savePortTransit() {
 // ── RENDER ALL ───────────────────────────────────────
 function renderAll() {
   renderPortTable();
+  renderSupplierTable();
   renderSrcTransitTable();
   renderPortTransitTable();
 }
