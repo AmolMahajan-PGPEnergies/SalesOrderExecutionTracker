@@ -233,7 +233,8 @@
             <th>#</th>
             <th>Supplier Name</th>
             <th>Supplier Location</th>
-            <th>Transit Days to Port</th>
+            <th>To Port</th>
+            <th>Transit Days</th>
             <th></th>
           </tr>
         </thead>
@@ -327,6 +328,10 @@
         <div class="fg span2">
           <label>Supplier Location <span class="req">*</span></label>
           <input type="text" id="stSupplierLocation" placeholder="e.g. Shanghai, China">
+        </div>
+        <div class="fg span2">
+          <label>To Port <span class="req">*</span></label>
+          <select id="stToPort"><option value="">— Select Port —</option></select>
         </div>
         <div class="fg span2">
           <label>Transit Days to Port <span class="req">*</span></label>
@@ -512,21 +517,31 @@ function savePort() {
 // ── SECTION 2: SOURCE TRANSIT ────────────────────────
 function renderSrcTransitTable() {
   const q = (document.getElementById('srcTransitSearch')?.value || '').toLowerCase();
-  const filtered = srcTransits.filter(s =>
-    !q || s.supplierName.toLowerCase().includes(q) || s.supplierLocation.toLowerCase().includes(q)
-  );
+  const portMap = new Map(ports.map(p => [p.id, p]));
+  const filtered = srcTransits.filter(s => {
+    if (!q) return true;
+    const portName = portMap.get(s.toPortId)?.name || '';
+    return s.supplierName.toLowerCase().includes(q) ||
+           s.supplierLocation.toLowerCase().includes(q) ||
+           portName.toLowerCase().includes(q);
+  });
   document.getElementById('srcTransitCount').textContent = srcTransits.length;
   const tbody = document.getElementById('srcTransitTableBody');
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="5" class="tbl-empty">${q ? 'No entries match your search' : 'No source transit entries yet — click + Add Entry'}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="tbl-empty">${q ? 'No entries match your search' : 'No source transit entries yet — click + Add Entry'}</td></tr>`;
     return;
   }
   tbody.innerHTML = filtered.map((s, i) => {
-    const idx = srcTransits.indexOf(s);
+    const idx  = srcTransits.indexOf(s);
+    const port = portMap.get(s.toPortId);
+    const portCell = port
+      ? `<span class="port-tag">${esc(port.name)}</span> <span style="font-size:10px;color:var(--muted)">${esc(port.country)}</span>`
+      : `<span style="color:var(--muted);font-size:11px">—</span>`;
     return `<tr>
       <td style="color:var(--muted);font-family:'DM Mono',monospace;font-size:11px">${i+1}</td>
       <td><span class="supplier-tag">${esc(s.supplierName)}</span></td>
       <td>${esc(s.supplierLocation)}</td>
+      <td>${portCell}</td>
       <td><span class="days-badge">${esc(s.transitDays)}</span></td>
       <td>${actionBtns(`editSrcTransit(${idx})`, `deleteSrcTransit(${idx})`)}</td>
     </tr>`;
@@ -540,6 +555,11 @@ function openSrcTransitModal(idx) {
   document.getElementById('stSupplierName').value     = s?.supplierName     || '';
   document.getElementById('stSupplierLocation').value = s?.supplierLocation || '';
   document.getElementById('stTransitDays').value      = s?.transitDays !== undefined ? s.transitDays : '';
+  // Populate port dropdown
+  const portSel = document.getElementById('stToPort');
+  portSel.innerHTML = '<option value="">— Select Port —</option>' +
+    ports.map(p => `<option value="${p.id}">${esc(p.name)} — ${esc(p.country)}</option>`).join('');
+  portSel.value = s?.toPortId || '';
   openModal('srcTransitModal');
   document.getElementById('stSupplierName').focus();
 }
@@ -557,13 +577,15 @@ function deleteSrcTransit(idx) {
 function saveSrcTransit() {
   const supplierName     = document.getElementById('stSupplierName').value.trim();
   const supplierLocation = document.getElementById('stSupplierLocation').value.trim();
+  const toPortId         = document.getElementById('stToPort').value;
   const transitDays      = parseInt(document.getElementById('stTransitDays').value) || 0;
   if (!supplierName)     { showToast('Supplier name is required', 'danger'); return; }
   if (!supplierLocation) { showToast('Supplier location is required', 'danger'); return; }
+  if (!toPortId)         { showToast('Please select a destination port', 'danger'); return; }
 
   const record = {
     id: editSrcTransitIdx !== null ? srcTransits[editSrcTransitIdx].id : genId('SRC'),
-    supplierName, supplierLocation, transitDays
+    supplierName, supplierLocation, toPortId, transitDays
   };
   if (editSrcTransitIdx !== null) srcTransits[editSrcTransitIdx] = record;
   else srcTransits.push(record);
