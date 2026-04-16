@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COREPULSE — Port Master</title>
+<script>(function(){if(localStorage.getItem('cpTheme')==='light')document.documentElement.classList.add('light');})()</script>
+<link rel="stylesheet" href="common.css">
+<style>
+/* ── PORT MASTER PAGE STYLES ── */
+.page { padding: 24px; animation: fadeUp .22s ease; }
+
+/* Section cards */
+.master-section {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--rl); overflow: hidden; margin-bottom: 20px;
+}
+.master-sec-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 16px 20px; border-bottom: 1px solid var(--border); gap: 12px; flex-wrap: wrap;
+}
+.master-sec-head h3 {
+  font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
+  color: var(--text); margin-bottom: 3px;
+}
+.master-sec-head p { font-size: 12px; color: var(--muted); }
+.sec-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px;
+  background: var(--accent-g); border: 1px solid rgba(0,212,216,.3);
+  color: var(--accent); font-family: 'DM Mono', monospace; font-size: 10px;
+  font-weight: 700; margin-left: 8px; vertical-align: middle;
+}
+.master-sec-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* Table */
+.master-table-wrap { overflow-x: auto; }
+.master-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 13px;
+}
+.master-table th {
+  font-family: 'DM Mono', monospace; font-size: 9px; font-weight: 700;
+  color: var(--muted); text-transform: uppercase; letter-spacing: .1em;
+  padding: 10px 16px; border-bottom: 1px solid var(--border);
+  background: var(--bg3); text-align: left; white-space: nowrap;
+}
+.master-table td {
+  padding: 11px 16px; border-bottom: 1px solid var(--border);
+  color: var(--text2); vertical-align: middle;
+}
+.master-table tr:last-child td { border-bottom: none; }
+.master-table tbody tr { transition: background .12s; }
+.master-table tbody tr:hover { background: var(--panel2); }
+.master-table td:first-child { color: var(--text); font-weight: 600; }
+.tbl-actions { display: flex; gap: 6px; }
+.tbl-num {
+  font-family: 'DM Mono', monospace; font-size: 12px;
+  font-weight: 700; color: var(--text);
+}
+.tbl-empty {
+  text-align: center; padding: 32px 16px;
+  color: var(--muted); font-size: 13px;
+}
+.port-tag {
+  display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 99px;
+  background: var(--accent-g); border: 1px solid rgba(0,212,216,.2);
+  color: var(--accent); font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 600;
+}
+.supplier-tag {
+  display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 99px;
+  background: rgba(167,139,250,.1); border: 1px solid rgba(167,139,250,.25);
+  color: #a78bfa; font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 600;
+}
+.days-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 700;
+  color: var(--warning);
+}
+.days-badge::after { content: 'd'; font-size: 10px; color: var(--muted); font-weight: 400; }
+
+/* Search bar inside section */
+.master-search {
+  padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--bg3);
+}
+.master-search input {
+  width: 260px; max-width: 100%; padding: 6px 12px 6px 30px;
+  background: var(--panel); border: 1px solid var(--border2);
+  border-radius: var(--r); color: var(--text); font-size: 12px;
+  font-family: 'DM Sans', sans-serif; outline: none;
+  transition: border-color .18s;
+}
+.master-search input:focus { border-color: var(--accent); }
+.master-search { position: relative; }
+.master-search::before {
+  content: '⌕'; position: absolute; left: 25px; top: 50%;
+  transform: translateY(-50%); color: var(--muted); font-size: 14px;
+  pointer-events: none;
+}
+
+/* Modal */
+.modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px) }
+.modal-overlay.open { display:flex }
+.modal { background:var(--panel);border:1px solid var(--border2);border-radius:var(--rl);width:100%;box-shadow:0 24px 80px rgba(0,0,0,.4);max-height:90vh;display:flex;flex-direction:column }
+.modal-head { display:flex;align-items:flex-start;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border) }
+.modal-head h3 { font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--text) }
+.modal-head p { font-size:12px;color:var(--muted);margin-top:3px }
+.modal-close { background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:4px;line-height:1;border-radius:6px;transition:color .15s }
+.modal-close:hover { color:var(--text) }
+.modal-body { padding:20px;overflow-y:auto }
+.modal-footer { display:flex;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid var(--border) }
+
+/* Form */
+.form-grid { display:grid;grid-template-columns:1fr 1fr;gap:14px }
+@media(max-width:480px){ .form-grid { grid-template-columns:1fr } }
+.fg { display:flex;flex-direction:column;gap:6px }
+.fg.span2 { grid-column:span 2 }
+.fg label { font-size:11px;font-weight:700;color:var(--muted2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em }
+.fg input, .fg select {
+  padding:9px 12px;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:var(--r);color:var(--text);font-size:13px;
+  font-family:'DM Sans',sans-serif;outline:none;transition:border-color .18s;width:100%
+}
+.fg input:focus, .fg select:focus { border-color:var(--accent) }
+.fg select option { background:var(--panel) }
+.req { color:var(--danger);margin-left:2px }
+
+/* Page head */
+.pg-head { display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;gap:16px;flex-wrap:wrap }
+.pg-head h2 { font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--text) }
+.pg-head p { font-size:13px;color:var(--muted);margin-top:4px }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <a class="hdr-logo" href="index.html" aria-label="PGP Energies home">
+    <img class="logo-img logo-img-dark"  src="PGP Energies - Full logo - Main.png" alt="PGP Energies">
+    <img class="logo-img logo-img-light" src="PgpEnergies Light Teme Logo.png"     alt="PGP Energies">
+  </a>
+  <div class="hdr-right">
+    <span class="hdr-page">Port Master</span>
+    <div class="hdr-acts">
+      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">&#x2600;&#xFE0F;</button>
+    </div>
+  </div>
+</header>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sb-section">
+    <div class="sb-label">Navigation</div>
+    <a class="nav-item" href="index.html">
+      <span class="nav-icon">▤</span><span class="nav-lbl">Dashboard</span>
+    </a>
+    <a class="nav-item" href="SalesOrderTrackerAndExecutionControls.html">
+      <span class="nav-icon">◈</span><span class="nav-lbl">Execution Controls</span>
+    </a>
+    <a class="nav-item active" href="PortMaster.html">
+      <span class="nav-icon">⚓</span><span class="nav-lbl">Port Master</span>
+    </a>
+    <a class="nav-item" href="ai-chat.html">
+      <span class="nav-icon">&#x2726;</span><span class="nav-lbl">AI Assistant</span>
+    </a>
+  </div>
+  <div class="sb-footer">
+    <button class="sb-toggle" onclick="toggleSidebar()">
+      <span id="sbIcon">◁</span><span id="sbLbl" style="font-size:11px">Collapse</span>
+    </button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main id="main">
+<div class="page">
+
+  <div class="pg-head">
+    <div>
+      <h2>⚓ Port Master</h2>
+      <p>Manage port definitions, source transit times, and port-to-port transit data</p>
+    </div>
+  </div>
+
+  <!-- ═══ SECTION 1: PORT MASTER ═══ -->
+  <div class="master-section">
+    <div class="master-sec-head">
+      <div>
+        <h3>Ports <span class="sec-badge" id="portCount">0</span></h3>
+        <p>Port name, country, and customs clearance days</p>
+      </div>
+      <div class="master-sec-actions">
+        <button class="btn btn-accent btn-sm" onclick="openPortModal()">+ Add Port</button>
+      </div>
+    </div>
+    <div class="master-search">
+      <input type="text" id="portSearch" placeholder="Search ports…" oninput="renderPortTable()">
+    </div>
+    <div class="master-table-wrap">
+      <table class="master-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Port Name</th>
+            <th>Country</th>
+            <th>Clearance Days</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="portTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ SECTION 2: SOURCE → PORT TRANSIT ═══ -->
+  <div class="master-section">
+    <div class="master-sec-head">
+      <div>
+        <h3>Source to Port Transit <span class="sec-badge" id="srcTransitCount">0</span></h3>
+        <p>Supplier location to port transit days</p>
+      </div>
+      <div class="master-sec-actions">
+        <button class="btn btn-accent btn-sm" onclick="openSrcTransitModal()">+ Add Entry</button>
+      </div>
+    </div>
+    <div class="master-search">
+      <input type="text" id="srcTransitSearch" placeholder="Search suppliers…" oninput="renderSrcTransitTable()">
+    </div>
+    <div class="master-table-wrap">
+      <table class="master-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Supplier Name</th>
+            <th>Supplier Location</th>
+            <th>Transit Days to Port</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="srcTransitTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ SECTION 3: PORT → PORT TRANSIT ═══ -->
+  <div class="master-section">
+    <div class="master-sec-head">
+      <div>
+        <h3>Port to Port Transit <span class="sec-badge" id="portTransitCount">0</span></h3>
+        <p>Sea transit days between ports</p>
+      </div>
+      <div class="master-sec-actions">
+        <button class="btn btn-accent btn-sm" onclick="openPortTransitModal()">+ Add Route</button>
+      </div>
+    </div>
+    <div class="master-search">
+      <input type="text" id="portTransitSearch" placeholder="Search routes…" oninput="renderPortTransitTable()">
+    </div>
+    <div class="master-table-wrap">
+      <table class="master-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>From Port</th>
+            <th>To Port</th>
+            <th>Transit Days</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="portTransitTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /page -->
+</main>
+
+<!-- ═══ PORT MODAL ═══ -->
+<div class="modal-overlay" id="portModal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-head">
+      <div>
+        <h3 id="portModalTitle">Add Port</h3>
+        <p>Enter port details below</p>
+      </div>
+      <button class="modal-close" onclick="closeModal('portModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="fg span2">
+          <label>Port Name <span class="req">*</span></label>
+          <input type="text" id="pmPortName" placeholder="e.g. Jebel Ali">
+        </div>
+        <div class="fg">
+          <label>Country <span class="req">*</span></label>
+          <input type="text" id="pmCountry" placeholder="e.g. United Arab Emirates">
+        </div>
+        <div class="fg">
+          <label>Clearance Days <span class="req">*</span></label>
+          <input type="number" id="pmClearanceDays" placeholder="e.g. 3" min="0">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('portModal')">Cancel</button>
+      <button class="btn btn-accent" onclick="savePort()">Save Port</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SOURCE TRANSIT MODAL ═══ -->
+<div class="modal-overlay" id="srcTransitModal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-head">
+      <div>
+        <h3 id="srcTransitModalTitle">Add Source Transit</h3>
+        <p>Supplier location to port transit time</p>
+      </div>
+      <button class="modal-close" onclick="closeModal('srcTransitModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="fg span2">
+          <label>Supplier Name <span class="req">*</span></label>
+          <input type="text" id="stSupplierName" placeholder="e.g. Acme Steel Ltd">
+        </div>
+        <div class="fg span2">
+          <label>Supplier Location <span class="req">*</span></label>
+          <input type="text" id="stSupplierLocation" placeholder="e.g. Shanghai, China">
+        </div>
+        <div class="fg span2">
+          <label>Transit Days to Port <span class="req">*</span></label>
+          <input type="number" id="stTransitDays" placeholder="e.g. 5" min="0">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('srcTransitModal')">Cancel</button>
+      <button class="btn btn-accent" onclick="saveSrcTransit()">Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PORT TRANSIT MODAL ═══ -->
+<div class="modal-overlay" id="portTransitModal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-head">
+      <div>
+        <h3 id="portTransitModalTitle">Add Port Route</h3>
+        <p>Sea transit days between two ports</p>
+      </div>
+      <button class="modal-close" onclick="closeModal('portTransitModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="fg">
+          <label>From Port <span class="req">*</span></label>
+          <select id="ptFromPort">
+            <option value="">Select port…</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>To Port <span class="req">*</span></label>
+          <select id="ptToPort">
+            <option value="">Select port…</option>
+          </select>
+        </div>
+        <div class="fg span2">
+          <label>Transit Days <span class="req">*</span></label>
+          <input type="number" id="ptTransitDays" placeholder="e.g. 21" min="1">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('portTransitModal')">Cancel</button>
+      <button class="btn btn-accent" onclick="savePortTransit()">Save Route</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toastArea" class="toast-area"></div>
+
+<script src="common.js"></script>
+<script>
+// ── STORAGE KEYS ────────────────────────────────────
+const KEY_PORTS         = 'pgp_portMaster';
+const KEY_SRC_TRANSIT   = 'pgp_srcPortTransit';
+const KEY_PORT_TRANSIT  = 'pgp_portPortTransit';
+
+// ── STATE ────────────────────────────────────────────
+let ports        = JSON.parse(localStorage.getItem(KEY_PORTS)        || '[]');
+let srcTransits  = JSON.parse(localStorage.getItem(KEY_SRC_TRANSIT)  || '[]');
+let portTransits = JSON.parse(localStorage.getItem(KEY_PORT_TRANSIT) || '[]');
+
+let editPortIdx        = null;
+let editSrcTransitIdx  = null;
+let editPortTransitIdx = null;
+
+// ── PERSIST ──────────────────────────────────────────
+function savePorts()        { localStorage.setItem(KEY_PORTS,        JSON.stringify(ports));        }
+function saveSrcTransits()  { localStorage.setItem(KEY_SRC_TRANSIT,  JSON.stringify(srcTransits));  }
+function savePortTransits() { localStorage.setItem(KEY_PORT_TRANSIT, JSON.stringify(portTransits)); }
+
+// ── ID GENERATOR ─────────────────────────────────────
+function genId(prefix) { return `${prefix}-${Date.now()}-${Math.floor(Math.random()*1000)}`; }
+
+// ── RENDER HELPERS ───────────────────────────────────
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function actionBtns(editFn, delFn) {
+  return `<div class="tbl-actions">
+    <button class="btn btn-ghost btn-sm" onclick="${editFn}">Edit</button>
+    <button class="btn btn-danger btn-sm" onclick="${delFn}">Delete</button>
+  </div>`;
+}
+
+// ── SECTION 1: PORTS ─────────────────────────────────
+function renderPortTable() {
+  const q = (document.getElementById('portSearch')?.value || '').toLowerCase();
+  const filtered = ports.filter(p =>
+    !q || p.name.toLowerCase().includes(q) || p.country.toLowerCase().includes(q)
+  );
+  document.getElementById('portCount').textContent = ports.length;
+  const tbody = document.getElementById('portTableBody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="tbl-empty">${q ? 'No ports match your search' : 'No ports added yet — click + Add Port to get started'}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map((p, i) => {
+    const idx = ports.indexOf(p);
+    return `<tr>
+      <td style="color:var(--muted);font-family:'DM Mono',monospace;font-size:11px">${i+1}</td>
+      <td><span class="port-tag">${esc(p.name)}</span></td>
+      <td>${esc(p.country)}</td>
+      <td><span class="days-badge">${esc(p.clearanceDays)}</span></td>
+      <td>${actionBtns(`editPort(${idx})`, `deletePort(${idx})`)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function openPortModal(idx) {
+  editPortIdx = idx !== undefined ? idx : null;
+  const p = editPortIdx !== null ? ports[editPortIdx] : null;
+  document.getElementById('portModalTitle').textContent = p ? 'Edit Port' : 'Add Port';
+  document.getElementById('pmPortName').value      = p?.name         || '';
+  document.getElementById('pmCountry').value       = p?.country      || '';
+  document.getElementById('pmClearanceDays').value = p?.clearanceDays!== undefined ? p.clearanceDays : '';
+  openModal('portModal');
+  document.getElementById('pmPortName').focus();
+}
+
+function editPort(idx)   { openPortModal(idx); }
+
+function deletePort(idx) {
+  if (!confirm(`Delete port "${ports[idx].name}"?`)) return;
+  // Remove dependent port-transit records
+  portTransits = portTransits.filter(t => t.fromPortId !== ports[idx].id && t.toPortId !== ports[idx].id);
+  savePortTransits();
+  ports.splice(idx, 1);
+  savePorts();
+  renderAll();
+  showToast('Port deleted', 'success');
+}
+
+function savePort() {
+  const name         = document.getElementById('pmPortName').value.trim();
+  const country      = document.getElementById('pmCountry').value.trim();
+  const clearanceDays= parseInt(document.getElementById('pmClearanceDays').value) || 0;
+  if (!name)    { showToast('Port name is required', 'danger'); return; }
+  if (!country) { showToast('Country is required', 'danger'); return; }
+
+  const record = { id: editPortIdx !== null ? ports[editPortIdx].id : genId('PORT'), name, country, clearanceDays };
+  if (editPortIdx !== null) ports[editPortIdx] = record;
+  else ports.push(record);
+  savePorts();
+  closeModal('portModal');
+  renderAll();
+  showToast(editPortIdx !== null ? 'Port updated ✓' : 'Port added ✓', 'success');
+  editPortIdx = null;
+}
+
+// ── SECTION 2: SOURCE TRANSIT ────────────────────────
+function renderSrcTransitTable() {
+  const q = (document.getElementById('srcTransitSearch')?.value || '').toLowerCase();
+  const filtered = srcTransits.filter(s =>
+    !q || s.supplierName.toLowerCase().includes(q) || s.supplierLocation.toLowerCase().includes(q)
+  );
+  document.getElementById('srcTransitCount').textContent = srcTransits.length;
+  const tbody = document.getElementById('srcTransitTableBody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="tbl-empty">${q ? 'No entries match your search' : 'No source transit entries yet — click + Add Entry'}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map((s, i) => {
+    const idx = srcTransits.indexOf(s);
+    return `<tr>
+      <td style="color:var(--muted);font-family:'DM Mono',monospace;font-size:11px">${i+1}</td>
+      <td><span class="supplier-tag">${esc(s.supplierName)}</span></td>
+      <td>${esc(s.supplierLocation)}</td>
+      <td><span class="days-badge">${esc(s.transitDays)}</span></td>
+      <td>${actionBtns(`editSrcTransit(${idx})`, `deleteSrcTransit(${idx})`)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function openSrcTransitModal(idx) {
+  editSrcTransitIdx = idx !== undefined ? idx : null;
+  const s = editSrcTransitIdx !== null ? srcTransits[editSrcTransitIdx] : null;
+  document.getElementById('srcTransitModalTitle').textContent = s ? 'Edit Source Transit' : 'Add Source Transit';
+  document.getElementById('stSupplierName').value     = s?.supplierName     || '';
+  document.getElementById('stSupplierLocation').value = s?.supplierLocation || '';
+  document.getElementById('stTransitDays').value      = s?.transitDays !== undefined ? s.transitDays : '';
+  openModal('srcTransitModal');
+  document.getElementById('stSupplierName').focus();
+}
+
+function editSrcTransit(idx)   { openSrcTransitModal(idx); }
+
+function deleteSrcTransit(idx) {
+  if (!confirm(`Delete transit entry for "${srcTransits[idx].supplierName}"?`)) return;
+  srcTransits.splice(idx, 1);
+  saveSrcTransits();
+  renderSrcTransitTable();
+  showToast('Entry deleted', 'success');
+}
+
+function saveSrcTransit() {
+  const supplierName     = document.getElementById('stSupplierName').value.trim();
+  const supplierLocation = document.getElementById('stSupplierLocation').value.trim();
+  const transitDays      = parseInt(document.getElementById('stTransitDays').value) || 0;
+  if (!supplierName)     { showToast('Supplier name is required', 'danger'); return; }
+  if (!supplierLocation) { showToast('Supplier location is required', 'danger'); return; }
+
+  const record = {
+    id: editSrcTransitIdx !== null ? srcTransits[editSrcTransitIdx].id : genId('SRC'),
+    supplierName, supplierLocation, transitDays
+  };
+  if (editSrcTransitIdx !== null) srcTransits[editSrcTransitIdx] = record;
+  else srcTransits.push(record);
+  saveSrcTransits();
+  closeModal('srcTransitModal');
+  renderSrcTransitTable();
+  showToast(editSrcTransitIdx !== null ? 'Entry updated ✓' : 'Entry added ✓', 'success');
+  editSrcTransitIdx = null;
+}
+
+// ── SECTION 3: PORT → PORT TRANSIT ──────────────────
+function populatePortSelects(fromVal, toVal) {
+  const opts = `<option value="">Select port…</option>` +
+    ports.map(p => `<option value="${p.id}">${esc(p.name)} — ${esc(p.country)}</option>`).join('');
+  const fromSel = document.getElementById('ptFromPort');
+  const toSel   = document.getElementById('ptToPort');
+  fromSel.innerHTML = opts;
+  toSel.innerHTML   = opts;
+  if (fromVal) fromSel.value = fromVal;
+  if (toVal)   toSel.value   = toVal;
+}
+
+function renderPortTransitTable() {
+  const q = (document.getElementById('portTransitSearch')?.value || '').toLowerCase();
+  const portMap = new Map(ports.map(p => [p.id, p]));
+  const filtered = portTransits.filter(t => {
+    if (!q) return true;
+    const fp = portMap.get(t.fromPortId)?.name || '';
+    const tp = portMap.get(t.toPortId)?.name   || '';
+    return fp.toLowerCase().includes(q) || tp.toLowerCase().includes(q);
+  });
+  document.getElementById('portTransitCount').textContent = portTransits.length;
+  const tbody = document.getElementById('portTransitTableBody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="tbl-empty">${q ? 'No routes match your search' : 'No port routes yet — click + Add Route'}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map((t, i) => {
+    const idx  = portTransits.indexOf(t);
+    const from = portMap.get(t.fromPortId);
+    const to   = portMap.get(t.toPortId);
+    const fromLabel = from ? `${from.name}<span style="color:var(--muted);font-size:10px;margin-left:4px">${from.country}</span>` : `<span style="color:var(--muted)">Unknown</span>`;
+    const toLabel   = to   ? `${to.name}<span style="color:var(--muted);font-size:10px;margin-left:4px">${to.country}</span>`   : `<span style="color:var(--muted)">Unknown</span>`;
+    return `<tr>
+      <td style="color:var(--muted);font-family:'DM Mono',monospace;font-size:11px">${i+1}</td>
+      <td><span class="port-tag">${esc(from?.name || '—')}</span> <span style="font-size:10px;color:var(--muted)">${esc(from?.country||'')}</span></td>
+      <td><span class="port-tag" style="background:rgba(16,217,138,.08);border-color:rgba(16,217,138,.2);color:var(--success)">${esc(to?.name || '—')}</span> <span style="font-size:10px;color:var(--muted)">${esc(to?.country||'')}</span></td>
+      <td><span class="days-badge">${esc(t.transitDays)}</span></td>
+      <td>${actionBtns(`editPortTransit(${idx})`, `deletePortTransit(${idx})`)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function openPortTransitModal(idx) {
+  editPortTransitIdx = idx !== undefined ? idx : null;
+  const t = editPortTransitIdx !== null ? portTransits[editPortTransitIdx] : null;
+  document.getElementById('portTransitModalTitle').textContent = t ? 'Edit Port Route' : 'Add Port Route';
+  populatePortSelects(t?.fromPortId, t?.toPortId);
+  document.getElementById('ptTransitDays').value = t?.transitDays !== undefined ? t.transitDays : '';
+  openModal('portTransitModal');
+}
+
+function editPortTransit(idx)   { openPortTransitModal(idx); }
+
+function deletePortTransit(idx) {
+  const t = portTransits[idx];
+  const portMap = new Map(ports.map(p => [p.id, p]));
+  const label = `${portMap.get(t.fromPortId)?.name || '?'} → ${portMap.get(t.toPortId)?.name || '?'}`;
+  if (!confirm(`Delete route "${label}"?`)) return;
+  portTransits.splice(idx, 1);
+  savePortTransits();
+  renderPortTransitTable();
+  showToast('Route deleted', 'success');
+}
+
+function savePortTransit() {
+  const fromPortId  = document.getElementById('ptFromPort').value;
+  const toPortId    = document.getElementById('ptToPort').value;
+  const transitDays = parseInt(document.getElementById('ptTransitDays').value) || 0;
+  if (!fromPortId)            { showToast('From Port is required', 'danger'); return; }
+  if (!toPortId)              { showToast('To Port is required', 'danger'); return; }
+  if (fromPortId === toPortId){ showToast('From Port and To Port must be different', 'danger'); return; }
+  if (transitDays < 1)        { showToast('Transit days must be at least 1', 'danger'); return; }
+
+  const record = {
+    id: editPortTransitIdx !== null ? portTransits[editPortTransitIdx].id : genId('PPT'),
+    fromPortId, toPortId, transitDays
+  };
+  if (editPortTransitIdx !== null) portTransits[editPortTransitIdx] = record;
+  else portTransits.push(record);
+  savePortTransits();
+  closeModal('portTransitModal');
+  renderPortTransitTable();
+  showToast(editPortTransitIdx !== null ? 'Route updated ✓' : 'Route added ✓', 'success');
+  editPortTransitIdx = null;
+}
+
+// ── RENDER ALL ───────────────────────────────────────
+function renderAll() {
+  renderPortTable();
+  renderSrcTransitTable();
+  renderPortTransitTable();
+}
+
+// ── INIT ─────────────────────────────────────────────
+renderAll();
+</script>
+</body>
+</html>
