@@ -1428,40 +1428,52 @@ document.getElementById('shipmentType').addEventListener('change', function() {
 // ═══════════════════════════════════════
 const STOCK_AUTO_TYPES = ['Stock Shipment', 'Stock Machining Shipment'];
 const STOCK_HIDE_FIELD_IDS = ['fg-srcDelivTerm','fg-srcDelivLoc','fg-srcDelivPort','fg-srcDelivCtry','fg-supInsurance','stopoverSection'];
-const PGP_SRC_DEFAULTS = {
-  srcName:     'PGP Energies',
-  srcLocation: 'PGP Energies Warehouse',
-  srcPort:     'Jebel Ali',
-  srcPortCountry: 'United Arab Emirates',
-};
+// Locked source fields for stock shipments (srcPortCountry is always readonly/auto-filled)
+const STOCK_LOCK_IDS = ['srcName','srcLocation','srcPort'];
+
+function _lockStockField(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (el.tagName === 'INPUT') el.readOnly = true;
+  el.style.pointerEvents = 'none';
+  el.style.background    = 'var(--bg3)';
+  el.style.color         = 'var(--muted2)';
+  el.style.cursor        = 'default';
+  el.style.borderStyle   = 'dashed';
+}
+function _unlockStockField(id, clear) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (el.tagName === 'INPUT') el.readOnly = false;
+  el.style.pointerEvents = '';
+  el.style.background    = '';
+  el.style.color         = '';
+  el.style.cursor        = '';
+  el.style.borderStyle   = '';
+  if (clear) el.value = '';
+}
 
 function _applyShipmentTypeDefaults(type, interactive) {
   const isStock = STOCK_AUTO_TYPES.includes(type);
 
   if (isStock) {
-    // ── Lock & fill the 4 source fields ──────────────────
-    Object.entries(PGP_SRC_DEFAULTS).forEach(([id, val]) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.value = val;
-      if (el.tagName === 'INPUT') el.readOnly = true;
-      el.style.pointerEvents = 'none';
-      el.style.background    = 'var(--bg3)';
-      el.style.color         = 'var(--muted2)';
-      el.style.cursor        = 'default';
-      el.style.borderStyle   = 'dashed';
-    });
+    // ── Auto-fill source fields from Supplier/Port Master ──
+    _setSupplierSelectByName('srcName', 'PGP Energies');
+    const srcLocEl = document.getElementById('srcLocation');
+    if (srcLocEl) srcLocEl.value = 'PGP Energies Warehouse';
+    _setPortSelectByName('srcPort', 'Jebel Ali');
+    onSrcPortChange(); // auto-fills srcPortCountry
 
-    // ── Silently fill the hidden delivery fields so sailing calculations work ──
-    const delivMap = {
-      srcDeliveryLocation: 'PGP Energies Warehouse',
-      srcDeliveryPort:     'Jebel Ali',
-      srcDeliveryCountry:  'United Arab Emirates',
-    };
-    Object.entries(delivMap).forEach(([id, val]) => {
-      const el = document.getElementById(id);
-      if (el) el.value = val;
-    });
+    // ── Lock the 3 source fields ──────────────────────────
+    STOCK_LOCK_IDS.forEach(_lockStockField);
+    // srcPortCountry is always readonly — just apply lock visuals
+    _lockStockField('srcPortCountry');
+
+    // ── Silently fill hidden delivery fields ──────────────
+    const srcDelivLocEl = document.getElementById('srcDeliveryLocation');
+    if (srcDelivLocEl) srcDelivLocEl.value = 'PGP Energies Warehouse';
+    _setPortSelectByName('srcDeliveryPort', 'Jebel Ali');
+    onSrcDelivPortChange(); // auto-fills srcDeliveryCountry + updateFinalSailingFrom
 
     // ── Hide delivery + stopover fields ──────────────────
     STOCK_HIDE_FIELD_IDS.forEach(id => {
@@ -1479,19 +1491,11 @@ function _applyShipmentTypeDefaults(type, interactive) {
     updateInsuranceScope();
 
   } else {
-    // ── Unlock the 4 source fields ────────────────────────
-    Object.keys(PGP_SRC_DEFAULTS).forEach(id => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      if (el.tagName === 'INPUT') el.readOnly = false;
-      el.style.pointerEvents = '';
-      el.style.background    = '';
-      el.style.color         = '';
-      el.style.cursor        = '';
-      el.style.borderStyle   = '';
-      // When user actively switches away from a stock type, clear PGP defaults
-      if (interactive) el.value = '';
-    });
+    // ── Unlock the source fields ──────────────────────────
+    STOCK_LOCK_IDS.forEach(id => _unlockStockField(id, interactive));
+    // Restore srcPortCountry readonly visuals (it stays readonly but loses lock styling)
+    const cpEl = document.getElementById('srcPortCountry');
+    if (cpEl) { cpEl.style.pointerEvents=''; cpEl.style.cursor=''; cpEl.style.borderStyle=''; }
 
     // ── Show delivery + stopover fields ──────────────────
     STOCK_HIDE_FIELD_IDS.forEach(id => {
